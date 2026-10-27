@@ -22,7 +22,7 @@ let catalogCache: { at: number; products: ReturnType<typeof normalizeProducts> }
 
 async function readCategory(id: number): Promise<CategoryResponse["data"]> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12_000);
+  const timeout = setTimeout(() => controller.abort(), 8_000);
   try {
     const response = await fetch(`${FAST4TOP_BASE_URL}/category/products/${id}?lang=ar`, {
       // Fast4Top exposes this catalog endpoint publicly; do not send the stored
@@ -43,7 +43,9 @@ function normalizeProducts(raw: Array<{ product: Fast4TopProduct; section: "ال
     externalId: product.id,
     name: product.product_name || `منتج ${product.id}`,
     category: section,
-    subcategory: product.category_name || section,
+    subcategory: product.category_name && !/^قسم\s*(التطبيقات|الألعاب)$/i.test(product.category_name)
+      ? product.category_name
+      : product.product_name || section,
     priceUsdCents: Math.max(0, Math.round(Number(product.price ?? product.product_currency_price ?? 0) * 100)),
     available: product.available !== false,
     imageUrl: product.photo ? `${FAST4TOP_ASSET_URL}${product.photo}` : null,
@@ -58,13 +60,13 @@ export async function readDigitalCatalog() {
   if (catalogCache && Date.now() - catalogCache.at < 60_000) return catalogCache.products;
   const roots = await Promise.all([readCategory(1), readCategory(2)]);
   const categories = roots.flatMap(root => root?.categories ?? []);
-  // Keep the supplier's public endpoint comfortable: it can expose many
-  // child categories, so read them sequentially instead of opening 20+ calls.
-  const responses: Array<{ data: CategoryResponse["data"]; section: "التطبيقات" | "الألعاب" }> = [];
-  for (const category of categories) {
+  // Read all child sections concurrently; a sequential 20+ request chain can
+  // exceed the frontend request window and make the UI fall back to demo cards.
+  const responses = await Promise.all(categories.map(async category => {
     const rootIndex = roots.findIndex(root => (root?.categories ?? []).some(item => item.id === category.id));
-    responses.push({ data: await readCategory(category.id), section: rootIndex === 1 ? "الألعاب" : "التطبيقات" });
-  }
+    try { return { data: await readCategory(category.id), section: rootIndex === 1 ? "الألعاب" as const : "التطبيقات" as const }; }
+    catch (error) { console.warn(`[Fast4Top] category ${category.id} skipped:`, error instanceof Error ? error.message : "unknown error"); return { data: undefined, section: rootIndex === 1 ? "الألعاب" as const : "التطبيقات" as const }; }
+  }));
   const raw: Array<{ product: Fast4TopProduct; section: "التطبيقات" | "الألعاب" }> = [];
   roots.forEach((root, index) => (root?.products ?? []).forEach(product => raw.push({ product, section: index === 1 ? "الألعاب" : "التطبيقات" })));
   responses.forEach(({ data, section }) => (data?.products ?? []).forEach(product => raw.push({ product, section })));
