@@ -1,0 +1,73 @@
+import { useState, type ReactNode } from "react";
+import { ArrowRight, Bell, Box, CheckCircle2, Clock3, ExternalLink, Package, Plus, Trash2, TrendingUp, Users, X } from "lucide-react";
+import { Link } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { startLogin } from "@/const";
+import { trpc } from "@/lib/trpc";
+
+const money=(cents:number)=>`$ ${(cents/100).toFixed(2)}`;
+const isSyriaTopupOrder=(items:string)=>items.includes('"category":"شحن ألعاب"')||items.includes('"category":"شحن تطبيقات"');
+
+type FormState={name:string;category:string;description:string;priceUsd:string;oldPrice:string;stock:string;isDigital:boolean;tag:string;imageData:string};
+const emptyForm:FormState={name:"",category:"هواتف",description:"",priceUsd:"",oldPrice:"",stock:"0",isDigital:false,tag:"",imageData:""};
+
+function compressProductImage(file: File, onDone: (data: string) => void, onError: (message: string) => void) {
+  if (!file.type.startsWith("image/")) { onError("اختر ملف صورة صالحًا"); return; }
+  const reader = new FileReader();
+  reader.onerror = () => onError("تعذر قراءة الصورة من الهاتف");
+  reader.onload = () => {
+    const image = new Image();
+    image.onerror = () => onError("تعذر معالجة الصورة، جرّب صورة أخرى");
+    image.onload = () => {
+      const maxSide = 1000;
+      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext("2d");
+      if (!context) { onError("تعذر تجهيز الصورة"); return; }
+      context.fillStyle = "#ffffff"; context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      let data = canvas.toDataURL("image/jpeg", 0.68);
+      if (data.length > 1_400_000) data = canvas.toDataURL("image/jpeg", 0.5);
+      if (data.length > 1_800_000) { onError("الصورة ما زالت كبيرة؛ اختر صورة أصغر أو التقطها بدقة أقل"); return; }
+      onDone(data);
+    };
+    image.src = String(reader.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+export default function Admin() {
+  const auth = useAuth();
+  const access = trpc.admin.access.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
+  const claim = trpc.admin.claim.useMutation({ onSuccess: (result) => { if (result.claimed) window.location.reload(); } });
+  const productsQuery = trpc.admin.products.list.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
+  const ordersQuery = trpc.adminOrders.list.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
+  const updateOrder = trpc.adminOrders.updateStatus.useMutation({ onSuccess: ()=>ordersQuery.refetch() });
+  const utils = trpc.useUtils();
+  const createProduct = trpc.admin.products.create.useMutation({ onSuccess: async()=>{ setForm(emptyForm); setFormOpen(false); setError(""); await Promise.all([utils.admin.products.list.invalidate(),utils.products.list.invalidate()]); }, onError: (err)=>setError(err.message || "تعذر حفظ المنتج، حاول مرة أخرى") });
+  const updateProduct = trpc.admin.products.update.useMutation({ onSuccess: async()=>{ setForm(emptyForm); setFormOpen(false); setError(""); await Promise.all([utils.admin.products.list.invalidate(),utils.products.list.invalidate()]); }, onError: (err)=>setError(err.message || "تعذر تعديل المنتج، حاول مرة أخرى") });
+  const removeProduct = trpc.admin.products.remove.useMutation({ onSuccess: async()=>{ await Promise.all([utils.admin.products.list.invalidate(),utils.products.list.invalidate()]); } });
+  const transfer = trpc.admin.transferOwnership.useMutation({ onSuccess: () => { setTransferOpen(false); setTransferEmail(""); auth.logout(); } });
+  const [formOpen,setFormOpen]=useState(false); const [form,setForm]=useState<FormState>(emptyForm); const [editingId,setEditingId]=useState<number|null>(null); const [error,setError]=useState(""); const [transferOpen,setTransferOpen]=useState(false); const [transferEmail,setTransferEmail]=useState("");
+  if (auth.loading) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>جاري التحقق من صلاحيات الدخول</h1><p>هذه الصفحة مخصصة لصاحب المتجر وفريق الإدارة فقط.</p></div></div>;
+  if (!auth.user) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>دخول صاحب المتجر</h1><p>هذه الصفحة منفصلة عن متجر الزبائن. استخدم حساب Manus المخصص للمالك.</p><button className="primary-btn" onClick={()=>startLogin()}>تسجيل الدخول كمالك <ArrowRight size={17}/></button></div></div>;
+  if (auth.user.role !== "admin" || access.isError) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>تجهيز حساب المالك</h1><p>إذا كنت تستخدم الحساب المنفصل الذي تريد تخصيصه للمتجر، اضغط الزر مرة واحدة لاعتماده كمالك. لا تستخدم حساب الزبائن أو حساب MySon.</p><button className="primary-btn" onClick={()=>claim.mutate()} disabled={claim.isPending}>{claim.isPending?"جارٍ اعتماد الحساب...":"اعتماد هذا الحساب كمالك"} <ArrowRight size={17}/></button><Link href="/" className="back-link gate-back">العودة إلى المتجر</Link></div></div>;
+  const products=productsQuery.data??[];
+  const orders=ordersQuery.data??[];
+  const openEdit=(p:(typeof products)[number])=>{setEditingId(p.id);setForm({name:p.name,category:p.category,description:p.description||"",priceUsd:((p.priceUsdCents??p.price)/100).toFixed(2),oldPrice:p.oldPrice?((p.oldPrice)/100).toFixed(2):"",stock:String(p.stock),isDigital:p.isDigital,tag:p.tag||"",imageData:""});setError("");setFormOpen(true)};
+  const submit=(e:React.FormEvent)=>{e.preventDefault();setError("");if(!form.name.trim()||!form.priceUsd||Number(form.priceUsd)<0){setError("اكتب اسم المنتج وسعر الدولار بشكل صحيح");return}const payload={name:form.name.trim(),category:form.category,description:form.description.trim()||undefined,priceUsdCents:Math.round(Number(form.priceUsd)*100),oldPrice:form.oldPrice?Math.round(Number(form.oldPrice)*100):undefined,stock:Number(form.stock)||0,isDigital:form.isDigital,tag:form.tag.trim()||undefined,imageData:form.imageData||undefined};if(editingId) updateProduct.mutate({id:editingId,...payload}); else createProduct.mutate(payload)};
+  return <div className="admin-shell">
+      <header className="admin-topbar"><Link href="/" className="back-link"><ArrowRight size={18}/> العودة للمتجر</Link><div className="admin-brand"><span className="brand-mark">TS</span><span>لوحة Tecno Sell</span></div><div className="admin-top-actions"><button className="icon-btn"><Bell size={18}/><i /></button></div></header>
+    <main className="admin-main">
+      <div className="admin-heading"><div><span className="eyebrow">مركز العمليات</span><h1>صاحب المتجر</h1><p>أضف منتجاتك من هنا، وستظهر مباشرةً في واجهة المتجر للزبائن.</p></div><div className="admin-heading-actions"><button className="secondary-btn" onClick={()=>setTransferOpen(true)}>نقل الملكية</button><button className="primary-btn" onClick={()=>setFormOpen(true)}><Plus size={17}/> إضافة منتج</button></div></div>
+      <section className="stats-grid"><Stat icon={<Box/>} label="منتجات المتجر" value={String(products.length)} suffix="منتج" delta="من إدخالك أنت"/><Stat icon={<TrendingUp/>} label="منتجات متاحة" value={String(products.filter(p=>p.isActive).length)} suffix="منتج" delta="تظهر للزبائن"/><Stat icon={<Clock3/>} label="طلبات جديدة" value="0" suffix="طلب" delta="بانتظار أول طلب"/><Stat icon={<Users/>} label="عملاء" value="0" suffix="عميل" delta="سيظهرون مع الطلبات"/></section>
+      <section className="panel product-manager"><div className="panel-head"><div><h2>منتجات المتجر</h2><span>عدّل الاسم والسعر بالدولار أو احذف المنتج</span></div><button className="text-btn" onClick={()=>{setEditingId(null);setForm(emptyForm);setFormOpen(true)}}><Plus size={14}/> إضافة منتج</button></div>{products.length===0?<div className="manager-empty"><Package size={34}/><h3>لم تضف أي منتج بعد</h3><p>ابدأ بإضافة أول منتج، وسيظهر تلقائيًا في واجهة المتجر.</p><button className="primary-btn" onClick={()=>{setEditingId(null);setForm(emptyForm);setFormOpen(true)}}>إضافة أول منتج</button></div>:<div className="managed-products">{products.map(p=><div className="managed-product" key={p.id}><div className="product-mini"><Box size={18}/></div><div className="managed-product-main"><strong>{p.name}</strong><span>{p.category} · {p.isDigital?"منتج رقمي":"منتج مادي"}</span></div><div className="managed-price"><b>{money(p.priceUsdCents??p.price)}</b><small>المخزون: {p.stock}</small></div><button className="text-btn" title="تعديل المنتج" onClick={()=>openEdit(p)}>تعديل</button><button className="delete-btn" title="حذف المنتج" onClick={()=>removeProduct.mutate({id:p.id})} disabled={removeProduct.isPending}><Trash2 size={16}/></button></div>)}</div>}</section>
+      <section className="admin-grid"><div className="panel orders-panel"><div className="panel-head"><div><h2>آخر الطلبات</h2><span>ستظهر هنا بعد أن يبدأ الزبائن بالشراء</span></div></div><div className="order-table"><div className="table-row table-head"><span>الطلب</span><span>العميل</span><span>الإجمالي</span><span>الحالة</span></div>{orders.length===0?<div className="manager-note"><Clock3 size={17}/> لا توجد طلبات يدوية بعد</div>:orders.map(o=><div className="table-row order-row" key={o.id}><strong>{o.orderNumber}</strong><span>{o.customerName}<small>{o.playerId?` UID: ${o.playerId}`:""}</small></span><span>{money(o.total)}</span><span className={`status-pill ${o.paymentStatus==='confirmed'&&o.executionStatus==='completed'?'green':o.paymentStatus==='confirmed'?'cyan':'amber'}`}>{o.executionStatus==='completed'?"تم التنفيذ":o.paymentStatus==='confirmed'?"الدفع مؤكد":"بانتظار تأكيد الدفع"}</span><div className="order-actions">{isSyriaTopupOrder(o.items)&&<button className="text-btn" onClick={()=>window.open("https://www.syria-market.net/categories/3/subs/3/product/5","_blank","noopener,noreferrer")}>شحن يدوي</button>}{o.paymentStatus==='pending'&&<button className="text-btn" onClick={()=>updateOrder.mutate({id:o.id,paymentStatus:'confirmed',executionStatus:'manual_processing'})}>تأكيد Shamcash</button>}{o.paymentStatus==='confirmed'&&o.executionStatus!=='completed'&&<button className="text-btn" onClick={()=>updateOrder.mutate({id:o.id,executionStatus:'completed'})}>تم الشحن يدويًا</button>}</div></div>)}</div></div><div className="panel inventory-panel"><div className="panel-head"><div><h2>المخزون المنخفض</h2><span>يتحدث تلقائيًا من منتجاتك</span></div><Package size={19}/></div>{products.filter(p=>p.stock<5).slice(0,4).map(p=><div className="stock-item" key={p.id}><div className="product-mini"><Box size={16}/></div><div><strong>{p.name}</strong><small>{p.stock} وحدات متبقية</small></div><span className="stock-warning">منخفض</span></div>)}{products.filter(p=>p.stock<5).length===0&&<div className="manager-note"><CheckCircle2 size={17}/> لا يوجد مخزون منخفض</div>}</div></section>
+    </main>
+    {formOpen&&<div className="overlay"><form className="product-modal" onSubmit={submit}><button type="button" className="close-btn modal-close" onClick={()=>setFormOpen(false)}><X/></button><span className="eyebrow">إدارة الكتالوج</span><h2>{editingId?"تعديل المنتج":"إضافة منتج جديد"}</h2><div className="form-grid"><label>اسم المنتج<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="مثال: Free Fire Diamonds أو جواهر فري فاير"/></label><label>الفئة<select value={form.category} onChange={e=>setForm({...form,category:e.target.value})}><option>هواتف</option><option>إكسسوارات</option><option>بطاقات رقمية</option><option>شحن ألعاب</option><option>شحن تطبيقات</option></select></label><label>السعر بالدولار<input required type="number" min="0" step="0.01" value={form.priceUsd} onChange={e=>setForm({...form,priceUsd:e.target.value})} placeholder="بالدولار الأمريكي"/></label><label>السعر السابق بالدولار<input type="number" min="0" step="0.01" value={form.oldPrice} onChange={e=>setForm({...form,oldPrice:e.target.value})} placeholder="اختياري للخصم"/></label><label>المخزون<input required type="number" min="0" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})}/></label><label>شارة المنتج<input value={form.tag} onChange={e=>setForm({...form,tag:e.target.value})} placeholder="الأكثر مبيعًا، عرض خاص..."/></label><label>صورة المنتج<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>{const file=e.target.files?.[0];if(!file)return;setError("جاري تجهيز الصورة...");compressProductImage(file,data=>{setForm({...form,imageData:data});setError("")},message=>setError(message))}}/></label><label className="wide">الوصف<textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} placeholder="وصف مختصر يظهر للزبائن"/></label><label className="wide check-label"><input type="checkbox" checked={form.isDigital} onChange={e=>setForm({...form,isDigital:e.target.checked})}/> هذا منتج رقمي (شحن ألعاب أو بطاقة)</label></div>{error&&<div className="form-error">{error}</div>}<button className="primary-btn full" disabled={createProduct.isPending||updateProduct.isPending}>{createProduct.isPending||updateProduct.isPending?"جارٍ الحفظ...":editingId?"حفظ تعديلات المنتج":"حفظ المنتج وإظهاره في المتجر"}</button></form></div>}
+    {transferOpen&&<div className="overlay"><form className="product-modal" onSubmit={e=>{e.preventDefault();transfer.mutate({newOwnerEmail:transferEmail})}}><button type="button" className="close-btn modal-close" onClick={()=>setTransferOpen(false)}><X/></button><span className="eyebrow">صلاحيات المتجر</span><h2>نقل الملكية</h2><p className="modal-copy">اكتب بريد حساب Manus الجديد. يجب أن يكون قد سجّل دخوله إلى المتجر مرة واحدة على الأقل. بعد النقل ستخرج من لوحة الإدارة.</p><label>بريد المالك الجديد<input required type="email" value={transferEmail} onChange={e=>setTransferEmail(e.target.value)} placeholder="owner@example.com"/></label>{transfer.error&&<div className="form-error">{transfer.error.message}</div>}<button className="primary-btn full" disabled={transfer.isPending}>{transfer.isPending?"جارٍ نقل الملكية...":"تأكيد نقل الملكية"}</button></form></div>}
+  </div>
+}
+function Stat({icon,label,value,suffix,delta}:{icon:ReactNode;label:string;value:string;suffix:string;delta:string}){return <div className="stat-card"><div className="stat-icon">{icon}</div><span>{label}</span><strong>{value} <small>{suffix}</small></strong><em>{delta}</em></div>}
