@@ -14,4 +14,7 @@ export const ENV = {
   get fast4topApiKey() { return process.env.FAST4TOP_API_KEY ?? ""; },
   get localAdminEmail() { return (process.env.TECHNOSELL_ADMIN_EMAIL ?? "").trim().toLowerCase(); },
   get localAdminPassword() { return process.env.TECHNOSELL_ADMIN_PASSWORD ?? ""; },
+  get firebaseProjectId() { return process.env.FIREBASE_PROJECT_ID ?? ""; },
+  get firebaseClientEmail() { return process.env.FIREBASE_CLIENT_EMAIL ?? ""; },
+  get firebasePrivateKey() { return process.env.FIREBASE_PRIVATE_KEY ?? ""; },
 };

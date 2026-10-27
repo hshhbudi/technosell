@@ -13,6 +13,7 @@ import { createCustomer, getCustomerByEmail, getCustomerById } from "./db";
 import { storagePut } from "./storage";
 import { readDigitalCatalog } from "./fast4top";
 import { clearLocalAdmin, localAdminUser, signLocalAdmin } from "./_core/localAdmin";
+import { verifyFirebaseIdToken } from "./_core/firebaseAdmin";
 
 const CUSTOMER_COOKIE = "technosell_customer";
 const customerSecret = () => new TextEncoder().encode(ENV.cookieSecret || "technosell-development-secret");
@@ -73,6 +74,30 @@ export const appRouter = router({
       const customer = await getCustomerByEmail(input.email);
       if (!customer || !passwordMatches(input.password, customer.passwordHash)) throw new TRPCError({ code: "UNAUTHORIZED", message: "البريد أو كلمة المرور غير صحيحة" });
       await setCustomerCookie(ctx.res, customer.id); return customerSafe(customer);
+    }),
+    firebaseLogin: publicProcedure.input(z.object({ idToken: z.string().min(20).max(10_000) })).mutation(async ({ input, ctx }) => {
+      let decoded;
+      try { decoded = await verifyFirebaseIdToken(input.idToken); }
+      catch { throw new TRPCError({ code: "UNAUTHORIZED", message: "تعذر التحقق من حساب Firebase" }); }
+      const email = decoded.email?.trim().toLowerCase();
+      if (!email) throw new TRPCError({ code: "UNAUTHORIZED", message: "حساب Firebase لا يحتوي على بريد إلكتروني" });
+      let customer = await getCustomerByEmail(email);
+      if (!customer) {
+        customer = await createCustomer({
+          displayName: decoded.name || email.split("@")[0] || "عميل Techno Sell",
+          email,
+          passwordHash: hashPassword(randomBytes(32).toString("hex")),
+          phone: null,
+          freeFireId: null,
+          pubgId: null,
+          pubgServerId: null,
+          takaId: null,
+          bigoId: null,
+          balanceCents: 0,
+        });
+      }
+      await setCustomerCookie(ctx.res, customer.id);
+      return customerSafe(customer);
     }),
     changePassword: publicProcedure.input(z.object({ currentPassword: z.string().min(1), newPassword: z.string().min(8).max(200) })).mutation(async ({ input, ctx }) => {
       const customer = await customerFromRequest(ctx.req);
