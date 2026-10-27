@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertCustomerAccount, InsertOrder, InsertProduct, InsertUser, customerAccounts, orders, products, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -131,6 +131,22 @@ export async function createCustomer(input: InsertCustomerAccount) {
   return created[0];
 }
 
+export async function spendCustomerBalance(customerId: number, amountCents: number) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const result = await db.update(customerAccounts)
+    .set({ balanceCents: sql`${customerAccounts.balanceCents} - ${amountCents}` })
+    .where(and(eq(customerAccounts.id, customerId), gte(customerAccounts.balanceCents, amountCents)));
+  return Number(result[0].affectedRows ?? 0) > 0;
+}
+
+export async function addCustomerBalance(customerId: number, amountCents: number) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  await db.update(customerAccounts)
+    .set({ balanceCents: sql`${customerAccounts.balanceCents} + ${amountCents}` })
+    .where(eq(customerAccounts.id, customerId));
+  return getCustomerById(customerId);
+}
+
 export async function listProducts() {
   const db = await getDb();
   if (!db) return [];
@@ -184,7 +200,14 @@ export async function listOrders() {
 export async function updateOrderStatus(id: number, input: { paymentStatus?: "pending" | "confirmed" | "rejected"; executionStatus?: "pending" | "manual_processing" | "completed" | "failed"; ownerNote?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
+  const current = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
   await db.update(orders).set(input).where(eq(orders.id, id));
   const updated = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  if (current[0] && current[0].paymentStatus !== "confirmed" && input.paymentStatus === "confirmed" && current[0].customerId) {
+    try {
+      const items = JSON.parse(current[0].items) as Array<{ category?: string }>;
+      if (items.some(item => item.category === "تعبئة الرصيد")) await addCustomerBalance(current[0].customerId, current[0].total);
+    } catch { /* Preserve the status update for legacy malformed orders. */ }
+  }
   return updated[0];
 }

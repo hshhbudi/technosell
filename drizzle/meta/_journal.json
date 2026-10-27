@@ -43,6 +43,13 @@
       "when": 1792432654895,
       "tag": "0005_fresh_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1793069855870,
+      "tag": "0006_damp_true_believers",
+      "breakpoints": true
     }
   ]
 }

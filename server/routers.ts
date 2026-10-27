@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { claimFirstAdmin, createOrder, createProduct, deleteProduct, listAllProducts, listOrders, listProducts, transferOwnership, updateOrderStatus, updateProduct } from "./db";
+import { addCustomerBalance, claimFirstAdmin, createOrder, createProduct, deleteProduct, listAllProducts, listOrders, listProducts, spendCustomerBalance, transferOwnership, updateOrderStatus, updateProduct } from "./db";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
@@ -17,7 +17,7 @@ const CUSTOMER_COOKIE = "technosell_customer";
 const customerSecret = () => new TextEncoder().encode(ENV.cookieSecret || "technosell-development-secret");
 const hashPassword = (password: string, salt = randomBytes(16).toString("hex")) => `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
 const passwordMatches = (password: string, stored: string) => { const [salt, digest] = stored.split(":"); if (!salt || !digest) return false; const actual = scryptSync(password, salt, 64); const expected = Buffer.from(digest, "hex"); return actual.length === expected.length && timingSafeEqual(actual, expected); };
-const customerSafe = (customer: Awaited<ReturnType<typeof getCustomerById>>) => customer && ({ id: customer.id, displayName: customer.displayName, email: customer.email, phone: customer.phone, freeFireId: customer.freeFireId, pubgId: customer.pubgId, pubgServerId: customer.pubgServerId, takaId: customer.takaId, bigoId: customer.bigoId });
+const customerSafe = (customer: Awaited<ReturnType<typeof getCustomerById>>) => customer && ({ id: customer.id, displayName: customer.displayName, email: customer.email, phone: customer.phone, freeFireId: customer.freeFireId, pubgId: customer.pubgId, pubgServerId: customer.pubgServerId, takaId: customer.takaId, bigoId: customer.bigoId, balanceCents: customer.balanceCents });
 async function customerFromRequest(req: { headers: { cookie?: string } }) {
   const token = parseCookie(req.headers.cookie ?? "")[CUSTOMER_COOKIE]; if (!token) return undefined;
   try { const { payload } = await jwtVerify(token, customerSecret()); return typeof payload.sub === "string" ? getCustomerById(Number(payload.sub)) : undefined; } catch { return undefined; }
@@ -55,6 +55,23 @@ export const appRouter = router({
       await setCustomerCookie(ctx.res, customer.id); return customerSafe(customer);
     }),
     logout: publicProcedure.mutation(({ ctx }) => { ctx.res.clearCookie(CUSTOMER_COOKIE, { httpOnly: true, secure: true, sameSite: "none", path: "/" }); return { success: true }; }),
+    requestWalletTopup: publicProcedure.input(z.object({ amountCents: z.number().int().positive().max(10_000_000), paymentReference: z.string().max(160).optional() })).mutation(async ({ input, ctx }) => {
+      const customer = await customerFromRequest(ctx.req);
+      if (!customer) throw new TRPCError({ code: "UNAUTHORIZED", message: "سجّل دخولك أولًا لطلب تعبئة الرصيد" });
+      return createOrder({ customerId: customer.id, orderNumber: `TS-W-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: 0, name: "تعبئة رصيد الحساب", category: "تعبئة الرصيد", price: input.amountCents, digital: true }]), total: input.amountCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "shamcash", paymentReference: input.paymentReference || null });
+    }),
+    directTopup: publicProcedure.input(z.object({ supplierProductId: z.number().int().positive(), name: z.string().max(180), category: z.string().max(80), targetId: z.string().min(1).max(160), quantity: z.number().positive().max(100_000_000).optional(), totalCents: z.number().int().positive().max(10_000_000) })).mutation(async ({ input, ctx }) => {
+      const customer = await customerFromRequest(ctx.req);
+      if (!customer) throw new TRPCError({ code: "UNAUTHORIZED", message: "سجّل دخولك أولًا للشحن من الرصيد" });
+      const spent = await spendCustomerBalance(customer.id, input.totalCents);
+      if (!spent) throw new TRPCError({ code: "BAD_REQUEST", message: "رصيدك غير كافٍ لهذه العملية" });
+      try {
+        return await createOrder({ customerId: customer.id, orderNumber: `TS-D-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: -input.supplierProductId, supplierProductId: input.supplierProductId, name: input.name, category: input.category, targetId: input.targetId, quantity: input.quantity, price: input.totalCents, digital: true }]), total: input.totalCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "other", paymentStatus: "confirmed", executionStatus: "pending" });
+      } catch (error) {
+        await addCustomerBalance(customer.id, input.totalCents);
+        throw error;
+      }
+    }),
   }),
 
   supplier: router({

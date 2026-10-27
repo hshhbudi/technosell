@@ -36,6 +36,7 @@ export const customerAccounts = mysqlTable("customer_accounts", {
   pubgServerId: varchar("pubgServerId", { length: 120 }),
   takaId: varchar("takaId", { length: 120 }),
   bigoId: varchar("bigoId", { length: 120 }),
+  balanceCents: int("balanceCents").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -67,6 +68,7 @@ export type InsertProduct = typeof products.$inferInsert;
 
 export const orders = mysqlTable("orders", {
   id: int("id").autoincrement().primaryKey(),
+  customerId: int("customerId"),
   orderNumber: varchar("orderNumber", { length: 32 }).notNull().unique(),
   items: text("items").notNull(),
   total: int("total").notNull(),

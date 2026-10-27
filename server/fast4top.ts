@@ -13,6 +13,7 @@ type Fast4TopProduct = {
   photo?: string | null;
   description?: string | null;
   offer?: boolean;
+  qty?: { min?: string; max?: string } | null;
   requires?: Array<{ name?: string; question?: string; type?: string }>;
 };
 
@@ -42,11 +43,13 @@ function normalizeProducts(raw: Array<{ product: Fast4TopProduct; section: "ال
     externalId: product.id,
     name: product.product_name || `منتج ${product.id}`,
     category: section,
+    subcategory: product.category_name || section,
     priceUsdCents: Math.max(0, Math.round(Number(product.price ?? product.product_currency_price ?? 0) * 100)),
     available: product.available !== false,
     imageUrl: product.photo ? `${FAST4TOP_ASSET_URL}${product.photo}` : null,
     description: product.description || product.category_name || "منتج رقمي من Fast4Top",
     offer: Boolean(product.offer),
+    quantity: product.qty || null,
     requires: product.requires || [],
   }));
 }
