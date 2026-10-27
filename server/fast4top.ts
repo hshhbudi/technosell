@@ -1,5 +1,6 @@
 const FAST4TOP_BASE_URL = "https://api.fast4top.com/api";
 const FAST4TOP_ASSET_URL = "https://api.fast4top.com/";
+const STORE_MARKUP = 1.15;
 
 type Fast4TopCategory = { id: number; name: string; categories?: Fast4TopCategory[] };
 type Fast4TopProduct = {
@@ -50,7 +51,7 @@ function normalizeProducts(raw: Array<{ product: Fast4TopProduct; section: "ال
     // Fast4Top's `price` is a per-unit price for variable quantity products.
     // The storefront must show the price of the minimum package (e.g. 1000
     // coins), not one cent for the whole package.
-    priceUsdCents: Math.max(0, Math.round(Number(product.price ?? product.product_currency_price ?? 0) * 100 * Number((product.qty || product.amount)?.min || 1))),
+    priceUsdCents: Math.max(0, Math.round(Number(product.price ?? product.product_currency_price ?? 0) * 100 * Number((product.qty || product.amount)?.min || 1) * STORE_MARKUP)),
     available: product.available !== false,
     imageUrl: product.photo ? (product.photo.startsWith("http") ? product.photo : new URL(product.photo.replace(/^\/+/, ""), FAST4TOP_ASSET_URL).toString()) : null,
     description: product.description || product.category_name || "منتج رقمي من Fast4Top",
