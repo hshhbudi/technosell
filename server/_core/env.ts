@@ -12,4 +12,6 @@ export const ENV = {
   get forgeApiUrl() { return process.env.MANUS_API_URL ?? ""; },
   get forgeApiKey() { return process.env.MANUS_API_KEY ?? ""; },
   get fast4topApiKey() { return process.env.FAST4TOP_API_KEY ?? ""; },
+  get localAdminEmail() { return (process.env.TECHNOSELL_ADMIN_EMAIL ?? "").trim().toLowerCase(); },
+  get localAdminPassword() { return process.env.TECHNOSELL_ADMIN_PASSWORD ?? ""; },
 };

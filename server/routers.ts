@@ -12,11 +12,13 @@ import { parse as parseCookie } from "cookie";
 import { createCustomer, getCustomerByEmail, getCustomerById } from "./db";
 import { storagePut } from "./storage";
 import { readDigitalCatalog } from "./fast4top";
+import { clearLocalAdmin, localAdminUser, signLocalAdmin } from "./_core/localAdmin";
 
 const CUSTOMER_COOKIE = "technosell_customer";
 const customerSecret = () => new TextEncoder().encode(ENV.cookieSecret || "technosell-development-secret");
 const hashPassword = (password: string, salt = randomBytes(16).toString("hex")) => `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
 const passwordMatches = (password: string, stored: string) => { const [salt, digest] = stored.split(":"); if (!salt || !digest) return false; const actual = scryptSync(password, salt, 64); const expected = Buffer.from(digest, "hex"); return actual.length === expected.length && timingSafeEqual(actual, expected); };
+const secretMatches = (provided: string, expected: string) => { const a = Buffer.from(provided); const b = Buffer.from(expected); return a.length === b.length && a.length > 0 && timingSafeEqual(a, b); };
 const customerSafe = (customer: Awaited<ReturnType<typeof getCustomerById>>) => customer && ({ id: customer.id, displayName: customer.displayName, email: customer.email, phone: customer.phone, freeFireId: customer.freeFireId, pubgId: customer.pubgId, pubgServerId: customer.pubgServerId, takaId: customer.takaId, bigoId: customer.bigoId, balanceCents: customer.balanceCents });
 async function customerFromRequest(req: { headers: { cookie?: string } }) {
   const token = parseCookie(req.headers.cookie ?? "")[CUSTOMER_COOKIE]; if (!token) return undefined;
@@ -43,6 +45,17 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+  }),
+  adminLocal: router({
+    me: publicProcedure.query(({ ctx }) => ctx.user?.openId === "local-admin" ? ctx.user : null),
+    login: publicProcedure.input(z.object({ email: z.string().email(), password: z.string().min(8).max(200) })).mutation(async ({ input, ctx }) => {
+      if (!ENV.localAdminEmail || !ENV.localAdminPassword || input.email.trim().toLowerCase() !== ENV.localAdminEmail || !secretMatches(input.password, ENV.localAdminPassword)) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "البريد أو كلمة المرور غير صحيحة" });
+      }
+      await signLocalAdmin(ctx.res);
+      return localAdminUser();
+    }),
+    logout: publicProcedure.mutation(({ ctx }) => { clearLocalAdmin(ctx.res); return { success: true } as const; }),
   }),
 
   customer: router({
