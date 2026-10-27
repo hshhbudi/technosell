@@ -14,19 +14,20 @@ const sampleProducts: StoreProduct[] = [
   {id:-6,externalId:6,name:"Jawaker Coins",category:"الألعاب",subcategory:"جواكر",price:75,stock:99,description:"شحن جواكر مباشر",accent:"navy",icon:"game"},
 ];
 const money=(cents:number)=>`$ ${(cents/100).toFixed(2)}`;
+const isGameProduct=(category:string,name="",subcategory="")=>category.includes("ألعاب")||/(pubg|ببجي|free\s*fire|فري\s*فاير|jawaker|جواكر)/i.test(`${name} ${subcategory}`);
 
 export default function Home(){
   const catalogQuery=trpc.products.list.useQuery();
   const supplierQuery=trpc.supplier.catalog.useQuery(undefined,{staleTime:60_000});
   const customerQuery=trpc.customer.me.useQuery();
   const directTopup=trpc.customer.directTopup.useMutation({onSuccess:async()=>{setSelected(null);setTargetId("");setQuantity("");await customerQuery.refetch();setToast("تم إرسال طلب الشحن للمالك");setTimeout(()=>setToast(""),2600)},onError:e=>setToast(e.message)});
-  const supplierProducts:StoreProduct[]=(supplierQuery.data?.products??[]).map(p=>({id:-Math.abs(p.externalId),externalId:p.externalId,name:p.name,category:p.category as StoreProduct["category"],subcategory:p.subcategory,price:p.priceUsdCents,stock:p.available?99:0,tag:p.offer?"عرض":undefined,description:p.description,imageUrl:p.imageUrl,accent:p.category==="الألعاب"?"blue":"pink",icon:p.category==="الألعاب"?"game":"app",quantity:p.quantity,requires:p.requires}));
+  const supplierProducts:StoreProduct[]=(supplierQuery.data?.products??[]).map(p=>({id:-Math.abs(p.externalId),externalId:p.externalId,name:p.name,category:(isGameProduct(p.category,p.name,p.subcategory)?"الألعاب":p.category) as StoreProduct["category"],subcategory:p.subcategory,price:p.priceUsdCents,stock:p.available?99:0,tag:p.offer?"عرض":undefined,description:p.description,imageUrl:p.imageUrl,accent:isGameProduct(p.category,p.name,p.subcategory)?"blue":"pink",icon:isGameProduct(p.category,p.name,p.subcategory)?"game":"app",quantity:p.quantity,requires:p.requires}));
   const localProducts:StoreProduct[]=(catalogQuery.data??[]).map(p=>({id:p.id,externalId:p.id,name:p.name,category:(['التطبيقات','الألعاب','المنتجات','الهواتف','الإكسسوارات'].includes(p.category)?p.category:'المنتجات') as StoreProduct["category"],subcategory:p.category,price:p.priceUsdCents??p.price,stock:p.stock,tag:p.tag??undefined,description:p.description??"منتج من Techno Sell",imageUrl:p.imageUrl,accent:p.category==="الألعاب"?"blue":p.category==="التطبيقات"?"pink":p.category==="الهواتف"?"navy":"gold",icon:p.category==="الألعاب"?"game":p.category==="التطبيقات"?"app":"product"}));
   const products:StoreProduct[]=[...supplierProducts,...localProducts.filter(local=>!supplierProducts.some(remote=>remote.name===local.name))];
   const [active,setActive]=useState<StoreProduct["category"]>("التطبيقات"); const [subcategory,setSubcategory]=useState(""); const [query,setQuery]=useState("");
   const [selected,setSelected]=useState<StoreProduct|null>(null); const [targetId,setTargetId]=useState(""); const [quantity,setQuantity]=useState(""); const [toast,setToast]=useState(""); const [menuOpen,setMenuOpen]=useState(false); const [authOpen,setAuthOpen]=useState(false); const [lightMode,setLightMode]=useState(false); const [noticeOpen,setNoticeOpen]=useState(false);
   const subcategories=useMemo(()=>Array.from(new Set(products.filter(p=>p.category===active).map(p=>p.subcategory).filter(Boolean))),[products,active]);
-  useEffect(()=>{if(!subcategories.includes(subcategory)) setSubcategory(subcategories[0]||"")},[subcategories,subcategory]);
+  useEffect(()=>{if(!subcategories.includes(subcategory)) setSubcategory(subcategories.find(item=>/(pubg|ببجي)/i.test(item))||subcategories[0]||"")},[subcategories,subcategory]);
   const filtered=useMemo(()=>products.filter(p=>p.category===active&&p.subcategory===subcategory&&p.name.toLowerCase().includes(query.toLowerCase())),[products,active,subcategory,query]);
   const selectCategory=(value:StoreProduct["category"])=>{setActive(value);setSubcategory("")};
   const hasQuantity=(p:StoreProduct)=>p.category==="التطبيقات"&&(Boolean(p.quantity?.min)||Boolean(p.requires?.some(r=>r.type==="quantity"||r.type==="amount"||r.name?.toLowerCase().includes("qty")||r.name?.toLowerCase().includes("amount")||r.question?.includes("كمية")||r.question?.includes("عدد"))));
