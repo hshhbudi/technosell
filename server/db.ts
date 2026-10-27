@@ -155,6 +155,12 @@ export async function addCustomerBalance(customerId: number, amountCents: number
   return getCustomerById(customerId);
 }
 
+export async function updateCustomerPassword(customerId: number, passwordHash: string) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  await db.update(customerAccounts).set({ passwordHash }).where(eq(customerAccounts.id, customerId));
+  return true;
+}
+
 export async function listProducts() {
   const db = await getDb();
   if (!db) return [];

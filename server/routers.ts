@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { addCustomerBalance, claimFirstAdmin, createOrder, createProduct, deleteProduct, grantAdminByEmail, listAllProducts, listOrders, listProducts, spendCustomerBalance, transferOwnership, updateOrderStatus, updateProduct } from "./db";
+import { addCustomerBalance, claimFirstAdmin, createOrder, createProduct, deleteProduct, grantAdminByEmail, listAllProducts, listOrders, listProducts, spendCustomerBalance, transferOwnership, updateCustomerPassword, updateOrderStatus, updateProduct } from "./db";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
@@ -73,6 +73,12 @@ export const appRouter = router({
       const customer = await getCustomerByEmail(input.email);
       if (!customer || !passwordMatches(input.password, customer.passwordHash)) throw new TRPCError({ code: "UNAUTHORIZED", message: "البريد أو كلمة المرور غير صحيحة" });
       await setCustomerCookie(ctx.res, customer.id); return customerSafe(customer);
+    }),
+    changePassword: publicProcedure.input(z.object({ currentPassword: z.string().min(1), newPassword: z.string().min(8).max(200) })).mutation(async ({ input, ctx }) => {
+      const customer = await customerFromRequest(ctx.req);
+      if (!customer || !passwordMatches(input.currentPassword, customer.passwordHash)) throw new TRPCError({ code: "UNAUTHORIZED", message: "كلمة المرور الحالية غير صحيحة" });
+      await updateCustomerPassword(customer.id, hashPassword(input.newPassword));
+      return { success: true } as const;
     }),
     logout: publicProcedure.mutation(({ ctx }) => { ctx.res.clearCookie(CUSTOMER_COOKIE, { httpOnly: true, secure: true, sameSite: "none", path: "/" }); return { success: true }; }),
     requestWalletTopup: publicProcedure.input(z.object({ amountCents: z.number().int().positive().max(10_000_000), paymentReference: z.string().max(160).optional(), paymentProofData: z.string().max(8_000_000).optional() })).mutation(async ({ input, ctx }) => {
