@@ -24,7 +24,7 @@ async function customerFromRequest(req: { headers: { cookie?: string } }) {
   const token = parseCookie(req.headers.cookie ?? "")[CUSTOMER_COOKIE]; if (!token) return undefined;
   try { const { payload } = await jwtVerify(token, customerSecret()); return typeof payload.sub === "string" ? getCustomerById(Number(payload.sub)) : undefined; } catch { return undefined; }
 }
-async function setCustomerCookie(res: any, id: number) { const token = await new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject(String(id)).setIssuedAt().setExpirationTime("30d").sign(customerSecret()); res.cookie(CUSTOMER_COOKIE, token, { httpOnly: true, secure: true, sameSite: "none", path: "/" }); }
+async function setCustomerCookie(res: any, id: number) { const token = await new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject(String(id)).setIssuedAt().setExpirationTime("180d").sign(customerSecret()); res.cookie(CUSTOMER_COOKIE, token, { httpOnly: true, secure: true, sameSite: "none", path: "/", maxAge: 180 * 24 * 60 * 60 * 1000 }); }
 async function savePaymentProof(data?: string) {
   if (!data) return null;
   const match = data.match(/^data:(image\/(?:png|jpe?g|webp|gif)|application\/pdf);base64,([A-Za-z0-9+/=]+)$/);
@@ -88,7 +88,7 @@ export const appRouter = router({
       if (!spent) throw new TRPCError({ code: "BAD_REQUEST", message: "رصيدك غير كافٍ لهذه العملية" });
       try {
         const paymentProofUrl = await savePaymentProof(input.paymentProofData);
-        return await createOrder({ customerId: customer.id, orderNumber: `TS-D-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: -input.supplierProductId, supplierProductId: input.supplierProductId, name: input.name, category: input.category, targetId: input.targetId, quantity: input.quantity, price: input.totalCents, digital: true }]), total: input.totalCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "shamcash", paymentReference: input.paymentReference || null, paymentProofUrl, paymentStatus: "confirmed", executionStatus: "pending" });
+        return await createOrder({ customerId: customer.id, orderNumber: `TS-D-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: -input.supplierProductId, supplierProductId: input.supplierProductId, name: input.name, category: input.category, targetId: input.targetId, quantity: input.quantity, price: input.totalCents, digital: true }]), total: input.totalCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "other", paymentReference: null, paymentProofUrl: null, paymentStatus: "confirmed", executionStatus: "pending" });
       } catch (error) {
         await addCustomerBalance(customer.id, input.totalCents);
         throw error;
