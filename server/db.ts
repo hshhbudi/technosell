@@ -112,6 +112,14 @@ export async function claimFirstAdmin(openId: string) {
   return true;
 }
 
+export async function grantAdminByEmail(email: string) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const target = await getUserByEmail(email);
+  if (!target) return { granted: false, reason: "target_not_found" as const };
+  await db.update(users).set({ role: "admin" }).where(eq(users.openId, target.openId));
+  return { granted: true, targetEmail: target.email };
+}
+
 export async function getCustomerByEmail(email: string) {
   const db = await getDb(); if (!db) return undefined;
   const result = await db.select().from(customerAccounts).where(eq(customerAccounts.email, email.toLowerCase())).limit(1);

@@ -78,6 +78,7 @@ export const orders = mysqlTable("orders", {
   serverId: varchar("serverId", { length: 120 }),
   paymentMethod: mysqlEnum("paymentMethod", ["shamcash", "other"]).notNull().default("shamcash"),
   paymentReference: varchar("paymentReference", { length: 160 }),
+  paymentProofUrl: varchar("paymentProofUrl", { length: 600 }),
   paymentStatus: mysqlEnum("paymentStatus", ["pending", "confirmed", "rejected"]).notNull().default("pending"),
   executionStatus: mysqlEnum("executionStatus", ["pending", "manual_processing", "completed", "failed"]).notNull().default("pending"),
   ownerNote: text("ownerNote"),

@@ -48,7 +48,7 @@ function normalizeProducts(raw: Array<{ product: Fast4TopProduct; section: "ال
       : product.product_name || section,
     priceUsdCents: Math.max(0, Math.round(Number(product.price ?? product.product_currency_price ?? 0) * 100)),
     available: product.available !== false,
-    imageUrl: product.photo ? `${FAST4TOP_ASSET_URL}${product.photo}` : null,
+    imageUrl: product.photo ? (product.photo.startsWith("http") ? product.photo : new URL(product.photo.replace(/^\/+/, ""), FAST4TOP_ASSET_URL).toString()) : null,
     description: product.description || product.category_name || "منتج رقمي من Fast4Top",
     offer: Boolean(product.offer),
     quantity: product.qty || null,

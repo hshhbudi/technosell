@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { addCustomerBalance, claimFirstAdmin, createOrder, createProduct, deleteProduct, listAllProducts, listOrders, listProducts, spendCustomerBalance, transferOwnership, updateOrderStatus, updateProduct } from "./db";
+import { addCustomerBalance, claimFirstAdmin, createOrder, createProduct, deleteProduct, grantAdminByEmail, listAllProducts, listOrders, listProducts, spendCustomerBalance, transferOwnership, updateOrderStatus, updateProduct } from "./db";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
@@ -23,6 +23,13 @@ async function customerFromRequest(req: { headers: { cookie?: string } }) {
   try { const { payload } = await jwtVerify(token, customerSecret()); return typeof payload.sub === "string" ? getCustomerById(Number(payload.sub)) : undefined; } catch { return undefined; }
 }
 async function setCustomerCookie(res: any, id: number) { const token = await new SignJWT({}).setProtectedHeader({ alg: "HS256" }).setSubject(String(id)).setIssuedAt().setExpirationTime("30d").sign(customerSecret()); res.cookie(CUSTOMER_COOKIE, token, { httpOnly: true, secure: true, sameSite: "none", path: "/" }); }
+async function savePaymentProof(data?: string) {
+  if (!data) return null;
+  const match = data.match(/^data:(image\/(?:png|jpe?g|webp|gif)|application\/pdf);base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) throw new TRPCError({ code: "BAD_REQUEST", message: "ارفع صورة أو ملف PDF صالح لإثبات شام كاش" });
+  const uploaded = await storagePut(`payment-proofs/proof-${Date.now()}-${randomUUID()}`, Buffer.from(match[2], "base64"), match[1]);
+  return uploaded.url;
+}
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -55,18 +62,20 @@ export const appRouter = router({
       await setCustomerCookie(ctx.res, customer.id); return customerSafe(customer);
     }),
     logout: publicProcedure.mutation(({ ctx }) => { ctx.res.clearCookie(CUSTOMER_COOKIE, { httpOnly: true, secure: true, sameSite: "none", path: "/" }); return { success: true }; }),
-    requestWalletTopup: publicProcedure.input(z.object({ amountCents: z.number().int().positive().max(10_000_000), paymentReference: z.string().max(160).optional() })).mutation(async ({ input, ctx }) => {
+    requestWalletTopup: publicProcedure.input(z.object({ amountCents: z.number().int().positive().max(10_000_000), paymentReference: z.string().max(160).optional(), paymentProofData: z.string().max(8_000_000).optional() })).mutation(async ({ input, ctx }) => {
       const customer = await customerFromRequest(ctx.req);
       if (!customer) throw new TRPCError({ code: "UNAUTHORIZED", message: "سجّل دخولك أولًا لطلب تعبئة الرصيد" });
-      return createOrder({ customerId: customer.id, orderNumber: `TS-W-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: 0, name: "تعبئة رصيد الحساب", category: "تعبئة الرصيد", price: input.amountCents, digital: true }]), total: input.amountCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "shamcash", paymentReference: input.paymentReference || null });
+      const paymentProofUrl = await savePaymentProof(input.paymentProofData);
+      return createOrder({ customerId: customer.id, orderNumber: `TS-W-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: 0, name: "تعبئة رصيد الحساب", category: "تعبئة الرصيد", price: input.amountCents, digital: true }]), total: input.amountCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "shamcash", paymentReference: input.paymentReference || null, paymentProofUrl });
     }),
-    directTopup: publicProcedure.input(z.object({ supplierProductId: z.number().int().positive(), name: z.string().max(180), category: z.string().max(80), targetId: z.string().min(1).max(160), quantity: z.number().positive().max(100_000_000).optional(), totalCents: z.number().int().positive().max(10_000_000), paymentReference: z.string().max(160).optional() })).mutation(async ({ input, ctx }) => {
+    directTopup: publicProcedure.input(z.object({ supplierProductId: z.number().int().positive(), name: z.string().max(180), category: z.string().max(80), targetId: z.string().min(1).max(160), quantity: z.number().positive().max(100_000_000).optional(), totalCents: z.number().int().positive().max(10_000_000), paymentReference: z.string().max(160).optional(), paymentProofData: z.string().max(8_000_000).optional() })).mutation(async ({ input, ctx }) => {
       const customer = await customerFromRequest(ctx.req);
       if (!customer) throw new TRPCError({ code: "UNAUTHORIZED", message: "سجّل دخولك أولًا للشحن من الرصيد" });
       const spent = await spendCustomerBalance(customer.id, input.totalCents);
       if (!spent) throw new TRPCError({ code: "BAD_REQUEST", message: "رصيدك غير كافٍ لهذه العملية" });
       try {
-        return await createOrder({ customerId: customer.id, orderNumber: `TS-D-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: -input.supplierProductId, supplierProductId: input.supplierProductId, name: input.name, category: input.category, targetId: input.targetId, quantity: input.quantity, price: input.totalCents, digital: true }]), total: input.totalCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "shamcash", paymentReference: input.paymentReference || null, paymentStatus: "confirmed", executionStatus: "pending" });
+        const paymentProofUrl = await savePaymentProof(input.paymentProofData);
+        return await createOrder({ customerId: customer.id, orderNumber: `TS-D-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: -input.supplierProductId, supplierProductId: input.supplierProductId, name: input.name, category: input.category, targetId: input.targetId, quantity: input.quantity, price: input.totalCents, digital: true }]), total: input.totalCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "shamcash", paymentReference: input.paymentReference || null, paymentProofUrl, paymentStatus: "confirmed", executionStatus: "pending" });
       } catch (error) {
         await addCustomerBalance(customer.id, input.totalCents);
         throw error;
@@ -97,6 +106,11 @@ export const appRouter = router({
       const result = await transferOwnership(ctx.user.openId, input.newOwnerEmail);
       if (!result.transferred && result.reason === "target_not_found") throw new TRPCError({ code: "NOT_FOUND", message: "يجب أن يسجل الحساب الجديد دخوله إلى المتجر أولًا" });
       if (!result.transferred) throw new TRPCError({ code: "BAD_REQUEST", message: "لا يمكن نقل الملكية إلى الحساب نفسه" });
+      return result;
+    }),
+    addAdmin: adminProcedure.input(z.object({ email: z.string().email() })).mutation(async ({ input }) => {
+      const result = await grantAdminByEmail(input.email);
+      if (!result.granted) throw new TRPCError({ code: "NOT_FOUND", message: "يجب أن يسجل المدير الثاني دخوله إلى المتجر مرة واحدة أولًا" });
       return result;
     }),
     access: adminProcedure.query(({ ctx }) => ({
