@@ -14,6 +14,7 @@ type Fast4TopProduct = {
   description?: string | null;
   offer?: boolean;
   qty?: { min?: string; max?: string } | null;
+  amount?: { min?: string; max?: string } | null;
   requires?: Array<{ name?: string; question?: string; type?: string }>;
 };
 
@@ -46,12 +47,15 @@ function normalizeProducts(raw: Array<{ product: Fast4TopProduct; section: "ال
     subcategory: product.category_name && !/^قسم\s*(التطبيقات|الألعاب)$/i.test(product.category_name)
       ? product.category_name
       : product.product_name || section,
-    priceUsdCents: Math.max(0, Math.round(Number(product.price ?? product.product_currency_price ?? 0) * 100)),
+    // Fast4Top's `price` is a per-unit price for variable quantity products.
+    // The storefront must show the price of the minimum package (e.g. 1000
+    // coins), not one cent for the whole package.
+    priceUsdCents: Math.max(0, Math.round(Number(product.price ?? product.product_currency_price ?? 0) * 100 * Number((product.qty || product.amount)?.min || 1))),
     available: product.available !== false,
     imageUrl: product.photo ? (product.photo.startsWith("http") ? product.photo : new URL(product.photo.replace(/^\/+/, ""), FAST4TOP_ASSET_URL).toString()) : null,
     description: product.description || product.category_name || "منتج رقمي من Fast4Top",
     offer: Boolean(product.offer),
-    quantity: product.qty || null,
+    quantity: product.qty || product.amount || null,
     requires: product.requires || [],
   }));
 }
