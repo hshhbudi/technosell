@@ -21,9 +21,12 @@ const money=(cents:number)=>`$ ${(cents/100).toFixed(2)}`;
 
 export default function Home(){
   const catalogQuery=trpc.products.list.useQuery();
+  const supplierQuery=trpc.supplier.catalog.useQuery(undefined,{staleTime:60_000});
   const customerQuery=trpc.customer.me.useQuery();
   const createOrder=trpc.orders.create.useMutation({onSuccess:()=>{setSubmitted(true);setToast("تم إرسال طلبك بنجاح");setTimeout(()=>setToast(""),2400)}});
-  const liveProducts: StoreProduct[]=(catalogQuery.data??[]).filter(p=>p.category==="التطبيقات"||p.category==="الألعاب").map(p=>({id:p.id,name:p.name,category:p.category as StoreProduct["category"],price:p.priceUsdCents??p.price,stock:p.stock,tag:p.tag??undefined,description:p.description??"منتج رقمي من Techno Sell",imageUrl:p.imageUrl,accent:p.category==="الألعاب"?"blue":"pink",icon:p.category==="الألعاب"?"game":"app"}));
+  const supplierProducts: StoreProduct[]=(supplierQuery.data?.products??[]).map(p=>({id:-Math.abs(p.externalId),name:p.name,category:p.category as StoreProduct["category"],price:p.priceUsdCents,stock:p.available?99:0,tag:p.offer?"عرض":undefined,description:p.description,imageUrl:p.imageUrl,accent:p.category==="الألعاب"?"blue":"pink",icon:p.category==="الألعاب"?"game":"app"}));
+  const localProducts: StoreProduct[]=(catalogQuery.data??[]).filter(p=>p.category==="التطبيقات"||p.category==="الألعاب").map(p=>({id:p.id,name:p.name,category:p.category as StoreProduct["category"],price:p.priceUsdCents??p.price,stock:p.stock,tag:p.tag??undefined,description:p.description??"منتج رقمي من Techno Sell",imageUrl:p.imageUrl,accent:p.category==="الألعاب"?"blue":"pink",icon:p.category==="الألعاب"?"game":"app"}));
+  const liveProducts=supplierProducts.length?supplierProducts:localProducts;
   const products=liveProducts.length?liveProducts:sampleProducts;
   const [active,setActive]=useState<"الكل"|StoreProduct["category"]>("الكل");
   const [query,setQuery]=useState(""); const [cart,setCart]=useState<StoreProduct[]>([]); const [cartOpen,setCartOpen]=useState(false); const [checkout,setCheckout]=useState(false); const [submitted,setSubmitted]=useState(false); const [toast,setToast]=useState(""); const [menuOpen,setMenuOpen]=useState(false); const [authOpen,setAuthOpen]=useState(false);

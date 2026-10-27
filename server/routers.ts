@@ -11,6 +11,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { parse as parseCookie } from "cookie";
 import { createCustomer, getCustomerByEmail, getCustomerById } from "./db";
 import { storagePut } from "./storage";
+import { readDigitalCatalog } from "./fast4top";
 
 const CUSTOMER_COOKIE = "technosell_customer";
 const customerSecret = () => new TextEncoder().encode(ENV.cookieSecret || "technosell-development-secret");
@@ -54,6 +55,18 @@ export const appRouter = router({
       await setCustomerCookie(ctx.res, customer.id); return customerSafe(customer);
     }),
     logout: publicProcedure.mutation(({ ctx }) => { ctx.res.clearCookie(CUSTOMER_COOKIE, { httpOnly: true, secure: true, sameSite: "none", path: "/" }); return { success: true }; }),
+  }),
+
+  supplier: router({
+    // Read-only catalog sync. Order creation is intentionally not exposed here yet.
+    catalog: publicProcedure.query(async () => {
+      try {
+        return { connected: true, products: await readDigitalCatalog() };
+      } catch (error) {
+        console.warn("[Fast4Top] Catalog read failed:", error instanceof Error ? error.message : "unknown error");
+        return { connected: false, products: [] };
+      }
+    }),
   }),
 
   admin: router({
