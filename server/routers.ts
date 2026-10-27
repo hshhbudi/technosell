@@ -60,7 +60,7 @@ export const appRouter = router({
   }),
 
   customer: router({
-    me: publicProcedure.query(async ({ ctx }) => customerSafe(await customerFromRequest(ctx.req))),
+    me: publicProcedure.query(async ({ ctx }) => customerSafe(await customerFromRequest(ctx.req)) ?? null),
     register: publicProcedure.input(z.object({
       displayName: z.string().min(2).max(120), email: z.string().email().max(320), password: z.string().min(8).max(200), phone: z.string().max(40).optional(),
       freeFireId: z.string().max(120).optional(), pubgId: z.string().max(120).optional(), pubgServerId: z.string().max(120).optional(), takaId: z.string().max(120).optional(), bigoId: z.string().max(120).optional(),
