@@ -86,3 +86,8 @@
 
 /* Clear owner action for removing local catalog products. */
 .delete-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;width:auto;min-width:62px;padding:0 9px;font-size:10px;font-weight:700}
+
+/* Wallet top-ups: make the requested amount impossible to miss. */
+.requested-topup{color:#168b9d;font-weight:800;font-size:13px;white-space:nowrap}
+.requested-topup-label{display:block;color:#b87916;font-size:9px;font-weight:700;margin-bottom:3px}
+.order-actions .text-btn{max-width:190px}
