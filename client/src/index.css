@@ -75,3 +75,8 @@
 
 /* Neutral card canvas: no colored red box behind product artwork. */
 .legacy-card-art.red{background:#101d4d}
+
+/* Product cards keep only the product name under the artwork. */
+.legacy-card-body h3{margin:0 0 16px;min-height:24px}
+.legacy-card-body>div{margin-top:0}
+@media(max-width:480px){.legacy-card-body h3{margin-bottom:14px;min-height:22px}}
