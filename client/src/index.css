@@ -83,3 +83,6 @@
 
 /* Separate Free Fire ID top-ups from redeem-code products. */
 .code-order-note{margin:14px 0!important;padding:12px 14px;border:1px solid rgba(184,255,67,.3);border-radius:10px;background:rgba(20,74,63,.45);color:#d8f7df!important;font-size:12px!important;line-height:1.7!important}
+
+/* Clear owner action for removing local catalog products. */
+.delete-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;width:auto;min-width:62px;padding:0 9px;font-size:10px;font-weight:700}
