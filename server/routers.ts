@@ -112,7 +112,7 @@ export const appRouter = router({
       const paymentProofUrl = await savePaymentProof(input.paymentProofData);
       return createOrder({ customerId: customer.id, orderNumber: `TS-W-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: 0, name: "تعبئة رصيد الحساب", category: "تعبئة الرصيد", price: input.amountCents, digital: true }]), total: input.amountCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "shamcash", paymentReference: input.paymentReference || null, paymentProofUrl });
     }),
-    directTopup: publicProcedure.input(z.object({ supplierProductId: z.number().int().positive(), name: z.string().max(180), category: z.string().max(80), targetId: z.string().min(1).max(160), quantity: z.number().positive().max(100_000_000).optional(), totalCents: z.number().int().positive().max(10_000_000), paymentReference: z.string().max(160).optional(), paymentProofData: z.string().max(8_000_000).optional() })).mutation(async ({ input, ctx }) => {
+    directTopup: publicProcedure.input(z.object({ supplierProductId: z.number().int().positive(), name: z.string().max(180), category: z.string().max(80), targetId: z.string().max(160).optional(), quantity: z.number().positive().max(100_000_000).optional(), totalCents: z.number().int().positive().max(10_000_000), paymentReference: z.string().max(160).optional(), paymentProofData: z.string().max(8_000_000).optional() })).mutation(async ({ input, ctx }) => {
       const customer = await customerFromRequest(ctx.req);
       if (!customer) throw new TRPCError({ code: "UNAUTHORIZED", message: "سجّل دخولك أولًا للشحن من الرصيد" });
       const spent = await spendCustomerBalance(customer.id, input.totalCents);

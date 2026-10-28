@@ -80,3 +80,6 @@
 .legacy-card-body h3{margin:0 0 16px;min-height:24px}
 .legacy-card-body>div{margin-top:0}
 @media(max-width:480px){.legacy-card-body h3{margin-bottom:14px;min-height:22px}}
+
+/* Separate Free Fire ID top-ups from redeem-code products. */
+.code-order-note{margin:14px 0!important;padding:12px 14px;border:1px solid rgba(184,255,67,.3);border-radius:10px;background:rgba(20,74,63,.45);color:#d8f7df!important;font-size:12px!important;line-height:1.7!important}
