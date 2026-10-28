@@ -72,3 +72,6 @@
 .legacy-card-body p{margin:0;min-height:34px;height:auto;line-height:1.65}
 .legacy-card-body>div{margin-top:18px}
 @media(max-width:480px){.legacy-card-art{height:148px;padding:10px}.legacy-card-body{padding:16px 11px 12px}.legacy-card-body h3{margin-top:9px}.legacy-card-body p{min-height:38px}}
+
+/* Neutral card canvas: no colored red box behind product artwork. */
+.legacy-card-art.red{background:#101d4d}
