@@ -210,6 +210,14 @@ export async function listOrders() {
   if (!db) return [];
   return db.select().from(orders).orderBy(desc(orders.createdAt));
 }
+export async function listCustomerOrders(customerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: orders.id, orderNumber: orders.orderNumber, items: orders.items, total: orders.total,
+    paymentStatus: orders.paymentStatus, executionStatus: orders.executionStatus, ownerNote: orders.ownerNote, createdAt: orders.createdAt,
+  }).from(orders).where(eq(orders.customerId, customerId)).orderBy(desc(orders.createdAt));
+}
 
 export async function updateOrderStatus(id: number, input: { paymentStatus?: "pending" | "confirmed" | "rejected"; executionStatus?: "pending" | "manual_processing" | "completed" | "failed"; ownerNote?: string | null }) {
   const db = await getDb();

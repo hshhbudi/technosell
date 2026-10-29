@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { addCustomerBalance, claimFirstAdmin, createOrder, createProduct, deleteProduct, grantAdminByEmail, listAllProducts, listOrders, listProducts, spendCustomerBalance, transferOwnership, updateCustomerPassword, updateOrderStatus, updateProduct } from "./db";
+import { addCustomerBalance, claimFirstAdmin, createOrder, createProduct, deleteProduct, grantAdminByEmail, listAllProducts, listCustomerOrders, listOrders, listProducts, spendCustomerBalance, transferOwnership, updateCustomerPassword, updateOrderStatus, updateProduct } from "./db";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
@@ -61,6 +61,7 @@ export const appRouter = router({
 
   customer: router({
     me: publicProcedure.query(async ({ ctx }) => customerSafe(await customerFromRequest(ctx.req)) ?? null),
+    orders: publicProcedure.query(async ({ ctx }) => { const customer = await customerFromRequest(ctx.req); return customer ? listCustomerOrders(customer.id) : []; }),
     register: publicProcedure.input(z.object({
       displayName: z.string().min(2).max(120), email: z.string().email().max(320), password: z.string().min(8).max(200), phone: z.string().max(40).optional(),
       freeFireId: z.string().max(120).optional(), pubgId: z.string().max(120).optional(), pubgServerId: z.string().max(120).optional(), takaId: z.string().max(120).optional(), bigoId: z.string().max(120).optional(),

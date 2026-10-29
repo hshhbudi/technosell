@@ -91,3 +91,9 @@
 .requested-topup{color:#168b9d;font-weight:800;font-size:13px;white-space:nowrap}
 .requested-topup-label{display:block;color:#b87916;font-size:9px;font-weight:700;margin-bottom:3px}
 .order-actions .text-btn{max-width:190px}
+
+.danger-action{color:#c5524b!important;background:#fff1f0!important}
+
+.customer-orders{margin:18px 0;padding:15px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.04)}
+.customer-orders-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.customer-orders-head button{background:transparent;color:var(--cyan);font-size:10px}
+.customer-order{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:11px}.customer-order>div:first-child{min-width:0}.customer-order strong,.customer-order small,.customer-order span{display:block}.customer-order strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.customer-order small{color:var(--muted);font-size:9px;margin-top:4px}.customer-order>div:last-child{text-align:left;white-space:nowrap}.customer-order-status{display:block;padding:4px 7px;border-radius:7px;font-size:9px;margin-bottom:4px}.customer-order-status.completed{background:#e4f8ef;color:#198b65}.customer-order-status.processing{background:#e8f7fb;color:#168ca1}.customer-order-status.pending{background:#fff5db;color:#a57616}.customer-order-status.failed{background:#fff0ef;color:#c5524b}
