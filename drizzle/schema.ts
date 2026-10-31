@@ -82,6 +82,12 @@ export const orders = mysqlTable("orders", {
   paymentStatus: mysqlEnum("paymentStatus", ["pending", "confirmed", "rejected"]).notNull().default("pending"),
   executionStatus: mysqlEnum("executionStatus", ["pending", "manual_processing", "completed", "failed"]).notNull().default("pending"),
   ownerNote: text("ownerNote"),
+  supplierOrderUuid: varchar("supplierOrderUuid", { length: 36 }),
+  supplierOrderId: varchar("supplierOrderId", { length: 100 }),
+  supplierStatus: varchar("supplierStatus", { length: 32 }),
+  supplierAttempts: int("supplierAttempts").notNull().default(0),
+  supplierLastError: text("supplierLastError"),
+  supplierRefunded: boolean("supplierRefunded").notNull().default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

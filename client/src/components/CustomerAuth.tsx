@@ -5,7 +5,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { firebaseAuth, firebaseEnabled } from "@/firebase";
 
 type Props = { onClose: () => void };
-type CustomerOrder = { id:number; orderNumber:string; items:string; total:number; paymentStatus:"pending"|"confirmed"|"rejected"; executionStatus:"pending"|"manual_processing"|"completed"|"failed"; ownerNote:string|null; createdAt:string|Date };
+type CustomerOrder = { id:number; orderNumber:string; items:string; total:number; paymentStatus:"pending"|"confirmed"|"rejected"; executionStatus:"pending"|"manual_processing"|"completed"|"failed"; ownerNote:string|null; supplierOrderId?:string|null; supplierStatus?:string|null; supplierAttempts?:number; createdAt:string|Date };
 const orderTitle=(items:string)=>{try{return (JSON.parse(items)?.[0]?.name as string)||"عملية شحن"}catch{return "عملية شحن"}};
 const orderState=(order:CustomerOrder)=>{
   if(order.executionStatus==="completed") return {label:"مكتملة",className:"completed"};

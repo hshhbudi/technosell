@@ -215,7 +215,9 @@ export async function listCustomerOrders(customerId: number) {
   if (!db) return [];
   return db.select({
     id: orders.id, orderNumber: orders.orderNumber, items: orders.items, total: orders.total,
-    paymentStatus: orders.paymentStatus, executionStatus: orders.executionStatus, ownerNote: orders.ownerNote, createdAt: orders.createdAt,
+    paymentStatus: orders.paymentStatus, executionStatus: orders.executionStatus, ownerNote: orders.ownerNote,
+    supplierOrderId: orders.supplierOrderId, supplierStatus: orders.supplierStatus, supplierAttempts: orders.supplierAttempts,
+    createdAt: orders.createdAt,
   }).from(orders).where(eq(orders.customerId, customerId)).orderBy(desc(orders.createdAt));
 }
 
@@ -232,4 +234,44 @@ export async function updateOrderStatus(id: number, input: { paymentStatus?: "pe
     } catch { /* Preserve the status update for legacy malformed orders. */ }
   }
   return updated[0];
+}
+
+export async function listPendingSupplierOrders() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(orders)
+    .where(and(eq(orders.paymentStatus, "confirmed"), sql`${orders.supplierStatus} in ('wait','sending','retry')`))
+    .orderBy(orders.createdAt);
+}
+
+export async function updateSupplierOrder(id: number, input: {
+  supplierOrderId?: string | null;
+  supplierStatus?: string | null;
+  supplierAttempts?: number;
+  supplierLastError?: string | null;
+  supplierRefunded?: boolean;
+  executionStatus?: "pending" | "manual_processing" | "completed" | "failed";
+  ownerNote?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(orders).set(input).where(eq(orders.id, id));
+  const updated = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  return updated[0];
+}
+
+export async function finalizeSupplierOrder(id: number, result: { status: "accept" | "reject" | "wait"; supplierOrderId?: string | null; note?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const current = (await db.select().from(orders).where(eq(orders.id, id)).limit(1))[0];
+  if (!current) return null;
+  if (result.status === "reject") {
+    if (current.customerId && !current.supplierRefunded) await addCustomerBalance(current.customerId, current.total);
+    await db.update(orders).set({ supplierOrderId: result.supplierOrderId ?? current.supplierOrderId, supplierStatus: "reject", supplierLastError: result.note ?? "تم رفض الطلب من Fast4Top", supplierRefunded: current.supplierRefunded || Boolean(current.customerId), executionStatus: "failed", ownerNote: result.note ?? "تم رفض الطلب من Fast4Top" }).where(eq(orders.id, id));
+  } else if (result.status === "accept") {
+    await db.update(orders).set({ supplierOrderId: result.supplierOrderId ?? current.supplierOrderId, supplierStatus: "accept", supplierLastError: null, executionStatus: "completed", ownerNote: "تم تنفيذ الشحن تلقائيًا عبر Fast4Top" }).where(eq(orders.id, id));
+  } else {
+    await db.update(orders).set({ supplierOrderId: result.supplierOrderId ?? current.supplierOrderId, supplierStatus: "wait", executionStatus: "manual_processing", ownerNote: result.note ?? "الطلب قيد التنفيذ لدى Fast4Top" }).where(eq(orders.id, id));
+  }
+  return (await db.select().from(orders).where(eq(orders.id, id)).limit(1))[0];
 }

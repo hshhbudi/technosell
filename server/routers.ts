@@ -11,7 +11,8 @@ import { SignJWT, jwtVerify } from "jose";
 import { parse as parseCookie } from "cookie";
 import { createCustomer, getCustomerByEmail, getCustomerById } from "./db";
 import { storagePut } from "./storage";
-import { readDigitalCatalog } from "./fast4top";
+import { getFast4TopProfile, readDigitalCatalog } from "./fast4top";
+import { dispatchFast4TopOrder } from "./fast4topWorker";
 import { clearLocalAdmin, localAdminUser, signLocalAdmin } from "./_core/localAdmin";
 import { verifyFirebaseIdToken } from "./_core/firebaseAdmin";
 
@@ -120,7 +121,9 @@ export const appRouter = router({
       if (!spent) throw new TRPCError({ code: "BAD_REQUEST", message: "رصيدك غير كافٍ لهذه العملية" });
       try {
         const paymentProofUrl = await savePaymentProof(input.paymentProofData);
-        return await createOrder({ customerId: customer.id, orderNumber: `TS-D-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: -input.supplierProductId, supplierProductId: input.supplierProductId, name: input.name, category: input.category, targetId: input.targetId, quantity: input.quantity, price: input.totalCents, digital: true }]), total: input.totalCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "other", paymentReference: null, paymentProofUrl: null, paymentStatus: "confirmed", executionStatus: "pending" });
+        const order = await createOrder({ customerId: customer.id, orderNumber: `TS-D-${Date.now().toString().slice(-8)}`, items: JSON.stringify([{ id: -input.supplierProductId, supplierProductId: input.supplierProductId, name: input.name, category: input.category, targetId: input.targetId, quantity: input.quantity, price: input.totalCents, digital: true }]), total: input.totalCents, customerName: customer.displayName, phone: customer.phone || "غير مضاف", paymentMethod: "other", paymentReference: null, paymentProofUrl: null, paymentStatus: "confirmed", executionStatus: "pending", supplierOrderUuid: randomUUID(), supplierStatus: "sending", supplierAttempts: 0 });
+        await dispatchFast4TopOrder(order);
+        return order;
       } catch (error) {
         await addCustomerBalance(customer.id, input.totalCents);
         throw error;
@@ -129,7 +132,14 @@ export const appRouter = router({
   }),
 
   supplier: router({
-    // Read-only catalog sync. Order creation is intentionally not exposed here yet.
+    profile: adminProcedure.query(async () => {
+      try {
+        const profile = await getFast4TopProfile();
+        return { connected: true, balance: profile.balance, email: profile.email };
+      } catch (error) {
+        return { connected: false, balance: null, email: null, error: error instanceof Error ? error.message : "تعذر قراءة رصيد Fast4Top" };
+      }
+    }),
     catalog: publicProcedure.query(async () => {
       try {
         return { connected: true, products: await readDigitalCatalog() };
