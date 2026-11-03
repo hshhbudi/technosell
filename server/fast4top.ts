@@ -4,7 +4,7 @@ import { ENV } from "./_core/env";
 const FAST4TOP_BASE_URL = "https://api.fast4top.com";
 const FAST4TOP_CATALOG_URL = "https://api.fast4top.com/api";
 const FAST4TOP_ASSET_URL = "https://api.fast4top.com/";
-const STORE_MARKUP = 1.10;
+const STORE_MARKUP = 1.08;
 
 type Fast4TopCategory = { id: number; name: string; categories?: Fast4TopCategory[] };
 type Fast4TopProduct = {
