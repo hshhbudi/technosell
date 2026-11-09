@@ -17,11 +17,21 @@ type SupplierItem = {
   name?: string;
 };
 
+type PendingOrder = Awaited<
+  ReturnType<typeof listPendingSupplierOrders>
+>[number];
+
+// الطلبات التي يجري إرسالها حالياً من هذه النسخة من الخادم.
+const activeOrderIds = new Set<number>();
+
 let workerBusy = false;
+
+const STALE_ORDER_MINUTES = 3;
 
 function itemFromOrder(items: string): SupplierItem | null {
   try {
     const parsed = JSON.parse(items);
+
     const item = Array.isArray(parsed)
       ? (parsed[0] as SupplierItem | undefined)
       : undefined;
@@ -32,13 +42,23 @@ function itemFromOrder(items: string): SupplierItem | null {
   }
 }
 
+function isOldSendingOrder(order: PendingOrder): boolean {
+  if (!order.createdAt) return false;
+
+  const createdAt = new Date(order.createdAt).getTime();
+
+  if (!Number.isFinite(createdAt)) return false;
+
+  const age = Date.now() - createdAt;
+
+  return age >= STALE_ORDER_MINUTES * 60 * 1000;
+}
+
 /**
  * إرسال الطلب مرة واحدة فقط.
- * لا توجد إعادة محاولة تلقائية عند أي خطأ اتصال.
+ * لا توجد إعادة محاولة تلقائية عند نتيجة اتصال مجهولة.
  */
-async function submitOrder(
-  order: Awaited<ReturnType<typeof listPendingSupplierOrders>>[number]
-) {
+async function submitOrder(order: PendingOrder) {
   const item = itemFromOrder(order.items);
 
   if (!item?.supplierProductId || !order.supplierOrderUuid) {
@@ -113,9 +133,7 @@ async function submitOrder(
 /**
  * متابعة الطلبات التي لديها رقم طلب مؤكد لدى Fast4Top.
  */
-async function checkWaitingOrders(
-  orders: Awaited<ReturnType<typeof listPendingSupplierOrders>>
-) {
+async function checkWaitingOrders(orders: PendingOrder[]) {
   const waiting = orders.filter(
     (order) =>
       (order.supplierStatus === "wait" ||
@@ -157,7 +175,7 @@ async function checkWaitingOrders(
 }
 
 /**
- * متابعة الحالات فقط.
+ * متابعة الحالات القديمة فقط.
  * لا يعيد إرسال الطلبات القديمة تلقائياً.
  */
 export async function processPendingFast4TopOrders() {
@@ -170,20 +188,31 @@ export async function processPendingFast4TopOrders() {
 
     await checkWaitingOrders(orders);
 
-    // الطلبات القديمة بحالة sending أو retry لا يعاد إرسالها.
     for (const order of orders) {
       if (
-        order.supplierStatus === "sending" ||
-        order.supplierStatus === "retry"
+        order.supplierStatus !== "sending" &&
+        order.supplierStatus !== "retry"
       ) {
-        await updateSupplierOrder(order.id, {
-          supplierStatus: "review",
-          executionStatus: "manual_processing",
-          supplierLastError: "الطلب لم تُحسم نتيجة إرساله",
-          ownerNote:
-            "تم إيقاف إعادة الإرسال التلقائي. يلزم التحقق من Fast4Top",
-        });
+        continue;
       }
+
+      // لا نلمس الطلب الذي يجري إرساله حالياً.
+      if (activeOrderIds.has(order.id)) {
+        continue;
+      }
+
+      // نعطي الطلب الجديد وقتاً كافياً قبل اعتباره عالقاً.
+      if (!isOldSendingOrder(order)) {
+        continue;
+      }
+
+      await updateSupplierOrder(order.id, {
+        supplierStatus: "review",
+        executionStatus: "manual_processing",
+        supplierLastError: "الطلب لم تُحسم نتيجة إرساله",
+        ownerNote:
+          "تم إيقاف إعادة الإرسال التلقائي. يلزم التحقق من Fast4Top",
+      });
     }
   } catch (error) {
     console.warn(
@@ -203,4 +232,17 @@ export function startFast4TopWorker() {
   }, 60_000);
 }
 
-export { submitOrder as dispatchFast4TopOrder };
+/**
+ * إرسال طلب جديد مع منع التداخل مع العامل الدوري.
+ */
+export async function dispatchFast4TopOrder(order: PendingOrder) {
+  if (activeOrderIds.has(order.id)) return;
+
+  activeOrderIds.add(order.id);
+
+  try {
+    await submitOrder(order);
+  } finally {
+    activeOrderIds.delete(order.id);
+  }
+}
