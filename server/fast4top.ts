@@ -124,25 +124,35 @@ async function apiGet<T>(
       signal: controller.signal,
     });
 
+    const responseText = await response.text();
+
     let payload: any = null;
 
     try {
-      payload = await response.json();
+      payload = responseText
+        ? JSON.parse(responseText)
+        : null;
     } catch {
-      // استجابة غير JSON
+      payload = null;
     }
 
     if (!response.ok) {
-      const message =
+      const details =
         payload?.message ||
         payload?.error ||
-        `Fast4Top HTTP ${response.status}`;
+        responseText ||
+        "لا توجد تفاصيل إضافية";
+
+      console.error("[Fast4Top HTTP Error]", {
+        path,
+        status: response.status,
+        details: String(details).slice(0, 1000),
+      });
 
       throw new Fast4TopError(
         `HTTP_${response.status}`,
-        String(message),
-        response.status >= 500 ||
-          response.status === 429
+        `Fast4Top HTTP ${response.status}: ${String(details).slice(0, 1000)}`,
+        response.status >= 500 || response.status === 429
       );
     }
 
@@ -211,6 +221,11 @@ async function apiGet<T>(
           ? error.message
           : "تعذر الاتصال بـ Fast4Top";
 
+    console.error("[Fast4Top Network Error]", {
+      path,
+      message,
+    });
+
     throw new Fast4TopError(
       "NETWORK",
       message,
@@ -255,22 +270,62 @@ async function readCategory(
       }
     );
 
+    const responseText = await response.text();
+
     let payload: any = null;
 
     try {
-      payload = await response.json();
+      payload = responseText
+        ? JSON.parse(responseText)
+        : null;
     } catch {
-      // تجاهل الاستجابة غير الصالحة
+      payload = null;
     }
 
     if (!response.ok) {
-      throw new Error(
+      const details =
         payload?.message ||
-          `Fast4Top returned HTTP ${response.status}`
+        payload?.error ||
+        responseText ||
+        "لا توجد تفاصيل إضافية";
+
+      console.error("[Fast4Top Category Error]", {
+        categoryId: id,
+        status: response.status,
+        details: String(details).slice(0, 1000),
+      });
+
+      throw new Fast4TopError(
+        `CATEGORY_HTTP_${response.status}`,
+        `القسم ${id}: HTTP ${response.status}: ${String(details).slice(0, 1000)}`,
+        response.status >= 500 || response.status === 429
       );
     }
 
     return payload?.data ?? payload;
+  } catch (error) {
+    if (error instanceof Fast4TopError) {
+      throw error;
+    }
+
+    const message =
+      error instanceof Error &&
+      error.name === "AbortError"
+        ? "انتهت مهلة قراءة قسم Fast4Top"
+        : error instanceof Error
+          ? error.message
+          : "تعذر قراءة القسم";
+
+    console.error("[Fast4Top Category Network Error]", {
+      categoryId: id,
+      message,
+    });
+
+    throw new Fast4TopError(
+      "CATEGORY_NETWORK",
+      message,
+      true
+    );
   } finally {
     clearTimeout(timeout);
   }
@@ -426,7 +481,6 @@ export async function readDigitalCatalog() {
     return catalogCache.products;
   }
 
-  // الصفحة الرئيسية في توثيق Fast4Top هي content/0
   const root = await readCategory(0);
 
   const raw: Array<{
@@ -533,6 +587,13 @@ export async function createFast4TopOrder(input: {
   orderUuid?: string;
   extraParams?: Record<string, string | number>;
 }): Promise<Fast4TopOrderResult> {
+  if (!Number.isFinite(input.productId)) {
+    throw new Fast4TopError(
+      "INVALID_PRODUCT_ID",
+      "معرّف المنتج غير صالح"
+    );
+  }
+
   const orderUuid =
     input.orderUuid || randomUUID();
 
@@ -562,6 +623,14 @@ export async function createFast4TopOrder(input: {
   const data = payload.data;
 
   if (!data?.order_id || !data.status) {
+    console.error(
+      "[Fast4Top Invalid Order Response]",
+      {
+        productId: input.productId,
+        response: payload,
+      }
+    );
+
     throw new Fast4TopError(
       "INVALID_RESPONSE",
       "استجابة Fast4Top غير مكتملة",
@@ -607,4 +676,4 @@ export async function checkFast4TopOrders(
   });
 
   return payload.data || [];
-}
+        }
