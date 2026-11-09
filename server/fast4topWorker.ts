@@ -1,70 +1,206 @@
-import { Fast4TopError, checkFast4TopOrders, createFast4TopOrder } from "./fast4top";
-import { finalizeSupplierOrder, listPendingSupplierOrders, updateSupplierOrder } from "./db";
 
-type SupplierItem = { supplierProductId?: number; targetId?: string; quantity?: number; name?: string };
-const MAX_ATTEMPTS = 3;
+import {
+  checkFast4TopOrders,
+  createFast4TopOrder,
+} from "./fast4top";
+
+import {
+  finalizeSupplierOrder,
+  listPendingSupplierOrders,
+  updateSupplierOrder,
+} from "./db";
+
+type SupplierItem = {
+  supplierProductId?: number;
+  targetId?: string;
+  quantity?: number;
+  name?: string;
+};
+
 let workerBusy = false;
 
 function itemFromOrder(items: string): SupplierItem | null {
   try {
-    const item = JSON.parse(items)[0] as SupplierItem | undefined;
+    const parsed = JSON.parse(items);
+    const item = Array.isArray(parsed)
+      ? (parsed[0] as SupplierItem | undefined)
+      : undefined;
+
     return item?.supplierProductId ? item : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
-async function submitOrder(order: Awaited<ReturnType<typeof listPendingSupplierOrders>>[number]) {
+/**
+ * إرسال الطلب مرة واحدة فقط.
+ * لا توجد إعادة محاولة تلقائية عند أي خطأ اتصال.
+ */
+async function submitOrder(
+  order: Awaited<ReturnType<typeof listPendingSupplierOrders>>[number]
+) {
   const item = itemFromOrder(order.items);
-  if (!item?.supplierProductId || !order.supplierOrderUuid) return;
-  const attempts = order.supplierAttempts ?? 0;
-  if (attempts >= MAX_ATTEMPTS) {
-    await finalizeSupplierOrder(order.id, { status: "reject", supplierOrderId: order.supplierOrderId, note: "تعذر الاتصال بـ Fast4Top بعد 3 محاولات؛ تمت إعادة المبلغ إلى رصيد العميل" });
+
+  if (!item?.supplierProductId || !order.supplierOrderUuid) {
+    await updateSupplierOrder(order.id, {
+      supplierStatus: "review",
+      executionStatus: "manual_processing",
+      supplierLastError: "بيانات طلب الشحن غير مكتملة",
+      ownerNote: "الطلب يحتاج مراجعة المالك بسبب نقص بيانات المنتج",
+    });
     return;
   }
-  await updateSupplierOrder(order.id, { supplierStatus: "sending", supplierAttempts: attempts + 1, supplierLastError: null, executionStatus: "manual_processing", ownerNote: `محاولة الشحن التلقائي ${attempts + 1} من ${MAX_ATTEMPTS}` });
+
+  // لا نسمح بإعادة إرسال طلب سبق إرساله.
+  if ((order.supplierAttempts ?? 0) > 0) {
+    await updateSupplierOrder(order.id, {
+      supplierStatus: "review",
+      executionStatus: "manual_processing",
+      supplierLastError: "تم إيقاف إعادة الإرسال التلقائي",
+      ownerNote: "الطلب يحتاج مراجعة المالك قبل أي محاولة جديدة",
+    });
+    return;
+  }
+
+  await updateSupplierOrder(order.id, {
+    supplierStatus: "sending",
+    supplierAttempts: 1,
+    supplierLastError: null,
+    executionStatus: "manual_processing",
+    ownerNote: "جارٍ إرسال الطلب إلى Fast4Top",
+  });
+
   try {
-    const result = await createFast4TopOrder({ productId: item.supplierProductId, quantity: item.quantity ?? 1, playerId: item.targetId, orderUuid: order.supplierOrderUuid });
-    await finalizeSupplierOrder(order.id, { status: result.status, supplierOrderId: result.orderId, note: result.status === "wait" ? "تم قبول الطلب وهو قيد التنفيذ لدى Fast4Top" : undefined });
+    const result = await createFast4TopOrder({
+      productId: item.supplierProductId,
+      quantity: item.quantity ?? 1,
+      playerId: item.targetId,
+      orderUuid: order.supplierOrderUuid,
+    });
+
+    await finalizeSupplierOrder(order.id, {
+      status: result.status,
+      supplierOrderId: result.orderId,
+      note:
+        result.status === "wait"
+          ? "الطلب قيد التنفيذ لدى Fast4Top"
+          : result.status === "accept"
+            ? "تم قبول الطلب لدى Fast4Top، بانتظار تأكيد التنفيذ"
+            : "رفض Fast4Top الطلب",
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "خطأ غير معروف من Fast4Top";
-    const retryable = error instanceof Fast4TopError ? error.retryable : true;
-    if (!retryable || attempts + 1 >= MAX_ATTEMPTS) {
-      await finalizeSupplierOrder(order.id, { status: "reject", supplierOrderId: order.supplierOrderId, note: `${message}؛ تمت إعادة المبلغ إلى رصيد العميل` });
-    } else {
-      await updateSupplierOrder(order.id, { supplierStatus: "retry", supplierAttempts: attempts + 1, supplierLastError: message, executionStatus: "manual_processing", ownerNote: `${message}. ستتم إعادة المحاولة تلقائيًا.` });
-    }
+    const message =
+      error instanceof Error
+        ? error.message
+        : "تعذر تحديد نتيجة طلب Fast4Top";
+
+    // لا نعيد الإرسال ولا نرجع الرصيد عند النتيجة المجهولة.
+    await updateSupplierOrder(order.id, {
+      supplierStatus: "review",
+      executionStatus: "manual_processing",
+      supplierLastError: message,
+      ownerNote:
+        "نتيجة الإرسال غير مؤكدة. يجب مراجعة الطلب لدى Fast4Top قبل أي إجراء",
+    });
+
+    console.warn(
+      `[Fast4Top] Order ${order.id} needs manual review:`,
+      message
+    );
   }
 }
 
-async function checkWaitingOrders(orders: Awaited<ReturnType<typeof listPendingSupplierOrders>>) {
-  const waiting = orders.filter(order => order.supplierStatus === "wait" && order.supplierOrderId);
+/**
+ * متابعة الطلبات التي لديها رقم طلب مؤكد لدى Fast4Top.
+ */
+async function checkWaitingOrders(
+  orders: Awaited<ReturnType<typeof listPendingSupplierOrders>>
+) {
+  const waiting = orders.filter(
+    (order) =>
+      (order.supplierStatus === "wait" ||
+        order.supplierStatus === "accept") &&
+      order.supplierOrderId
+  );
+
   if (!waiting.length) return;
+
   try {
-    const results = await checkFast4TopOrders(waiting.map(order => order.supplierOrderId as string));
+    const results = await checkFast4TopOrders(
+      waiting.map((order) => order.supplierOrderId as string)
+    );
+
     for (const order of waiting) {
-      const result = results.find(item => item.order_id === order.supplierOrderId);
-      if (result?.status) await finalizeSupplierOrder(order.id, { status: result.status, supplierOrderId: result.order_id, note: result.status === "wait" ? "الطلب ما زال قيد التنفيذ لدى Fast4Top" : undefined });
+      const result = results.find(
+        (item) => item.order_id === order.supplierOrderId
+      );
+
+      if (!result?.status) continue;
+
+      await finalizeSupplierOrder(order.id, {
+        status: result.status,
+        supplierOrderId: result.order_id,
+        note:
+          result.status === "wait"
+            ? "الطلب ما زال قيد التنفيذ لدى Fast4Top"
+            : result.status === "accept"
+              ? "Fast4Top أكد قبول الطلب، بانتظار تأكيد التنفيذ"
+              : "Fast4Top رفض الطلب",
+      });
     }
   } catch (error) {
-    console.warn("[Fast4Top] status check failed:", error instanceof Error ? error.message : "unknown error");
+    console.warn(
+      "[Fast4Top] Status check failed:",
+      error instanceof Error ? error.message : "unknown error"
+    );
   }
 }
 
+/**
+ * متابعة الحالات فقط.
+ * لا يعيد إرسال الطلبات القديمة تلقائياً.
+ */
 export async function processPendingFast4TopOrders() {
   if (workerBusy) return;
+
   workerBusy = true;
+
   try {
     const orders = await listPendingSupplierOrders();
+
     await checkWaitingOrders(orders);
-    const fresh = await listPendingSupplierOrders();
-    for (const order of fresh.filter(item => item.supplierStatus === "sending" || item.supplierStatus === "retry")) await submitOrder(order);
+
+    // الطلبات القديمة بحالة sending أو retry لا يعاد إرسالها.
+    for (const order of orders) {
+      if (
+        order.supplierStatus === "sending" ||
+        order.supplierStatus === "retry"
+      ) {
+        await updateSupplierOrder(order.id, {
+          supplierStatus: "review",
+          executionStatus: "manual_processing",
+          supplierLastError: "الطلب لم تُحسم نتيجة إرساله",
+          ownerNote:
+            "تم إيقاف إعادة الإرسال التلقائي. يلزم التحقق من Fast4Top",
+        });
+      }
+    }
   } catch (error) {
-    console.warn("[Fast4Top] worker failed:", error instanceof Error ? error.message : "unknown error");
-  } finally { workerBusy = false; }
+    console.warn(
+      "[Fast4Top] Worker failed:",
+      error instanceof Error ? error.message : "unknown error"
+    );
+  } finally {
+    workerBusy = false;
+  }
 }
 
 export function startFast4TopWorker() {
   void processPendingFast4TopOrders();
-  setInterval(() => void processPendingFast4TopOrders(), 60_000);
+
+  setInterval(() => {
+    void processPendingFast4TopOrders();
+  }, 60_000);
 }
 
 export { submitOrder as dispatchFast4TopOrder };
