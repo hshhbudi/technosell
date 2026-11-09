@@ -797,7 +797,6 @@ export async function finalizeSupplierOrder(
 
       const note =
         result.note ?? "تم رفض الطلب من Fast4Top";
-
       // Claim the refund only once.
       const claim = await tx
         .update(orders)
@@ -817,8 +816,6 @@ export async function finalizeSupplierOrder(
           )
         );
 
-      // Credit the customer only if this transaction
-      // successfully claimed the one-time refund.
       if (
         Number(claim[0].affectedRows ?? 0) > 0 &&
         current.customerId
@@ -831,7 +828,7 @@ export async function finalizeSupplierOrder(
           .where(eq(customerAccounts.id, current.customerId));
       }
     });
-    } else if (result.status === "accept") {
+  } else if (result.status === "accept") {
     await db
       .update(orders)
       .set({
@@ -839,8 +836,8 @@ export async function finalizeSupplierOrder(
           result.supplierOrderId ?? null,
         supplierStatus: "accept",
         supplierLastError: null,
-        executionStatus: "completed",
-        ownerNote: result.note ?? "تم قبول الطلب من Fast4Top",
+        executionStatus: "manual_processing",
+        ownerNote: result.note ?? "تم قبول الطلب لدى Fast4Top",
       })
       .where(eq(orders.id, id));
   } else {
