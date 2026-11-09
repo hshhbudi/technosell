@@ -1,5 +1,5 @@
 
-name: Techno Sell - Build and Check
+name: تكنو سيل - بناء وفحص
 
 on:
   push:
@@ -13,8 +13,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download project
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.0
+          run_install: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -22,15 +28,10 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.0
-
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Check TypeScript
+      - name: TypeScript check
         run: pnpm run check
 
       - name: Build project
