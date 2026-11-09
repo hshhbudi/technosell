@@ -376,10 +376,6 @@ export type SupplierProductSyncInput = {
   available?: boolean;
 };
 
-/**
- * Calculate selling price from supplier price and markup.
- * All prices are stored in cents.
- */
 function calculateSellingPrice(
   supplierPriceCents: number,
   markupPercent: number
@@ -389,9 +385,6 @@ function calculateSellingPrice(
   );
 }
 
-/**
- * Get all supplier products for owner/admin use.
- */
 export async function listSupplierProducts() {
   const db = await getDb();
   if (!db) return [];
@@ -402,10 +395,6 @@ export async function listSupplierProducts() {
     .orderBy(desc(supplierProducts.createdAt));
 }
 
-/**
- * Get only approved, enabled and available products.
- * This is the list intended for customer storefronts.
- */
 export async function listApprovedSupplierProducts() {
   const db = await getDb();
   if (!db) return [];
@@ -423,9 +412,6 @@ export async function listApprovedSupplierProducts() {
     .orderBy(desc(supplierProducts.createdAt));
 }
 
-/**
- * Get one supplier product by its internal database ID.
- */
 export async function getSupplierProductById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
@@ -439,9 +425,6 @@ export async function getSupplierProductById(id: number) {
   return result[0];
 }
 
-/**
- * Get one supplier product by Fast4Top external ID.
- */
 export async function getSupplierProductByExternalId(externalId: string) {
   const db = await getDb();
   if (!db) return undefined;
@@ -455,16 +438,6 @@ export async function getSupplierProductByExternalId(externalId: string) {
   return result[0];
 }
 
-/**
- * Synchronize supplier catalog into the database.
- *
- * Existing owner settings are preserved:
- * - markupPercent
- * - approved
- * - enabled
- *
- * New products start unapproved and disabled.
- */
 export async function syncSupplierProducts(
   items: SupplierProductSyncInput[]
 ) {
@@ -548,10 +521,6 @@ export async function syncSupplierProducts(
   return { inserted, updated, total: items.length };
 }
 
-/**
- * Change the profit percentage for one supplier product.
- * Selling price is recalculated automatically.
- */
 export async function updateSupplierProductMarkup(
   id: number,
   markupPercent: number
@@ -586,9 +555,6 @@ export async function updateSupplierProductMarkup(
   return getSupplierProductById(id);
 }
 
-/**
- * Approve or unapprove a supplier product.
- */
 export async function setSupplierProductApproval(
   id: number,
   approved: boolean
@@ -604,9 +570,6 @@ export async function setSupplierProductApproval(
   return getSupplierProductById(id);
 }
 
-/**
- * Enable or disable a supplier product.
- */
 export async function setSupplierProductEnabled(
   id: number,
   enabled: boolean
@@ -735,7 +698,7 @@ export async function listPendingSupplierOrders() {
     .where(
       and(
         eq(orders.paymentStatus, "confirmed"),
-        sql`${orders.supplierStatus} in ('wait','sending','retry')`
+        sql`${orders.supplierStatus} in ('wait', 'accept', 'sending', 'retry')`
       )
     )
     .orderBy(orders.createdAt);
@@ -767,12 +730,6 @@ export async function updateSupplierOrder(
   return updated[0];
 }
 
-/**
- * Finalize supplier order.
- *
- * Rejection refund is protected by a database transaction
- * and a conditional update on supplierRefunded.
- */
 export async function finalizeSupplierOrder(
   id: number,
   result: {
@@ -797,7 +754,7 @@ export async function finalizeSupplierOrder(
 
       const note =
         result.note ?? "تم رفض الطلب من Fast4Top";
-      // Claim the refund only once.
+
       const claim = await tx
         .update(orders)
         .set({
@@ -853,4 +810,4 @@ export async function finalizeSupplierOrder(
       })
       .where(eq(orders.id, id));
   }
-}
+      }
