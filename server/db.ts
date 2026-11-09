@@ -831,8 +831,29 @@ export async function finalizeSupplierOrder(
           .where(eq(customerAccounts.id, current.customerId));
       }
     });
-  } else if (result.status === "accept") {
+    } else if (result.status === "accept") {
     await db
       .update(orders)
       .set({
-        supplierOrderId: result.suppli
+        supplierOrderId:
+          result.supplierOrderId ?? null,
+        supplierStatus: "accept",
+        supplierLastError: null,
+        executionStatus: "completed",
+        ownerNote: result.note ?? "تم قبول الطلب من Fast4Top",
+      })
+      .where(eq(orders.id, id));
+  } else {
+    await db
+      .update(orders)
+      .set({
+        supplierOrderId:
+          result.supplierOrderId ?? null,
+        supplierStatus: "wait",
+        supplierLastError: null,
+        executionStatus: "manual_processing",
+        ownerNote: result.note ?? "الطلب قيد التنفيذ لدى Fast4Top",
+      })
+      .where(eq(orders.id, id));
+  }
+}
