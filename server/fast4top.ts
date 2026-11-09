@@ -5,19 +5,13 @@ import { ENV } from "./_core/env";
 const FAST4TOP_BASE_URL = "https://api.fast4top.com";
 const STORE_MARKUP = 1.08;
 
-type Fast4TopCategory = {
-  id: number;
-  name: string;
-  categories?: Fast4TopCategory[];
-};
-
 type Fast4TopProduct = {
   id: number;
   name?: string;
   product_name?: string;
   category_name?: string;
-  price?: number;
-  base_price?: number;
+  price?: number | string;
+  base_price?: number | string;
   product_currency_price?: string;
   available?: boolean;
   visible?: number;
@@ -41,22 +35,16 @@ type Fast4TopProduct = {
   params?: string[];
 };
 
-type CategoryResponse = {
-  status?: string | number;
-  data?: {
-    name?: string;
-    products?: Fast4TopProduct[];
-    categories?: Fast4TopCategory[];
-  };
-};
-
 type ApiEnvelope<T> = {
   status?: string | number;
   message?: string;
   data?: T;
 };
 
-export type Fast4TopOrderStatus = "accept" | "reject" | "wait";
+export type Fast4TopOrderStatus =
+  | "accept"
+  | "reject"
+  | "wait";
 
 export type Fast4TopOrderResult = {
   orderId: string;
@@ -88,12 +76,39 @@ export const isFast4TopConfigured = () =>
   Boolean(apiToken());
 
 // ========================================
+// رسائل أخطاء Fast4Top
+// ========================================
+
+const ERROR_MESSAGES: Record<string, string> = {
+  "100": "رصيد حساب Fast4Top غير كافٍ",
+  "105": "الكمية غير متاحة",
+  "106": "الكمية غير مسموحة",
+  "107": "معرّف اللاعب محظور",
+  "108": "المنتج يحتاج إلى تحقق 2FA",
+  "109": "المنتج غير موجود أو تم حذفه",
+  "110": "المنتج غير متاح حالياً",
+  "111": "يجب إعادة المحاولة بعد دقيقة",
+  "112": "الكمية أصغر من الحد الأدنى",
+  "113": "الكمية أكبر من الحد الأقصى",
+  "114": "خطأ غير معروف من Fast4Top",
+  "120": "رمز API مطلوب",
+  "121": "رمز API غير صحيح",
+  "122": "غير مسموح باستخدام API",
+  "123": "عنوان IP الخادم غير مسموح",
+  "130": "خادم Fast4Top تحت الصيانة",
+  "500": "خطأ داخلي من Fast4Top",
+};
+
+// ========================================
 // الاتصال بخادم Fast4Top
 // ========================================
 
 async function apiGet<T>(
   path: string,
-  params: Record<string, string | number | undefined> = {}
+  params: Record<
+    string,
+    string | number | undefined
+  > = {}
 ): Promise<T> {
   const token = apiToken();
 
@@ -113,10 +128,15 @@ async function apiGet<T>(
   });
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  const timeout = setTimeout(
+    () => controller.abort(),
+    20000
+  );
 
   try {
     const response = await fetch(url, {
+      method: "GET",
       headers: {
         Accept: "application/json",
         "api-token": token,
@@ -152,7 +172,8 @@ async function apiGet<T>(
       throw new Fast4TopError(
         `HTTP_${response.status}`,
         `Fast4Top HTTP ${response.status}: ${String(details).slice(0, 1000)}`,
-        response.status >= 500 || response.status === 429
+        response.status >= 500 ||
+          response.status === 429
       );
     }
 
@@ -171,39 +192,17 @@ async function apiGet<T>(
       apiCode !== "200" &&
       apiCode !== "OK"
     ) {
-      const messages: Record<string, string> = {
-        "100": "رصيد حساب Fast4Top غير كافٍ",
-        "105": "الكمية غير متاحة",
-        "106": "الكمية غير مسموحة",
-        "107": "معرّف اللاعب محظور",
-        "108": "المنتج يحتاج إلى تحقق 2FA",
-        "109": "المنتج غير موجود",
-        "110": "المنتج غير متاح حالياً",
-        "111": "يجب إعادة المحاولة بعد دقيقة",
-        "112": "الكمية أصغر من الحد الأدنى",
-        "113": "الكمية أكبر من الحد الأقصى",
-        "114": "خطأ غير معروف من Fast4Top",
-        "120": "رمز API مطلوب",
-        "121": "رمز API غير صحيح",
-        "122": "غير مسموح باستخدام API",
-        "123": "عنوان IP الخادم غير مسموح",
-        "130": "خادم Fast4Top تحت الصيانة",
-        "500": "خطأ داخلي في Fast4Top",
-      };
-
-      const retryable = [
-        "111",
-        "114",
-        "130",
-        "500",
-      ].includes(apiCode);
+      const message =
+        ERROR_MESSAGES[apiCode] ||
+        envelope.message ||
+        `خطأ Fast4Top رقم ${apiCode}`;
 
       throw new Fast4TopError(
         apiCode,
-        messages[apiCode] ||
-          envelope.message ||
-          `خطأ Fast4Top رقم ${apiCode}`,
-        retryable
+        message,
+        ["111", "114", "130", "500"].includes(
+          apiCode
+        )
       );
     }
 
@@ -237,98 +236,38 @@ async function apiGet<T>(
 }
 
 // ========================================
-// قراءة محتوى الأقسام
+// تحديد قسم المنتج
 // ========================================
 
-async function readCategory(
-  id: number
-): Promise<CategoryResponse["data"]> {
-  const token = apiToken();
+function detectSection(
+  product: Fast4TopProduct
+): "التطبيقات" | "الألعاب" {
+  const text = [
+    product.name,
+    product.product_name,
+    product.category_name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 
-  if (!token) {
-    throw new Fast4TopError(
-      "NOT_CONFIGURED",
-      "Fast4Top API Token غير موجود"
-    );
+  if (
+    /game|games|لعبة|ألعاب|free fire|فري فاير|pubg|ببجي|uc|جواهر|شحن ألعاب/i.test(
+      text
+    )
+  ) {
+    return "الألعاب";
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(
-    () => controller.abort(),
-    12000
-  );
-
-  try {
-    const response = await fetch(
-      `${FAST4TOP_BASE_URL}/client/api/content/${id}`,
-      {
-        headers: {
-          Accept: "application/json",
-          "api-token": token,
-        },
-        signal: controller.signal,
-      }
-    );
-
-    const responseText = await response.text();
-
-    let payload: any = null;
-
-    try {
-      payload = responseText
-        ? JSON.parse(responseText)
-        : null;
-    } catch {
-      payload = null;
-    }
-
-    if (!response.ok) {
-      const details =
-        payload?.message ||
-        payload?.error ||
-        responseText ||
-        "لا توجد تفاصيل إضافية";
-
-      console.error("[Fast4Top Category Error]", {
-        categoryId: id,
-        status: response.status,
-        details: String(details).slice(0, 1000),
-      });
-
-      throw new Fast4TopError(
-        `CATEGORY_HTTP_${response.status}`,
-        `القسم ${id}: HTTP ${response.status}: ${String(details).slice(0, 1000)}`,
-        response.status >= 500 || response.status === 429
-      );
-    }
-
-    return payload?.data ?? payload;
-  } catch (error) {
-    if (error instanceof Fast4TopError) {
-      throw error;
-    }
-
-    const message =
-      error instanceof Error &&
-      error.name === "AbortError"
-        ? "انتهت مهلة قراءة قسم Fast4Top"
-        : error instanceof Error
-          ? error.message
-          : "تعذر قراءة القسم";
-
-    console.error("[Fast4Top Category Network Error]", {
-      categoryId: id,
-      message,
-    });
-
-    throw new Fast4TopError(
-      "CATEGORY_NETWORK",
-      message,
-      true
-    );
-  } finally {
-    clearTimeout(timeout);
+  if (
+    /app|apps|تطبيق|تطبيقات|haya|kwai|likee|bigo|تيك توك/i.test(
+      text
+    )
+  ) {
+    return "التطبيقات";
   }
+
+  return "الألعاب";
 }
 
 // ========================================
@@ -336,141 +275,133 @@ async function readCategory(
 // ========================================
 
 function normalizeProducts(
-  raw: Array<{
-    product: Fast4TopProduct;
-    section: "التطبيقات" | "الألعاب";
-  }>
+  products: Fast4TopProduct[]
 ) {
   const unique = new Map<
     number,
-    {
-      product: Fast4TopProduct;
-      section: "التطبيقات" | "الألعاب";
-    }
+    Fast4TopProduct
   >();
 
-  for (const item of raw) {
+  for (const product of products) {
     if (
-      item.product.visible !== 0 &&
-      item.product.available !== false
+      product &&
+      Number.isFinite(Number(product.id)) &&
+      product.visible !== 0 &&
+      product.available !== false
     ) {
-      unique.set(item.product.id, item);
+      unique.set(Number(product.id), product);
     }
   }
 
-  return [...unique.values()].map(
-    ({ product, section }) => {
-      const qtyValues = product.qty_values;
+  return [...unique.values()].map((product) => {
+    const qtyValues = product.qty_values;
 
-      const quantity =
-        product.qty ||
-        product.amount ||
-        (Array.isArray(qtyValues)
+    const quantity =
+      product.qty ||
+      product.amount ||
+      (Array.isArray(qtyValues)
+        ? {
+            min: String(qtyValues[0] ?? 1),
+            max: String(
+              qtyValues[qtyValues.length - 1] ?? 1
+            ),
+          }
+        : qtyValues
           ? {
-              min: String(qtyValues[0] ?? 1),
-              max: String(
-                qtyValues[qtyValues.length - 1] ?? 1
-              ),
+              min: String(qtyValues.min ?? 1),
+              max: String(qtyValues.max ?? 1),
             }
-          : qtyValues
-            ? {
-                min: String(qtyValues.min ?? 1),
-                max: String(qtyValues.max ?? 1),
-              }
-            : null);
+          : null);
 
-      const minimumQuantity = Number(
-        quantity?.min || 1
-      );
+    const minimumQuantity = Math.max(
+      1,
+      Number(quantity?.min || 1) || 1
+    );
 
-      const price = Number(
-        product.price ??
-          product.product_currency_price ??
-          0
-      );
+    const price = Number(
+      product.price ??
+        product.product_currency_price ??
+        product.base_price ??
+        0
+    );
 
-      const productName =
-        product.name ||
-        product.product_name ||
-        `منتج ${product.id}`;
+    const productName =
+      product.name ||
+      product.product_name ||
+      `منتج ${product.id}`;
 
-      const categoryName =
-        product.category_name || productName;
+    const categoryName =
+      product.category_name || productName;
 
-      const photo =
-        product.photo || product.category_img;
+    const photo =
+      product.photo || product.category_img;
 
-      const requires =
-        product.requires ||
-        (product.params || []).map((question) => ({
-          name: question,
-          question,
-          type: "text",
-        }));
+    const requires =
+      product.requires ||
+      (product.params || []).map((question) => ({
+        name: question,
+        question,
+        type: "text",
+      }));
 
-      return {
-        externalId: product.id,
+    return {
+      externalId: Number(product.id),
 
-        name: productName,
+      name: productName,
 
-        category: section,
+      category: detectSection(product),
 
-        subcategory:
-          /pubg|ببجي/i.test(
-            `${productName} ${categoryName}`
-          )
-            ? "PUBG"
-            : categoryName &&
-                !/^قسم\s*(التطبيقات|الألعاب)$/i.test(
-                  categoryName
-                )
-              ? categoryName
-              : productName,
+      subcategory:
+        /pubg|ببجي/i.test(
+          `${productName} ${categoryName}`
+        )
+          ? "PUBG"
+          : categoryName,
 
-        priceUsdCents: Math.max(
-          0,
-          Math.round(
-            price *
-              100 *
-              minimumQuantity *
-              STORE_MARKUP
-          )
-        ),
+      priceUsdCents: Math.max(
+        0,
+        Math.round(
+          price *
+            100 *
+            minimumQuantity *
+            STORE_MARKUP
+        )
+      ),
 
-        available: product.available !== false,
+      available: product.available !== false,
 
-        imageUrl: photo
-          ? photo.startsWith("http")
-            ? photo
-            : new URL(
-                photo.replace(/^\/+/, ""),
-                FAST4TOP_BASE_URL + "/"
-              ).toString()
-          : null,
+      imageUrl: photo
+        ? photo.startsWith("http")
+          ? photo
+          : new URL(
+              photo.replace(/^\/+/, ""),
+              FAST4TOP_BASE_URL + "/"
+            ).toString()
+        : null,
 
-        description:
-          product.description ||
-          categoryName ||
-          "منتج رقمي من Fast4Top",
+      description:
+        product.description ||
+        categoryName ||
+        "منتج رقمي من Fast4Top",
 
-        offer: Boolean(product.offer),
+      offer: Boolean(product.offer),
 
-        quantity,
+      quantity,
 
-        quantityValues: Array.isArray(qtyValues)
-          ? qtyValues
-          : null,
+      quantityValues: Array.isArray(qtyValues)
+        ? qtyValues
+        : null,
 
-        requires,
+      requires,
 
-        productType: product.product_type || "package",
-      };
-    }
-  );
+      productType:
+        product.product_type || "package",
+    };
+  });
 }
 
 // ========================================
-// جلب كتالوج المنتجات بالكامل
+// جلب جميع المنتجات مباشرة
 // ========================================
 
 export async function readDigitalCatalog() {
@@ -481,86 +412,43 @@ export async function readDigitalCatalog() {
     return catalogCache.products;
   }
 
-  const root = await readCategory(0);
+  console.log("[Fast4Top] Fetching all products...");
 
-  const raw: Array<{
-    product: Fast4TopProduct;
-    section: "التطبيقات" | "الألعاب";
-  }> = [];
+  const response = await apiGet<
+    Fast4TopProduct[] |
+    ApiEnvelope<Fast4TopProduct[]>
+  >("/client/api/products");
 
-  const visited = new Set<number>();
+  // التوثيق يعرض الاستجابة كمصفوفة مباشرة.
+  // هذا يدعم أيضاً الاستجابة المغلفة داخل data.
+  const productsRaw = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data)
+      ? response.data
+      : null;
 
-  const getSection = (
-    name: string,
-    parent: "التطبيقات" | "الألعاب"
-  ): "التطبيقات" | "الألعاب" => {
-    if (/game|لعبة|ألعاب|games/i.test(name)) {
-      return "الألعاب";
-    }
-
-    if (/app|تطبيق|تطبيقات/i.test(name)) {
-      return "التطبيقات";
-    }
-
-    return parent;
-  };
-
-  const visit = async (
-    category: Fast4TopCategory,
-    parentSection: "التطبيقات" | "الألعاب"
-  ): Promise<void> => {
-    if (visited.has(category.id)) return;
-
-    visited.add(category.id);
-
-    const section = getSection(
-      category.name || "",
-      parentSection
+  if (!productsRaw) {
+    console.error(
+      "[Fast4Top] Unexpected products response"
     );
 
-    try {
-      const data = await readCategory(category.id);
+    throw new Fast4TopError(
+      "INVALID_PRODUCTS_RESPONSE",
+      "Fast4Top لم يرجع قائمة منتجات صالحة",
+      true
+    );
+  }
 
-      (data?.products ?? []).forEach((product) => {
-        raw.push({ product, section });
-      });
-
-      await Promise.all(
-        (data?.categories ?? []).map((child) =>
-          visit(child, section)
-        )
-      );
-    } catch (error) {
-      console.warn(
-        `[Fast4Top] category ${category.id} skipped:`,
-        error instanceof Error
-          ? error.message
-          : "unknown error"
-      );
-    }
-  };
-
-  const rootSection = "التطبيقات" as const;
-
-  (root?.products ?? []).forEach((product) => {
-    raw.push({
-      product,
-      section: rootSection,
-    });
-  });
-
-  await Promise.all(
-    (root?.categories ?? []).map((category) =>
-      visit(category, rootSection)
-    )
-  );
-
-  const products = normalizeProducts(raw);
+  const products = normalizeProducts(productsRaw);
 
   catalogCache = {
     at: Date.now(),
     products,
   };
+
+  console.log(
+    `[Fast4Top] Products loaded: ${products.length}`
+  );
 
   return products;
 }
@@ -587,7 +475,10 @@ export async function createFast4TopOrder(input: {
   orderUuid?: string;
   extraParams?: Record<string, string | number>;
 }): Promise<Fast4TopOrderResult> {
-  if (!Number.isFinite(input.productId)) {
+  if (
+    !Number.isFinite(input.productId) ||
+    input.productId <= 0
+  ) {
     throw new Fast4TopError(
       "INVALID_PRODUCT_ID",
       "معرّف المنتج غير صالح"
@@ -602,10 +493,13 @@ export async function createFast4TopOrder(input: {
     string | number | undefined
   > = {
     qty: input.quantity ?? 1,
+
     ...(input.playerId
       ? { playerId: input.playerId }
       : {}),
+
     ...(input.extraParams || {}),
+
     order_uuid: orderUuid,
   };
 
@@ -620,9 +514,12 @@ export async function createFast4TopOrder(input: {
     params
   );
 
-  const data = payload.data;
+  const data = payload?.data;
 
-  if (!data?.order_id || !data.status) {
+  if (
+    !data?.order_id ||
+    !data.status
+  ) {
     console.error(
       "[Fast4Top Invalid Order Response]",
       {
@@ -676,4 +573,4 @@ export async function checkFast4TopOrders(
   });
 
   return payload.data || [];
-        }
+  }
