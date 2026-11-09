@@ -1,11 +1,22 @@
+
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertCustomerAccount, InsertOrder, InsertProduct, InsertUser, customerAccounts, orders, products, users } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import {
+  InsertCustomerAccount,
+  InsertOrder,
+  InsertProduct,
+  InsertUser,
+  customerAccounts,
+  orders,
+  products,
+  users,
+  supplierProducts,
+} from "../drizzle/schema";
+import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
+// Database connection
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -18,20 +29,20 @@ export async function getDb() {
   return _db;
 }
 
+// ===============================
+// USERS
+// ===============================
+
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) {
     throw new Error("User openId is required for upsert");
   }
 
   const db = await getDb();
-  if (!db) {
-    throw new Error("Database is not available");
-  }
+  if (!db) throw new Error("Database is not available");
 
   try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
+    const values: InsertUser = { openId: user.openId };
     const updateSet: Record<string, unknown> = {};
 
     const textFields = ["name", "email", "loginMethod"] as const;
@@ -51,12 +62,13 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.lastSignedIn = user.lastSignedIn;
       updateSet.lastSignedIn = user.lastSignedIn;
     }
+
     if (user.role !== undefined) {
       values.role = user.role;
       updateSet.role = user.role;
     } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
+      values.role = "admin";
+      updateSet.role = "admin";
     }
 
     if (!values.lastSignedIn) {
@@ -78,200 +90,749 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
+  if (!db) return undefined;
 
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
 
-  return result.length > 0 ? result[0] : undefined;
-}
-
-export async function getUserByEmail(email: string) {
-  const db = await getDb(); if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
   return result[0];
 }
 
-export async function transferOwnership(currentOpenId: string, newOwnerEmail: string) {
-  const db = await getDb(); if (!db) throw new Error("Database is not available");
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email.toLowerCase()))
+    .limit(1);
+
+  return result[0];
+}
+
+export async function transferOwnership(
+  currentOpenId: string,
+  newOwnerEmail: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
   const target = await getUserByEmail(newOwnerEmail);
-  if (!target) return { transferred: false, reason: "target_not_found" as const };
-  if (target.openId === currentOpenId) return { transferred: false, reason: "same_account" as const };
-  await db.update(users).set({ role: "user" }).where(eq(users.openId, currentOpenId));
-  await db.update(users).set({ role: "admin" }).where(eq(users.openId, target.openId));
+  if (!target) {
+    return { transferred: false, reason: "target_not_found" as const };
+  }
+
+  if (target.openId === currentOpenId) {
+    return { transferred: false, reason: "same_account" as const };
+  }
+
+  await db
+    .update(users)
+    .set({ role: "user" })
+    .where(eq(users.openId, currentOpenId));
+
+  await db
+    .update(users)
+    .set({ role: "admin" })
+    .where(eq(users.openId, target.openId));
+
   return { transferred: true, targetEmail: target.email };
 }
 
 export async function claimFirstAdmin(openId: string) {
-  const db = await getDb(); if (!db) throw new Error("Database is not available");
-  const admins = await db.select({ id: users.id }).from(users).where(eq(users.role, "admin")).limit(1);
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  const admins = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.role, "admin"))
+    .limit(1);
+
   if (admins.length > 0) return false;
-  await db.update(users).set({ role: "admin" }).where(eq(users.openId, openId));
+
+  await db
+    .update(users)
+    .set({ role: "admin" })
+    .where(eq(users.openId, openId));
+
   return true;
 }
 
 export async function grantAdminByEmail(email: string) {
-  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
   const target = await getUserByEmail(email);
-  if (!target) return { granted: false, reason: "target_not_found" as const };
-  await db.update(users).set({ role: "admin" }).where(eq(users.openId, target.openId));
+  if (!target) {
+    return { granted: false, reason: "target_not_found" as const };
+  }
+
+  await db
+    .update(users)
+    .set({ role: "admin" })
+    .where(eq(users.openId, target.openId));
+
   return { granted: true, targetEmail: target.email };
 }
 
+// ===============================
+// CUSTOMERS
+// ===============================
+
 export async function getCustomerByEmail(email: string) {
-  const db = await getDb(); if (!db) return undefined;
-  const result = await db.select().from(customerAccounts).where(eq(customerAccounts.email, email.toLowerCase())).limit(1);
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(customerAccounts)
+    .where(eq(customerAccounts.email, email.toLowerCase()))
+    .limit(1);
+
   return result[0];
 }
 
 export async function getCustomerById(id: number) {
-  const db = await getDb(); if (!db) return undefined;
-  const result = await db.select().from(customerAccounts).where(eq(customerAccounts.id, id)).limit(1);
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(customerAccounts)
+    .where(eq(customerAccounts.id, id))
+    .limit(1);
+
   return result[0];
 }
 
 export async function createCustomer(input: InsertCustomerAccount) {
-  const db = await getDb(); if (!db) throw new Error("Database is not available");
-  const result = await db.insert(customerAccounts).values({ ...input, email: input.email.toLowerCase() });
-  const created = await db.select().from(customerAccounts).where(eq(customerAccounts.id, Number(result[0].insertId))).limit(1);
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  const result = await db
+    .insert(customerAccounts)
+    .values({ ...input, email: input.email.toLowerCase() });
+
+  const created = await db
+    .select()
+    .from(customerAccounts)
+    .where(eq(customerAccounts.id, Number(result[0].insertId)))
+    .limit(1);
+
   return created[0];
 }
 
-export async function spendCustomerBalance(customerId: number, amountCents: number) {
-  const db = await getDb(); if (!db) throw new Error("Database is not available");
-  const result = await db.update(customerAccounts)
-    .set({ balanceCents: sql`${customerAccounts.balanceCents} - ${amountCents}` })
-    .where(and(eq(customerAccounts.id, customerId), gte(customerAccounts.balanceCents, amountCents)));
+export async function spendCustomerBalance(
+  customerId: number,
+  amountCents: number
+) {
+  if (!Number.isInteger(amountCents) || amountCents <= 0) {
+    throw new Error("Invalid balance amount");
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  const result = await db
+    .update(customerAccounts)
+    .set({
+      balanceCents: sql`${customerAccounts.balanceCents} - ${amountCents}`,
+    })
+    .where(
+      and(
+        eq(customerAccounts.id, customerId),
+        gte(customerAccounts.balanceCents, amountCents)
+      )
+    );
+
   return Number(result[0].affectedRows ?? 0) > 0;
 }
 
-export async function addCustomerBalance(customerId: number, amountCents: number) {
-  const db = await getDb(); if (!db) throw new Error("Database is not available");
-  await db.update(customerAccounts)
-    .set({ balanceCents: sql`${customerAccounts.balanceCents} + ${amountCents}` })
+export async function addCustomerBalance(
+  customerId: number,
+  amountCents: number
+) {
+  if (!Number.isInteger(amountCents) || amountCents <= 0) {
+    throw new Error("Invalid balance amount");
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  await db
+    .update(customerAccounts)
+    .set({
+      balanceCents: sql`${customerAccounts.balanceCents} + ${amountCents}`,
+    })
     .where(eq(customerAccounts.id, customerId));
+
   return getCustomerById(customerId);
 }
 
-export async function updateCustomerPassword(customerId: number, passwordHash: string) {
-  const db = await getDb(); if (!db) throw new Error("Database is not available");
-  await db.update(customerAccounts).set({ passwordHash }).where(eq(customerAccounts.id, customerId));
+export async function updateCustomerPassword(
+  customerId: number,
+  passwordHash: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  await db
+    .update(customerAccounts)
+    .set({ passwordHash })
+    .where(eq(customerAccounts.id, customerId));
+
   return true;
 }
+
+// ===============================
+// MANUAL STORE PRODUCTS
+// ===============================
 
 export async function listProducts() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(products).where(eq(products.isActive, true)).orderBy(desc(products.createdAt));
+
+  return db
+    .select()
+    .from(products)
+    .where(eq(products.isActive, true))
+    .orderBy(desc(products.createdAt));
 }
 
 export async function listAllProducts() {
   const db = await getDb();
   if (!db) return [];
+
   return db.select().from(products).orderBy(desc(products.createdAt));
 }
 
 export async function createProduct(input: InsertProduct) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
+
   const result = await db.insert(products).values(input);
   const id = Number(result[0].insertId);
-  const created = await db.select().from(products).where(eq(products.id, id)).limit(1);
+
+  const created = await db
+    .select()
+    .from(products)
+    .where(eq(products.id, id))
+    .limit(1);
+
   return created[0];
 }
 
-export async function updateProduct(id: number, input: Partial<InsertProduct>) {
+export async function updateProduct(
+  id: number,
+  input: Partial<InsertProduct>
+) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
+
   await db.update(products).set(input).where(eq(products.id, id));
-  const updated = await db.select().from(products).where(eq(products.id, id)).limit(1);
+
+  const updated = await db
+    .select()
+    .from(products)
+    .where(eq(products.id, id))
+    .limit(1);
+
   return updated[0];
 }
 
 export async function deleteProduct(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
-  await db.update(products).set({ isActive: false }).where(eq(products.id, id));
+
+  await db
+    .update(products)
+    .set({ isActive: false })
+    .where(eq(products.id, id));
+
   return { success: true } as const;
 }
+
+// ===============================
+// FAST4TOP SUPPLIER PRODUCTS
+// ===============================
+
+export type SupplierProductSyncInput = {
+  externalId: string;
+  name: string;
+  category?: string | null;
+  subcategory?: string | null;
+  supplierPriceCents: number;
+  quantity?: number | null;
+  quantityValues?: unknown;
+  requires?: unknown;
+  productType?: string | null;
+  imageUrl?: string | null;
+  description?: string | null;
+  available?: boolean;
+};
+
+/**
+ * Calculate selling price from supplier price and markup.
+ * All prices are stored in cents.
+ */
+function calculateSellingPrice(
+  supplierPriceCents: number,
+  markupPercent: number
+) {
+  return Math.round(
+    supplierPriceCents * (100 + markupPercent) / 100
+  );
+}
+
+/**
+ * Get all supplier products for owner/admin use.
+ */
+export async function listSupplierProducts() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(supplierProducts)
+    .orderBy(desc(supplierProducts.createdAt));
+}
+
+/**
+ * Get only approved, enabled and available products.
+ * This is the list intended for customer storefronts.
+ */
+export async function listApprovedSupplierProducts() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(supplierProducts)
+    .where(
+      and(
+        eq(supplierProducts.approved, true),
+        eq(supplierProducts.enabled, true),
+        eq(supplierProducts.available, true)
+      )
+    )
+    .orderBy(desc(supplierProducts.createdAt));
+}
+
+/**
+ * Get one supplier product by its internal database ID.
+ */
+export async function getSupplierProductById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(supplierProducts)
+    .where(eq(supplierProducts.id, id))
+    .limit(1);
+
+  return result[0];
+}
+
+/**
+ * Get one supplier product by Fast4Top external ID.
+ */
+export async function getSupplierProductByExternalId(externalId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(supplierProducts)
+    .where(eq(supplierProducts.externalId, externalId))
+    .limit(1);
+
+  return result[0];
+}
+
+/**
+ * Synchronize supplier catalog into the database.
+ *
+ * Existing owner settings are preserved:
+ * - markupPercent
+ * - approved
+ * - enabled
+ *
+ * New products start unapproved and disabled.
+ */
+export async function syncSupplierProducts(
+  items: SupplierProductSyncInput[]
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  let inserted = 0;
+  let updated = 0;
+
+  for (const item of items) {
+    if (
+      !item.externalId ||
+      !item.name ||
+      !Number.isInteger(item.supplierPriceCents) ||
+      item.supplierPriceCents < 0
+    ) {
+      continue;
+    }
+
+    const existing = await db
+      .select()
+      .from(supplierProducts)
+      .where(eq(supplierProducts.externalId, item.externalId))
+      .limit(1);
+
+    if (existing[0]) {
+      const current = existing[0];
+      const markup = current.markupPercent ?? 8;
+
+      await db
+        .update(supplierProducts)
+        .set({
+          name: item.name,
+          category: item.category ?? null,
+          subcategory: item.subcategory ?? null,
+          supplierPriceCents: item.supplierPriceCents,
+          sellingPriceCents: calculateSellingPrice(
+            item.supplierPriceCents,
+            markup
+          ),
+          quantity: item.quantity ?? 1,
+          quantityValues: item.quantityValues ?? null,
+          requires: item.requires ?? null,
+          productType: item.productType ?? null,
+          imageUrl: item.imageUrl ?? null,
+          description: item.description ?? null,
+          available: item.available ?? true,
+        })
+        .where(eq(supplierProducts.id, current.id));
+
+      updated++;
+    } else {
+      const markup = 8;
+
+      await db.insert(supplierProducts).values({
+        externalId: item.externalId,
+        name: item.name,
+        category: item.category ?? null,
+        subcategory: item.subcategory ?? null,
+        supplierPriceCents: item.supplierPriceCents,
+        markupPercent: markup,
+        sellingPriceCents: calculateSellingPrice(
+          item.supplierPriceCents,
+          markup
+        ),
+        quantity: item.quantity ?? 1,
+        quantityValues: item.quantityValues ?? null,
+        requires: item.requires ?? null,
+        productType: item.productType ?? null,
+        imageUrl: item.imageUrl ?? null,
+        description: item.description ?? null,
+        available: item.available ?? true,
+        approved: false,
+        enabled: false,
+      });
+
+      inserted++;
+    }
+  }
+
+  return { inserted, updated, total: items.length };
+}
+
+/**
+ * Change the profit percentage for one supplier product.
+ * Selling price is recalculated automatically.
+ */
+export async function updateSupplierProductMarkup(
+  id: number,
+  markupPercent: number
+) {
+  if (
+    !Number.isInteger(markupPercent) ||
+    markupPercent < 0 ||
+    markupPercent > 1000
+  ) {
+    throw new Error("Markup must be an integer between 0 and 1000");
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  const current = await getSupplierProductById(id);
+  if (!current) throw new Error("Supplier product not found");
+
+  const sellingPriceCents = calculateSellingPrice(
+    current.supplierPriceCents,
+    markupPercent
+  );
+
+  await db
+    .update(supplierProducts)
+    .set({
+      markupPercent,
+      sellingPriceCents,
+    })
+    .where(eq(supplierProducts.id, id));
+
+  return getSupplierProductById(id);
+}
+
+/**
+ * Approve or unapprove a supplier product.
+ */
+export async function setSupplierProductApproval(
+  id: number,
+  approved: boolean
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  await db
+    .update(supplierProducts)
+    .set({ approved })
+    .where(eq(supplierProducts.id, id));
+
+  return getSupplierProductById(id);
+}
+
+/**
+ * Enable or disable a supplier product.
+ */
+export async function setSupplierProductEnabled(
+  id: number,
+  enabled: boolean
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  await db
+    .update(supplierProducts)
+    .set({ enabled })
+    .where(eq(supplierProducts.id, id));
+
+  return getSupplierProductById(id);
+}
+
+// ===============================
+// ORDERS
+// ===============================
 
 export async function createOrder(input: InsertOrder) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
+
   await db.insert(orders).values(input);
-  const created = await db.select().from(orders).where(eq(orders.orderNumber, input.orderNumber)).limit(1);
+
+  const created = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.orderNumber, input.orderNumber))
+    .limit(1);
+
   return created[0];
 }
 
 export async function listOrders() {
   const db = await getDb();
   if (!db) return [];
+
   return db.select().from(orders).orderBy(desc(orders.createdAt));
 }
+
 export async function listCustomerOrders(customerId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select({
-    id: orders.id, orderNumber: orders.orderNumber, items: orders.items, total: orders.total,
-    paymentStatus: orders.paymentStatus, executionStatus: orders.executionStatus, ownerNote: orders.ownerNote,
-    supplierOrderId: orders.supplierOrderId, supplierStatus: orders.supplierStatus, supplierAttempts: orders.supplierAttempts,
-    createdAt: orders.createdAt,
-  }).from(orders).where(eq(orders.customerId, customerId)).orderBy(desc(orders.createdAt));
+
+  return db
+    .select({
+      id: orders.id,
+      orderNumber: orders.orderNumber,
+      items: orders.items,
+      total: orders.total,
+      paymentStatus: orders.paymentStatus,
+      executionStatus: orders.executionStatus,
+      ownerNote: orders.ownerNote,
+      supplierOrderId: orders.supplierOrderId,
+      supplierStatus: orders.supplierStatus,
+      supplierAttempts: orders.supplierAttempts,
+      createdAt: orders.createdAt,
+    })
+    .from(orders)
+    .where(eq(orders.customerId, customerId))
+    .orderBy(desc(orders.createdAt));
 }
 
-export async function updateOrderStatus(id: number, input: { paymentStatus?: "pending" | "confirmed" | "rejected"; executionStatus?: "pending" | "manual_processing" | "completed" | "failed"; ownerNote?: string | null }) {
+export async function updateOrderStatus(
+  id: number,
+  input: {
+    paymentStatus?: "pending" | "confirmed" | "rejected";
+    executionStatus?: "pending" | "manual_processing" | "completed" | "failed";
+    ownerNote?: string | null;
+  }
+) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
-  const current = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+
+  const current = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.id, id))
+    .limit(1);
+
   await db.update(orders).set(input).where(eq(orders.id, id));
-  const updated = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
-  if (current[0] && current[0].paymentStatus !== "confirmed" && input.paymentStatus === "confirmed" && current[0].customerId) {
+
+  const updated = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.id, id))
+    .limit(1);
+
+  if (
+    current[0] &&
+    current[0].paymentStatus !== "confirmed" &&
+    input.paymentStatus === "confirmed" &&
+    current[0].customerId
+  ) {
     try {
-      const items = JSON.parse(current[0].items) as Array<{ category?: string }>;
-      if (items.some(item => item.category === "تعبئة الرصيد")) await addCustomerBalance(current[0].customerId, current[0].total);
-    } catch { /* Preserve the status update for legacy malformed orders. */ }
+      const items = JSON.parse(current[0].items) as Array<{
+        category?: string;
+      }>;
+
+      if (items.some((item) => item.category === "تعبئة الرصيد")) {
+        await addCustomerBalance(
+          current[0].customerId,
+          current[0].total
+        );
+      }
+    } catch {
+      // Preserve status update for legacy malformed orders.
+    }
   }
+
   return updated[0];
 }
+
+// ===============================
+// FAST4TOP SUPPLIER ORDERS
+// ===============================
 
 export async function listPendingSupplierOrders() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(orders)
-    .where(and(eq(orders.paymentStatus, "confirmed"), sql`${orders.supplierStatus} in ('wait','sending','retry')`))
+
+  return db
+    .select()
+    .from(orders)
+    .where(
+      and(
+        eq(orders.paymentStatus, "confirmed"),
+        sql`${orders.supplierStatus} in ('wait','sending','retry')`
+      )
+    )
     .orderBy(orders.createdAt);
 }
 
-export async function updateSupplierOrder(id: number, input: {
-  supplierOrderId?: string | null;
-  supplierStatus?: string | null;
-  supplierAttempts?: number;
-  supplierLastError?: string | null;
-  supplierRefunded?: boolean;
-  executionStatus?: "pending" | "manual_processing" | "completed" | "failed";
-  ownerNote?: string | null;
-}) {
+export async function updateSupplierOrder(
+  id: number,
+  input: {
+    supplierOrderId?: string | null;
+    supplierStatus?: string | null;
+    supplierAttempts?: number;
+    supplierLastError?: string | null;
+    supplierRefunded?: boolean;
+    executionStatus?: "pending" | "manual_processing" | "completed" | "failed";
+    ownerNote?: string | null;
+  }
+) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
+
   await db.update(orders).set(input).where(eq(orders.id, id));
-  const updated = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+
+  const updated = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.id, id))
+    .limit(1);
+
   return updated[0];
 }
 
-export async function finalizeSupplierOrder(id: number, result: { status: "accept" | "reject" | "wait"; supplierOrderId?: string | null; note?: string | null }) {
+/**
+ * Finalize supplier order.
+ *
+ * Rejection refund is protected by a database transaction
+ * and a conditional update on supplierRefunded.
+ */
+export async function finalizeSupplierOrder(
+  id: number,
+  result: {
+    status: "accept" | "reject" | "wait";
+    supplierOrderId?: string | null;
+    note?: string | null;
+  }
+) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
-  const current = (await db.select().from(orders).where(eq(orders.id, id)).limit(1))[0];
-  if (!current) return null;
+
   if (result.status === "reject") {
-    if (current.customerId && !current.supplierRefunded) await addCustomerBalance(current.customerId, current.total);
-    await db.update(orders).set({ supplierOrderId: result.supplierOrderId ?? current.supplierOrderId, supplierStatus: "reject", supplierLastError: result.note ?? "تم رفض الطلب من Fast4Top", supplierRefunded: current.supplierRefunded || Boolean(current.customerId), executionStatus: "failed", ownerNote: result.note ?? "تم رفض الطلب من Fast4Top" }).where(eq(orders.id, id));
+    await db.transaction(async (tx) => {
+      const currentResult = await tx
+        .select()
+        .from(orders)
+        .where(eq(orders.id, id))
+        .limit(1);
+
+      const current = currentResult[0];
+      if (!current) return;
+
+      const note =
+        result.note ?? "تم رفض الطلب من Fast4Top";
+
+      // Claim the refund only once.
+      const claim = await tx
+        .update(orders)
+        .set({
+          supplierOrderId:
+            result.supplierOrderId ?? current.supplierOrderId,
+          supplierStatus: "reject",
+          supplierLastError: note,
+          supplierRefunded: true,
+          executionStatus: "failed",
+          ownerNote: note,
+        })
+        .where(
+          and(
+            eq(orders.id, id),
+            eq(orders.supplierRefunded, false)
+          )
+        );
+
+      // Credit the customer only if this transaction
+      // successfully claimed the one-time refund.
+      if (
+        Number(claim[0].affectedRows ?? 0) > 0 &&
+        current.customerId
+      ) {
+        await tx
+          .update(customerAccounts)
+          .set({
+            balanceCents: sql`${customerAccounts.balanceCents} + ${current.total}`,
+          })
+          .where(eq(customerAccounts.id, current.customerId));
+      }
+    });
   } else if (result.status === "accept") {
-    await db.update(orders).set({ supplierOrderId: result.supplierOrderId ?? current.supplierOrderId, supplierStatus: "accept", supplierLastError: null, executionStatus: "completed", ownerNote: "تم تنفيذ الشحن تلقائيًا عبر Fast4Top" }).where(eq(orders.id, id));
-  } else {
-    await db.update(orders).set({ supplierOrderId: result.supplierOrderId ?? current.supplierOrderId, supplierStatus: "wait", executionStatus: "manual_processing", ownerNote: result.note ?? "الطلب قيد التنفيذ لدى Fast4Top" }).where(eq(orders.id, id));
-  }
-  return (await db.select().from(orders).where(eq(orders.id, id)).limit(1))[0];
-}
+    await db
+      .update(orders)
+      .set({
+        supplierOrderId: result.suppli
