@@ -19,6 +19,7 @@ import {
   getSupplierProductById,
   grantAdminByEmail,
   listAllProducts,
+  listApprovedSupplierProducts,
   listCustomerOrders,
   listOrders,
   listProducts,
@@ -42,7 +43,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { parse as parseCookie } from "cookie";
 import { createCustomer, getCustomerByEmail, getCustomerById } from "./db";
 import { storagePut } from "./storage";
-import { getFast4TopProfile, readDigitalCatalog } from "./fast4top";
+import { getFast4TopProfile } from "./fast4top";
 import { dispatchFast4TopOrder } from "./fast4topWorker";
 import {
   clearLocalAdmin,
@@ -427,10 +428,6 @@ export const appRouter = router({
         });
       }),
 
-    // ===============================
-    // DIRECT FAST4TOP TOPUP
-    // ===============================
-
     directTopup: publicProcedure
       .input(
         z.object({
@@ -454,7 +451,6 @@ export const appRouter = router({
           });
         }
 
-        // جلب المنتج الحقيقي من قاعدة البيانات.
         const product = await getSupplierProductById(
           input.supplierProductId
         );
@@ -498,7 +494,6 @@ export const appRouter = router({
           });
         }
 
-        // حساب السعر من قاعدة البيانات.
         const totalCents = Math.round(
           (product.sellingPriceCents * quantity) / baseQuantity
         );
@@ -514,7 +509,6 @@ export const appRouter = router({
           });
         }
 
-        // خصم الرصيد بعد التحقق من المنتج والسعر.
         const spent = await spendCustomerBalance(
           customer.id,
           totalCents
@@ -558,12 +552,10 @@ export const appRouter = router({
             supplierAttempts: 0,
           });
         } catch (error) {
-          // إعادة الرصيد إذا فشل إنشاء الطلب فقط.
           await addCustomerBalance(customer.id, totalCents);
           throw error;
         }
 
-        // لا نعيد الرصيد عند نتيجة إرسال غير مؤكدة.
         try {
           await dispatchFast4TopOrder(order);
         } catch (error) {
@@ -622,11 +614,11 @@ export const appRouter = router({
       try {
         return {
           connected: true,
-          products: await readDigitalCatalog(),
+          products: await listApprovedSupplierProducts(),
         };
       } catch (error) {
         console.warn(
-          "[Fast4Top] Catalog read failed:",
+          "[Supplier] Approved catalog read failed:",
           error instanceof Error ? error.message : "unknown error"
         );
 
@@ -748,170 +740,4 @@ export const appRouter = router({
               throw new TRPCError({
                 code: "BAD_REQUEST",
                 message:
-                  "صيغة الصورة غير مدعومة. استخدم PNG أو JPG أو WEBP",
-              });
-            }
-
-            const uploaded = await storagePut(
-              `products/product-${Date.now()}-${randomUUID()}.jpg`,
-              Buffer.from(match[2], "base64"),
-              match[1]
-            );
-
-            imageUrl = uploaded.url;
-          }
-
-          const isDigitalTopup =
-            productInput.isDigital &&
-            ["شحن ألعاب", "شحن تطبيقات"].includes(
-              productInput.category
-            );
-
-          return createProduct({
-            ...productInput,
-            price: productInput.priceUsdCents,
-            priceUsdCents: productInput.priceUsdCents,
-            description: productInput.description || null,
-            oldPrice: productInput.oldPrice || null,
-            tag: productInput.tag || null,
-            imageUrl,
-            fulfillmentUrl: isDigitalTopup
-              ? "https://www.syria-market.net/categories/3/subs/3/product/5"
-              : null,
-          });
-        }),
-
-      update: adminProcedure
-        .input(
-          z.object({
-            id: z.number().int().positive(),
-            name: z.string().min(2).max(180),
-            category: z.string().min(2).max(80),
-            description: z.string().max(2000).optional(),
-            priceUsdCents: z.number().int().nonnegative(),
-            oldPrice: z.number().int().nonnegative().optional(),
-            stock: z.number().int().nonnegative(),
-            isDigital: z.boolean(),
-            tag: z.string().max(60).optional(),
-            imageData: z.string().max(12_000_000).optional(),
-          })
-        )
-        .mutation(async ({ input }) => {
-          const { id, imageData, ...productInput } = input;
-
-          let imageUrl: string | undefined;
-
-          if (imageData) {
-            const match = imageData.match(
-              /^data:(image\/(?:png|jpe?g|webp|gif));base64,([A-Za-z0-9+/=]+)$/
-            );
-
-            if (!match) {
-              throw new TRPCError({
-                code: "BAD_REQUEST",
-                message:
-                  "صيغة الصورة غير مدعومة. استخدم PNG أو JPG أو WEBP",
-              });
-            }
-
-            const uploaded = await storagePut(
-              `products/product-${Date.now()}-${randomUUID()}.jpg`,
-              Buffer.from(match[2], "base64"),
-              match[1]
-            );
-
-            imageUrl = uploaded.url;
-          }
-
-          return updateProduct(id, {
-            ...productInput,
-            price: productInput.priceUsdCents,
-            priceUsdCents: productInput.priceUsdCents,
-            description: productInput.description || null,
-            oldPrice: productInput.oldPrice || null,
-            tag: productInput.tag || null,
-            ...(imageUrl ? { imageUrl } : {}),
-          });
-        }),
-
-      remove: adminProcedure
-        .input(
-          z.object({
-            id: z.number().int().positive(),
-          })
-        )
-        .mutation(({ input }) => deleteProduct(input.id)),
-    }),
-  }),
-
-  products: router({
-    list: publicProcedure.query(() => listProducts()),
-  }),
-
-  orders: router({
-    create: publicProcedure
-      .input(
-        z.object({
-          items: z
-            .array(
-              z.object({
-                id: z.number(),
-                name: z.string(),
-                category: z.string().optional(),
-                price: z.number(),
-                digital: z.boolean().optional(),
-              })
-            )
-            .min(1),
-          total: z.number().int().nonnegative(),
-          customerName: z.string().min(2).max(160),
-          phone: z.string().min(5).max(40),
-          playerId: z.string().max(120).optional(),
-          serverId: z.string().max(120).optional(),
-          paymentMethod: z
-            .enum(["shamcash", "other"])
-            .default("shamcash"),
-          paymentReference: z.string().max(160).optional(),
-        })
-      )
-      .mutation(({ input }) =>
-        createOrder({
-          orderNumber: `TS-${Date.now().toString().slice(-8)}`,
-          items: JSON.stringify(input.items),
-          total: input.total,
-          customerName: input.customerName,
-          phone: input.phone,
-          playerId: input.playerId || null,
-          serverId: input.serverId || null,
-          paymentMethod: input.paymentMethod,
-          paymentReference: input.paymentReference || null,
-        })
-      ),
-  }),
-
-  adminOrders: router({
-    list: adminProcedure.query(() => listOrders()),
-
-    updateStatus: adminProcedure
-      .input(
-        z.object({
-          id: z.number().int().positive(),
-          paymentStatus: z
-            .enum(["pending", "confirmed", "rejected"])
-            .optional(),
-          executionStatus: z
-            .enum([
-              "pending",
-              "manual_processing",
-              "completed",
-              "failed",
-            ])
-            .optional(),
-          ownerNote: z.string().max(2000).nullable().optional(),
-        })
-      )
-      .mutation(({ input }) => updateOrderStatus(input.id, input)),
-  }),
-});
-
-export type AppRouter = typeof appRouter;
+                  "صيغة الصورة غير مدعومة. استخدم PNG أ
