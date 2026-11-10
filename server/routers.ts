@@ -753,33 +753,40 @@ export const appRouter = router({
 
             imageUrl = uploaded.url;
           }
-
-          return createProduct({
-            ...productInput,
-            imageUrl,
+return createProduct({
+  ...productInput,
+  price: productInput.priceUsdCents,
+  imageUrl,
+});
           });
         }),
+update: adminProcedure
+  .input(
+    z.object({
+      id: z.number().int().positive(),
+      name: z.string().min(2).max(180).optional(),
+      category: z.string().min(2).max(80).optional(),
+      description: z.string().max(2000).optional(),
+      priceUsdCents: z.number().int().nonnegative().optional(),
+      oldPrice: z.number().int().nonnegative().optional(),
+      stock: z.number().int().nonnegative().optional(),
+      isDigital: z.boolean().optional(),
+      tag: z.string().max(60).optional(),
+      imageUrl: z.string().url().nullable().optional(),
+    })
+  )
+  .mutation(async ({ input }) => {
+    const { id, priceUsdCents, ...changes } = input;
 
-      update: adminProcedure
-        .input(
-          z.object({
-            id: z.number().int().positive(),
-            name: z.string().min(2).max(180).optional(),
-            category: z.string().min(2).max(80).optional(),
-            description: z.string().max(2000).optional(),
-            priceUsdCents: z.number().int().nonnegative().optional(),
-            oldPrice: z.number().int().nonnegative().optional(),
-            stock: z.number().int().nonnegative().optional(),
-            isDigital: z.boolean().optional(),
-            tag: z.string().max(60).optional(),
-            imageUrl: z.string().url().nullable().optional(),
-          })
-        )
-        .mutation(async ({ input }) => {
-          const { id, ...changes } = input;
-          await updateProduct(id, changes);
-          return { success: true };
-        }),
+    await updateProduct(id, {
+      ...changes,
+      ...(priceUsdCents !== undefined
+        ? { price: priceUsdCents }
+        : {}),
+    });
+
+        return { success: true };
+  }),
 
       delete: adminProcedure
         .input(z.object({ id: z.number().int().positive() }))
@@ -793,32 +800,45 @@ export const appRouter = router({
       list: adminProcedure.query(() => listOrders()),
 
       updateStatus: adminProcedure
-        .input(
-          z.object({
-            id: z.number().int().positive(),
-            status: z.string().min(1).max(80),
-          })
-        )
-        .mutation(async ({ input }) => {
-          await updateOrderStatus(input.id, input.status);
-          return { success: true };
-        }),
-    }),
+  .input(
+    z.object({
+      id: z.number().int().positive(),
+      paymentStatus: z
+        .enum(["pending", "confirmed", "rejected"])
+        .optional(),
+      executionStatus: z
+        .enum([
+          "pending",
+          "manual_processing",
+          "completed",
+          "failed",
+        ])
+        .optional(),
+      ownerNote: z.string().nullable().optional(),
+    })
+  )
+  .mutation(async ({ input }) => {
+    const { id, ...changes } = input;
 
-    customers: router({
-      addBalance: adminProcedure
-        .input(
-          z.object({
-            customerId: z.number().int().positive(),
-            amountCents: z.number().int().positive(),
-          })
-        )
-        .mutation(async ({ input }) => {
-          await addCustomerBalance(input.customerId, input.amountCents);
-          return { success: true };
-        }),
-    }),
+    await updateOrderStatus(id, changes);
+    return { success: true };
   }),
+}),
+
+customers: router({
+  addBalance: adminProcedure
+    .input(
+      z.object({
+        customerId: z.number().int().positive(),
+        amountCents: z.number().int().positive(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await addCustomerBalance(input.customerId, input.amountCents);
+      return { success: true };
+    }),
+}),
+}),
 });
 
 export type AppRouter = typeof appRouter;
