@@ -764,7 +764,6 @@ export const appRouter = router({
       imageUrl,
     });
   }),
-        }),
 update: adminProcedure
   .input(
     z.object({
