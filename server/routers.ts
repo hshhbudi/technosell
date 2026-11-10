@@ -737,7 +737,8 @@ export const appRouter = router({
             );
 
             if (!match) {
-              throw new TRPCError({
-                code: "BAD_REQUEST",
-                message:
-                  "صيغة الصورة غير مدعومة. استخدم PNG أ
+  throw new TRPCError({
+    code: "BAD_REQUEST",
+    message: "صيغة الصورة غير مدعومة. استخدم PNG أو JPG أو WEBP.",
+  });
+            }
