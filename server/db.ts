@@ -808,5 +808,6 @@ export async function finalizeSupplierOrder(
         executionStatus: "manual_processing",
         ownerNote: result.note ?? "الطلب قيد التنفيذ لدى Fast4Top",
       })
-      .where(eq(orders.id, id));
+            .where(eq(orders.id, id));
   }
+}
