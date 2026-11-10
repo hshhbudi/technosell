@@ -805,4 +805,159 @@ export default function Home() {
                   className={`legacy-card-art ${p.accent}`}
                 >
                   {p.tag && (
-                    <b className="legacy-tag">{p.ta
+                    
+<b className="legacy-tag">{p.tag}</b>
+                  )}
+
+                  {p.imageUrl || fallbackImageFor(p) ? (
+                    <img
+                      src={p.imageUrl || fallbackImageFor(p) || ""}
+                      alt={p.name}
+                    />
+                  ) : (
+                    <div className="legacy-product-icon">
+                      {p.icon === "game" ? (
+                        <Gamepad2 size={42} />
+                      ) : p.icon === "app" ? (
+                        <Package size={42} />
+                      ) : (
+                        <Smartphone size={42} />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="legacy-card-info">
+                  <span>{p.subcategory}</span>
+                  <h3>{p.name}</h3>
+                  <p>{p.description}</p>
+
+                  <div className="legacy-card-bottom">
+                    <strong>{money(p.price)}</strong>
+
+                    <button
+                      onClick={() => startTopup(p)}
+                      disabled={!p.supplierDbId}
+                    >
+                      {p.supplierDbId ? "اشحن الآن" : "غير متاح للشحن"}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {filtered.length === 0 && (
+            <div className="legacy-empty">
+              <Package size={32} />
+              <p>لا توجد منتجات في هذا القسم حالياً.</p>
+            </div>
+          )}
+        </section>
+      </main>
+
+      {selected && (
+        <div className="legacy-modal-backdrop">
+          <div className="legacy-modal">
+            <button
+              className="legacy-modal-close"
+              onClick={() => setSelected(null)}
+              aria-label="إغلاق"
+            >
+              <X size={20} />
+            </button>
+
+            <h2>تأكيد طلب الشحن</h2>
+            <strong>{selected.name}</strong>
+            <p>{selected.description}</p>
+
+            {selected.delivery !== "code" && (
+              <label>
+                معرّف اللاعب أو الحساب
+                <input
+                  value={targetId}
+                  onChange={(e) => setTargetId(e.target.value)}
+                  placeholder="أدخل ID الحساب"
+                />
+              </label>
+            )}
+
+            {hasQuantity(selected) && (
+              <label>
+                الكمية
+                <input
+                  type="number"
+                  min={selected.quantity?.min || 1}
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  placeholder="أدخل الكمية"
+                />
+              </label>
+            )}
+
+            <div className="legacy-modal-total">
+              المجموع: <strong>{money(computedTotal)}</strong>
+            </div>
+
+            <button
+              className="legacy-primary"
+              onClick={submitTopup}
+              disabled={directTopup.isPending}
+            >
+              {directTopup.isPending ? "جارٍ إرسال الطلب..." : "تأكيد الشحن"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {historyOpen && (
+        <div className="legacy-modal-backdrop">
+          <div className="legacy-modal">
+            <button
+              className="legacy-modal-close"
+              onClick={() => setHistoryOpen(false)}
+              aria-label="إغلاق"
+            >
+              <X size={20} />
+            </button>
+
+            <h2>سجل طلباتي</h2>
+
+            {shipmentHistory.isLoading ? (
+              <p>جارٍ تحميل الطلبات...</p>
+            ) : shipmentHistory.data?.length ? (
+              shipmentHistory.data.map((order) => (
+                <div className="legacy-history-item" key={order.id}>
+                  <strong>{order.orderNumber}</strong>
+                  <span>{order.executionStatus}</span>
+                  <small>{money(order.total)}</small>
+                </div>
+              ))
+            ) : (
+              <p>لا توجد طلبات حتى الآن.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {authOpen && (
+        <CustomerAuth
+          onClose={() => setAuthOpen(false)}
+          onSuccess={async () => {
+            setAuthOpen(false);
+            await customerQuery.refetch();
+          }}
+        />
+      )}
+
+      {toast && <div className="legacy-toast">{toast}</div>}
+
+      <footer className="legacy-footer">
+        <strong>Techno Sell</strong>
+        <span>متجرك للشحن والهواتف والإكسسوارات</span>
+        <small>© {new Date().getFullYear()} Techno Sell</small>
+      </footer>
+    </div>
+  );
+}
+
