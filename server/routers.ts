@@ -736,9 +736,86 @@ export const appRouter = router({
               /^data:(image\/(?:png|jpe?g|webp|gif));base64,([A-Za-z0-9+/=]+)$/
             );
 
-            if (!match) {
-  throw new TRPCError({
-    code: "BAD_REQUEST",
-    message: "صيغة الصورة غير مدعومة. استخدم PNG أو JPG أو WEBP.",
-  });
+                        if (!match) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message:
+                  "صيغة الصورة غير مدعومة. استخدم PNG أو JPG أو WEBP.",
+              });
             }
+
+            const uploaded = await storagePut(
+              `products/product-${Date.now()}-${randomUUID()}`,
+              Buffer.from(match[2], "base64"),
+              match[1]
+            );
+
+            imageUrl = uploaded.url;
+          }
+
+          await createProduct({
+            ...productInput,
+            imageUrl,
+          });
+        }),
+
+      update: adminProcedure
+        .input(
+          z.object({
+            id: z.number().int().positive(),
+            name: z.string().min(2).max(180).optional(),
+            category: z.string().min(2).max(80).optional(),
+            description: z.string().max(2000).optional(),
+            priceUsdCents: z.number().int().nonnegative().optional(),
+            oldPrice: z.number().int().nonnegative().optional(),
+            stock: z.number().int().nonnegative().optional(),
+            isDigital: z.boolean().optional(),
+            tag: z.string().max(60).optional(),
+            imageUrl: z.string().url().nullable().optional(),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const { id, ...changes } = input;
+          await updateProduct(id, changes);
+          return { success: true };
+        }),
+
+      delete: adminProcedure
+        .input(z.object({ id: z.number().int().positive() }))
+        .mutation(async ({ input }) => {
+          await deleteProduct(input.id);
+          return { success: true };
+        }),
+    }),
+
+    orders: router({
+      list: adminProcedure.query(() => listOrders()),
+
+      updateStatus: adminProcedure
+        .input(
+          z.object({
+            id: z.number().int().positive(),
+            status: z.string().min(1).max(80),
+          })
+        )
+        .mutation(async ({ input }) => {
+          await updateOrderStatus(input.id, input.status);
+          return { success: true };
+        }),
+    }),
+
+    customers: router({
+      addBalance: adminProcedure
+        .input(
+          z.object({
+            customerId: z.number().int().positive(),
+            amountCents: z.number().int().positive(),
+          })
+        )
+        .mutation(async ({ input }) => {
+          await addCustomerBalance(input.customerId, input.amountCents);
+          return { success: true };
+        }),
+    }),
+  }),
+});
