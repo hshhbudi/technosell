@@ -713,85 +713,85 @@ export const appRouter = router({
     products: router({
       list: adminProcedure.query(() => listAllProducts()),
 
-      create: adminProcedure
-  .input(
-    z.object({
-      name: z.string().min(2).max(180),
-      category: z.string().min(2).max(80),
-      description: z.string().max(2000).optional(),
-      priceUsdCents: z.number().int().nonnegative(),
-      oldPrice: z.number().int().nonnegative().optional(),
-      stock: z.number().int().nonnegative(),
-      isDigital: z.boolean(),
-      tag: z.string().max(60).optional(),
-      imageData: z.string().max(12_000_000).optional(),
-    })
-  )
-  .mutation(async ({ input }) => {
-    const {
-      imageData,
-      priceUsdCents,
-      ...productInput
-    } = input;
+            create: adminProcedure
+        .input(
+          z.object({
+            name: z.string().min(2).max(180),
+            category: z.string().min(2).max(80),
+            description: z.string().max(2000).optional(),
+            priceUsdCents: z.number().int().nonnegative(),
+            oldPrice: z.number().int().nonnegative().optional(),
+            stock: z.number().int().nonnegative(),
+            isDigital: z.boolean(),
+            tag: z.string().max(60).optional(),
+            imageData: z.string().max(12_000_000).optional(),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const {
+            imageData,
+            priceUsdCents,
+            ...productInput
+          } = input;
 
-    let imageUrl: string | null = null;
+          let imageUrl: string | null = null;
 
-    if (imageData) {
-      const match = imageData.match(
-        /^data:(image\/(?:png|jpe?g|webp|gif));base64,([A-Za-z0-9+/=]+)$/
-      );
+          if (imageData) {
+            const match = imageData.match(
+              /^data:(image\/(?:png|jpe?g|webp|gif));base64,([A-Za-z0-9+/=]+)$/
+            );
 
-      if (!match) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            "صيغة الصورة غير مدعومة. استخدم PNG أو JPG أو WEBP.",
-        });
-      }
+            if (!match) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message:
+                  "صيغة الصورة غير مدعومة. استخدم PNG أو JPG أو WEBP.",
+              });
+            }
 
-      const uploaded = await storagePut(
-        `products/product-${Date.now()}-${randomUUID()}`,
-        Buffer.from(match[2], "base64"),
-        match[1]
-      );
+            const uploaded = await storagePut(
+              `products/product-${Date.now()}-${randomUUID()}`,
+              Buffer.from(match[2], "base64"),
+              match[1]
+            );
 
-      imageUrl = uploaded.url;
-    }
+            imageUrl = uploaded.url;
+          }
 
-    return createProduct({
-      ...productInput,
-      price: priceUsdCents,
-      imageUrl,
-    });
-  }),
-update: adminProcedure
-  .input(
-    z.object({
-      id: z.number().int().positive(),
-      name: z.string().min(2).max(180).optional(),
-      category: z.string().min(2).max(80).optional(),
-      description: z.string().max(2000).optional(),
-      priceUsdCents: z.number().int().nonnegative().optional(),
-      oldPrice: z.number().int().nonnegative().optional(),
-      stock: z.number().int().nonnegative().optional(),
-      isDigital: z.boolean().optional(),
-      tag: z.string().max(60).optional(),
-      imageUrl: z.string().url().nullable().optional(),
-    })
-  )
-  .mutation(async ({ input }) => {
-    const { id, priceUsdCents, ...changes } = input;
+          return createProduct({
+            ...productInput,
+            price: priceUsdCents,
+            imageUrl,
+          });
+        }),
 
-    await updateProduct(id, {
-      ...changes,
-      ...(priceUsdCents !== undefined
-        ? { price: priceUsdCents }
-        : {}),
-    });
+      update: adminProcedure
+        .input(
+          z.object({
+            id: z.number().int().positive(),
+            name: z.string().min(2).max(180).optional(),
+            category: z.string().min(2).max(80).optional(),
+            description: z.string().max(2000).optional(),
+            priceUsdCents: z.number().int().nonnegative().optional(),
+            oldPrice: z.number().int().nonnegative().optional(),
+            stock: z.number().int().nonnegative().optional(),
+            isDigital: z.boolean().optional(),
+            tag: z.string().max(60).optional(),
+            imageUrl: z.string().url().nullable().optional(),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const { id, priceUsdCents, ...changes } = input;
 
-        return { success: true };
-  }),
+          await updateProduct(id, {
+            ...changes,
+            ...(priceUsdCents !== undefined
+              ? { price: priceUsdCents }
+              : {}),
+          });
 
+          return { success: true };
+        }),
       delete: adminProcedure
         .input(z.object({ id: z.number().int().positive() }))
         .mutation(async ({ input }) => {
