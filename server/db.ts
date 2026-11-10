@@ -810,4 +810,3 @@ export async function finalizeSupplierOrder(
       })
       .where(eq(orders.id, id));
   }
-      }
