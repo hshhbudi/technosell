@@ -22,13 +22,15 @@ import {
   listApprovedSupplierProducts,
   listCustomerOrders,
   listOrders,
-  listProducts,
   spendCustomerBalance,
   transferOwnership,
   updateCustomerPassword,
   updateOrderStatus,
   updateProduct,
   updateSupplierOrder,
+  createCustomer,
+  getCustomerByEmail,
+  getCustomerById,
 } from "./db";
 
 import { z } from "zod";
@@ -41,7 +43,6 @@ import {
 } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { parse as parseCookie } from "cookie";
-import { createCustomer, getCustomerByEmail, getCustomerById } from "./db";
 import { storagePut } from "./storage";
 import { getFast4TopProfile } from "./fast4top";
 import { dispatchFast4TopOrder } from "./fast4topWorker";
@@ -736,7 +737,7 @@ export const appRouter = router({
               /^data:(image\/(?:png|jpe?g|webp|gif));base64,([A-Za-z0-9+/=]+)$/
             );
 
-                        if (!match) {
+            if (!match) {
               throw new TRPCError({
                 code: "BAD_REQUEST",
                 message:
@@ -753,7 +754,7 @@ export const appRouter = router({
             imageUrl = uploaded.url;
           }
 
-          await createProduct({
+          return createProduct({
             ...productInput,
             imageUrl,
           });
@@ -819,3 +820,5 @@ export const appRouter = router({
     }),
   }),
 });
+
+export type AppRouter = typeof appRouter;
