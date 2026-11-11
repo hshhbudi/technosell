@@ -135,6 +135,7 @@ export const supplierProducts = mysqlTable(
     name: varchar("name", { length: 255 }).notNull(),
     category: varchar("category", { length: 100 }),
     subcategory: varchar("subcategory", { length: 100 }),
+    storeSection: varchar("storeSection", { length: 50 }),
 
     // Original supplier price in USD cents
     supplierPriceCents: int("supplierPriceCents").notNull(),
