@@ -580,6 +580,21 @@ export async function setSupplierProductApproval(
   return getSupplierProductById(id);
 }
 
+export async function setSupplierCategoryEnabled(
+  categoryName: string,
+  enabled: boolean
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  await db
+    .update(supplierProducts)
+    .set(enabled ? { approved: true, enabled: true } : { enabled: false })
+    .where(eq(supplierProducts.subcategory, categoryName));
+
+  return { category: categoryName, enabled };
+}
+
 export async function setSupplierProductEnabled(
   id: number,
   enabled: boolean
