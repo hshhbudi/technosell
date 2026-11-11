@@ -120,20 +120,6 @@ export default function Home() {
   const [lightMode, setLightMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const customerNotifications = (customerOrdersQuery.data ?? []).slice(0, 8);
-  const customerNotificationCount = customerNotifications.filter((order) =>
-    order.paymentStatus === "pending" ||
-    order.executionStatus === "completed" ||
-    order.executionStatus === "failed" ||
-    order.paymentStatus === "rejected"
-  ).length;
-  const notificationText = (order: (typeof customerNotifications)[number]) => {
-    if (order.paymentStatus === "rejected" || order.executionStatus === "failed") return "تعذر تنفيذ الطلب أو تم رفض الدفع";
-    if (order.executionStatus === "completed") return "اكتمل طلبك بنجاح";
-    if (order.paymentStatus === "confirmed") return "تم تأكيد الدفع والطلب قيد المعالجة";
-    return "طلبك وصل وينتظر مراجعة الدفع";
-  };
-
   const directTopup = trpc.customer.directTopup.useMutation({
     onSuccess: async () => {
       setSelected(null);
@@ -143,7 +129,7 @@ export default function Home() {
       await customerQuery.refetch();
 
       setToast(
-        "تم إرسال طلب الشحن إلى Fast4Top؛ تابع حالته من السجل"
+        "تم إرسال طلب الشحن إلى Fast4Top؛ لمتابعة الحالة تواصل معنا على رقم الدعم"
       );
 
       setTimeout(() => setToast(""), 3200);
