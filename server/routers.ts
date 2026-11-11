@@ -186,7 +186,9 @@ export const appRouter = router({
       } as const;
     }),
   }),
-
+  products: router({
+    list: publicProcedure.query(() => listProducts()),
+  }),
   adminLocal: router({
     me: publicProcedure.query(({ ctx }) =>
       ctx.user?.openId === "local-admin" ? ctx.user : null
