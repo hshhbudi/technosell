@@ -263,7 +263,7 @@ export default function Home() {
     stock: p.stock,
 
     tag: p.tag ?? undefined,
-    description: p.description ?? "منتج من Techno Sell",
+    description: p.description ?? "منتج من متجر رصيد",
     imageUrl: p.imageUrl,
 
     accent:
@@ -449,10 +449,10 @@ export default function Home() {
     >
       <div className="legacy-topline">
         <span>
-          <Sparkles size={14} /> شحن مباشر وآمن
+          <Sparkles size={14} /> شحن مباشر وموثوق
         </span>
 
-        <b>Techno Sell</b>
+        <b>رصيد</b>
 
         <span>
           {customerQuery.data
@@ -463,12 +463,12 @@ export default function Home() {
 
       <header className="legacy-header">
         <Link href="/" className="legacy-logo">
-          <span className="legacy-logo-mark">TS</span>
+          <span className="legacy-logo-mark">ر</span>
 
           <span>
-            Techno<strong>Sell</strong>
+            رصيد<strong> ✦</strong>
             <small>
-              متجر الشحن والهواتف والإكسسوارات
+              متجر الألعاب والتطبيقات والهواتف والإكسسوارات
             </small>
           </span>
         </Link>
@@ -608,7 +608,7 @@ export default function Home() {
         <section className="legacy-hero">
           <div className="legacy-hero-copy">
             <span className="legacy-kicker">
-              TECHNO SELL / DIRECT TOPUP
+              رصيد / متجر رقمي متكامل
             </span>
 
             <h1>
@@ -644,7 +644,7 @@ export default function Home() {
             <div className="hero-glow" />
 
             <div className="hero-device">
-              <div className="device-brand">TS / DIRECT</div>
+              <div className="device-brand">RASEED / رصيد</div>
 
               <div className="hero-icons">
                 <Gamepad2 />
@@ -665,7 +665,7 @@ export default function Home() {
         </section>
 
         <section className="store-banner-wrap">
-          <img src="/store-banner.jpg" alt="Techno Sell" />
+          
         </section>
 
         <section className="legacy-category-row">
@@ -948,9 +948,9 @@ export default function Home() {
       {toast && <div className="legacy-toast">{toast}</div>}
 
       <footer className="legacy-footer">
-        <strong>Techno Sell</strong>
-        <span>متجرك للشحن والهواتف والإكسسوارات</span>
-        <small>© {new Date().getFullYear()} Techno Sell</small>
+        <strong>رصيد</strong>
+        <span>كل احتياجاتك الرقمية والتقنية في مكان واحد</span>
+        <small>تواصل: <a href="tel:+994408440648">+994408440648</a> · © {new Date().getFullYear()} رصيد</small>
       </footer>
     </div>
   );
