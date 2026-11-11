@@ -8,7 +8,7 @@ import { trpc } from "@/lib/trpc";
 const money=(cents:number)=>`$ ${(cents/100).toFixed(2)}`;
 const isSyriaTopupOrder=(items:string)=>items.includes('"category":"شحن ألعاب"')||items.includes('"category":"شحن تطبيقات"');
 const isWalletTopupOrder=(items:string)=>items.includes('"category":"تعبئة الرصيد"');
-const isGameProduct=(category:string,name="",subcategory="")=>category.includes("ألعاب")||/(pubg|ببجي|free\s*fire|فري\s*فاير|jawaker|جواكر)/i.test(`${name} ${subcategory}`);
+const isGameProduct=(category:string,name="",subcategory="")=>/(ألعاب|العاب|game|games|gaming)/i.test(category)||/(pubg|ببجي|free\s*fire|فري\s*فاير|jawaker|جواكر|call\s*of\s*duty|mobile\s*legends|mlbb|roblox|minecraft|fortnite|steam|playstation|xbox|valorant|genshin)/i.test(`${name} ${subcategory}`);\nconst isLiveAppProduct=(category:string,name="",subcategory="")=>/(haya|kwai|likee|bigo|tiktok|poppo|mico|chamet|yalla\s*live|buzzcast|liveme|nonolive|uplive|live\s*stream|تطبيق|app|application|social|بث\s*مباشر)/i.test(`${category} ${name} ${subcategory}`);
 
 type FormState={name:string;category:string;description:string;priceUsd:string;oldPrice:string;stock:string;isDigital:boolean;tag:string;imageData:string};
 const emptyForm:FormState={name:"",category:"التطبيقات",description:"",priceUsd:"",oldPrice:"",stock:"0",isDigital:true,tag:"",imageData:""};
@@ -114,7 +114,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   if (!auth.user) return <div className="admin-gate"><form className="gate-card" onSubmit={e=>{e.preventDefault();localLogin.mutate({email:localEmail,password:localPassword})}}><span className="brand-mark">TS</span><h1>دخول صاحب المتجر</h1><p>دخول مستقل عن Google وManus. استخدم بيانات المالك التي تم إعدادها بأمان.</p><label className="admin-login-field">البريد الإلكتروني<input required type="email" value={localEmail} onChange={e=>setLocalEmail(e.target.value)} placeholder="owner@example.com"/></label><label className="admin-login-field">كلمة المرور<input required type="password" value={localPassword} onChange={e=>setLocalPassword(e.target.value)} placeholder="كلمة المرور"/></label>{localLogin.error&&<div className="form-error">{localLogin.error.message}</div>}<button className="primary-btn full" disabled={localLogin.isPending}>{localLogin.isPending?"جارٍ تسجيل الدخول...":"تسجيل الدخول كمالك"} <ArrowRight size={17}/></button></form></div>;
   if (auth.user.role !== "admin" || access.isError) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>تجهيز حساب المالك</h1><p>إذا كنت تستخدم الحساب المنفصل الذي تريد تخصيصه للمتجر، اضغط الزر مرة واحدة لاعتماده كمالك. لا تستخدم حساب الزبائن أو حساب MySon.</p><button className="primary-btn" onClick={()=>claim.mutate()} disabled={claim.isPending}>{claim.isPending?"جارٍ اعتماد الحساب...":"اعتماد هذا الحساب كمالك"} <ArrowRight size={17}/></button><Link href="/" className="back-link gate-back">العودة إلى المتجر</Link></div></div>;
   const products=productsQuery.data??[];
-  const supplierProducts=(supplierAdminCatalogQuery.data?.products??[]).filter(p => p.category === "الألعاب" || p.category === "التطبيقات");
+  const supplierProducts=(supplierAdminCatalogQuery.data?.products??[]).filter(p => isGameProduct(p.category ?? "",p.name,p.subcategory ?? "") || isLiveAppProduct(p.category ?? "",p.name,p.subcategory ?? ""));
   const supplierCategories = Array.from(new Set(supplierProducts.map(p => p.subcategory).filter((name): name is string => Boolean(name)))).sort((a,b)=>a.localeCompare(b,"ar"));
   const categoryOverrides = categoryOverridesQuery.data ?? [];
   const orders=ordersQuery.data??[];
@@ -182,7 +182,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
         </div>
       </div>
       <div className="supplier-products-grid">
-        {supplierProducts.filter(p => p.category === "الألعاب" || p.category === "التطبيقات").map(p => (
+        {supplierProducts.map(p => (
           <div className="supplier-mini-card" key={`${p.externalId}-${p.name}`}>
             {p.imageUrl ? <img src={p.imageUrl} alt={p.name}/> : <div className="product-mini"><Box size={18}/></div>}
             <div>
