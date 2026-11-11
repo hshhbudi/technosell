@@ -4,6 +4,7 @@ import {
   json,
   mysqlEnum,
   mysqlTable,
+  mediumtext,
   text,
   timestamp,
   varchar,
@@ -187,3 +188,18 @@ export type SupplierCategory = typeof supplierCategories.$inferSelect;
 
 export type SupplierProduct = typeof supplierProducts.$inferSelect;
 export type InsertSupplierProduct = typeof supplierProducts.$inferInsert;
+
+
+/**
+ * Persistent uploads stored in the existing MySQL database.
+ * This replaces the retired Manus/Forge object storage dependency.
+ */
+export const mediaFiles = mysqlTable("media_files", {
+  id: int("id").autoincrement().primaryKey(),
+  storageKey: varchar("storageKey", { length: 255 }).notNull().unique(),
+  contentType: varchar("contentType", { length: 100 }).notNull(),
+  dataBase64: mediumtext("dataBase64").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type MediaFile = typeof mediaFiles.$inferSelect;
