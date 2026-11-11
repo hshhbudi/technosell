@@ -58,8 +58,8 @@ const isGameProduct = (
   name = "",
   subcategory = ""
 ) =>
-  category.includes("ألعاب") ||
-  /(pubg|ببجي|free\s*fire|فري\s*فاير|jawaker|جواكر)/i.test(
+  /(ألعاب|العاب|game|games)/i.test(category) ||
+  /(pubg|ببجي|free\s*fire|فري\s*فاير|jawaker|جواكر|call\s*of\s*duty|كول\s*اوف\s*ديوتي|mobile\s*legends|mlbb|roblox|minecraft|clash\s*of\s*clans|efootball|فيفا|fortnite|steam|playstation|xbox)/i.test(
     `${name} ${subcategory}`
   );
 
@@ -168,7 +168,9 @@ export default function Home() {
     category: (
       isGameProduct(category, p.name, subcategory)
         ? "الألعاب"
-        : category || "المنتجات"
+        : /(تطبيق|app|application|social)/i.test(category)
+          ? "التطبيقات"
+          : "المنتجات"
     ) as StoreProduct["category"],
 
     subcategory: isFreeFireProduct(p.name, subcategory)
