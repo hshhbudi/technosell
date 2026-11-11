@@ -11,6 +11,7 @@ import {
   Moon,
   Package,
   Search,
+  Settings,
   Smartphone,
   Sparkles,
   Sun,
@@ -124,6 +125,7 @@ export default function Home() {
   const [authOpen, setAuthOpen] = useState(false);
   const [lightMode, setLightMode] = useState(false);
   const [noticeOpen, setNoticeOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const customerOrdersQuery = trpc.customer.orders.useQuery(undefined, {
     enabled: Boolean(customerQuery.data),
@@ -382,6 +384,18 @@ export default function Home() {
       className={`legacy-store ${lightMode ? "theme-light" : ""}`}
       dir="rtl"
     >
+      <aside className="raseed-side-rail" aria-label="اختصارات الحساب">
+        <button className="raseed-rail-balance" onClick={() => setAuthOpen(true)} title="رصيد الحساب"><WalletCards size={19}/><span>{customerQuery.data ? money(customerQuery.data.balanceCents) : "حسابي"}</span></button>
+        <button onClick={() => customerQuery.data ? setHistoryOpen(true) : setAuthOpen(true)} title="طلباتي"><ClipboardList size={19}/><small>طلباتي</small></button>
+        <button onClick={() => {setNoticeOpen(v=>!v);setSettingsOpen(false);}} title="الإشعارات"><Bell size={19}/><small>الإشعارات</small>{customerNotificationCount>0&&<i>{customerNotificationCount}</i>}</button>
+        <button onClick={() => setSettingsOpen(v=>!v)} title="الإعدادات"><Settings size={20}/><small>الإعدادات</small></button>
+        {settingsOpen && <div className="raseed-settings-popover"><strong>إعدادات رصيد</strong>
+          <button onClick={() => {setAuthOpen(true);setSettingsOpen(false);}}><WalletCards size={16}/> الحساب والمحفظة</button>
+          <button onClick={() => {setHistoryOpen(true);setSettingsOpen(false);}}><ClipboardList size={16}/> سجل الطلبات</button>
+          <button onClick={() => {setLightMode(v=>!v);setSettingsOpen(false);}}>{lightMode?<Sun size={16}/>:<Moon size={16}/>} تغيير المظهر</button>
+          <button onClick={() => {setNoticeOpen(true);setSettingsOpen(false);}}><Bell size={16}/> مركز الإشعارات</button>
+        </div>}
+      </aside>
       <header className="legacy-header">
         <Link href="/" className="legacy-logo">
           <span className="legacy-logo-mark">ر</span>
