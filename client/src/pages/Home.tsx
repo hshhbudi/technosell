@@ -174,8 +174,13 @@ export default function Home() {
 
   // منتجات المورد المعتمدة والمفعّلة من قاعدة البيانات
   const supplierProducts: StoreProduct[] = (
-    supplierQuery.data?.products ?? []
-  ).map((p) => ({
+  supplierQuery.data?.products ?? []
+).map((p) => {
+  const category = p.category ?? "";
+  const subcategory = p.subcategory ?? "";
+  const description = p.description ?? "";
+
+  return {
     id: p.id,
     externalId: String(p.externalId),
     supplierDbId: p.id,
@@ -183,64 +188,51 @@ export default function Home() {
     name: p.name,
 
     category: (
-      isGameProduct(p.category, p.name, p.subcategory)
+      isGameProduct(category, p.name, subcategory)
         ? "الألعاب"
-        : p.category
+        : category || "المنتجات"
     ) as StoreProduct["category"],
 
-    subcategory: isFreeFireProduct(p.name, p.subcategory)
-      ? freeFireSection(
-          p.name,
-          p.subcategory,
-          p.description
-        )
-      : /pubg|ببجي/i.test(`${p.name} ${p.subcategory}`)
+    subcategory: isFreeFireProduct(p.name, subcategory)
+      ? freeFireSection(p.name, subcategory, description)
+      : /pubg|ببجي/i.test(`${p.name} ${subcategory}`)
         ? "PUBG"
-        : p.subcategory,
+        : subcategory,
 
     delivery:
-      isFreeFireProduct(p.name, p.subcategory) &&
-      isCodeProduct(p.name, p.subcategory, p.description)
+      isFreeFireProduct(p.name, subcategory) &&
+      isCodeProduct(p.name, subcategory, description)
         ? "code"
         : "id",
 
-    // سعر البيع المحسوب في قاعدة البيانات مع نسبة الربح
     price: p.sellingPriceCents,
-
     stock: p.available ? 99 : 0,
 
-    description: p.description,
+    description,
     imageUrl: p.imageUrl,
 
-    accent: isGameProduct(
-      p.category,
-      p.name,
-      p.subcategory
-    )
+    accent: isGameProduct(category, p.name, subcategory)
       ? "blue"
       : "pink",
 
-    icon: isGameProduct(
-      p.category,
-      p.name,
-      p.subcategory
-    )
+    icon: isGameProduct(category, p.name, subcategory)
       ? "game"
       : "app",
 
     quantity: p.quantity,
     requires: p.requires,
-  }));
+  };
+});
 
   // إخفاء منتجات الأكواد المحظورة من قسم الشحن المباشر
-  const supplierOnlyIdProducts = supplierProducts.filter(
-    (product) =>
-      !isBlockedCodeProduct(
-        product.name,
-        product.subcategory,
-        product.description
-      )
-  );
+  const supplierOnlyProducts = supplierProducts.filter(
+  (product) =>
+    !isBlockedCodeProduct(
+      product.name,
+      product.subcategory ?? "",
+      product.description ?? ""
+    )
+);
 
   // المنتجات اليدوية الموجودة في المتجر
   const localProducts: StoreProduct[] = (
