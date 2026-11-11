@@ -4,7 +4,10 @@ import { trpc } from "@/lib/trpc";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { firebaseAuth, firebaseEnabled } from "@/firebase";
 
-type Props = { onClose: () => void };
+type Props = {
+  onClose: () => void;
+  onSuccess?: () => void | Promise<void>;
+};
 type CustomerOrder = { id:number; orderNumber:string; items:string; total:number; paymentStatus:"pending"|"confirmed"|"rejected"; executionStatus:"pending"|"manual_processing"|"completed"|"failed"; ownerNote:string|null; supplierOrderId?:string|null; supplierStatus?:string|null; supplierAttempts?:number; createdAt:string|Date };
 const orderItems=(items:string):Array<{name?:string;targetId?:string;quantity?:string|number;price?:number;category?:string}>=>{try{return JSON.parse(items)||[]}catch{return []}};
 const orderTitle=(items:string)=>orderItems(items)[0]?.name||"عملية شحن";
