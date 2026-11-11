@@ -19,6 +19,7 @@ import {
   getSupplierProductById,
   grantAdminByEmail,
   listAllProducts,
+listProducts,
   listApprovedSupplierProducts,
   listCustomerOrders,
   listOrders,
