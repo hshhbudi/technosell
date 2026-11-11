@@ -314,3 +314,28 @@
  .legacy-footer strong{grid-column:1/-1}
 }
 @media(max-width:380px){.legacy-grid{gap:8px}.legacy-card-info{padding:9px}.legacy-card-info h3{font-size:11px}.legacy-card-bottom strong{font-size:14px}}
+
+/* Raseed owner dashboard refinements */
+.admin-shell{min-height:100vh;background-color:#12091f!important}
+.admin-topbar{min-height:72px;padding:12px clamp(14px,3vw,34px)!important;box-shadow:0 8px 28px #05020b66}
+.admin-brand{gap:10px!important;font-weight:900!important;color:#f4d58d!important}
+.admin-brand .brand-mark{display:grid;place-items:center;width:40px;height:40px;border-radius:13px;background:linear-gradient(145deg,#f5d78f,#a8732c);color:#251331;font-size:23px;font-weight:900}
+.admin-phone a{color:#f2ce82!important;text-decoration:none}
+.admin-main{max-width:1420px;margin-inline:auto;padding:24px!important}
+.admin-heading{color:#fff}
+.admin-heading h1,.admin-heading h2{font-weight:900;letter-spacing:-.3px}
+.admin-section-tabs{background:#1b102a!important;border:1px solid #674c6e!important;border-radius:17px!important;padding:8px!important;gap:8px!important}
+.admin-section-tabs button{border:1px solid #62496e!important;border-radius:12px!important;padding:12px 14px!important}
+.admin-section-tabs button.active,.admin-section-tabs button[aria-selected=true]{background:linear-gradient(135deg,#f0d18a,#b77d37)!important;color:#28152e!important}
+.stats-grid{gap:15px!important}
+.stat-card{background:linear-gradient(150deg,#2c1940,#1b1029)!important;border:1px solid #6b4d70!important;border-radius:17px!important;box-shadow:0 12px 28px #05020b55!important;color:#f4eaf9!important}
+.stat-card>strong{color:#f2cf83!important}
+.stat-card svg{color:#e6bd6e!important}
+.admin-main .panel,.admin-main .panel-card,.admin-main .dashboard-panel,.admin-main .product-manager,.admin-main .supplier-manager{background:#211331!important;border-color:#694d73!important;color:#f7effb!important;border-radius:16px!important}
+.admin-main h2,.admin-main h3{color:#f3d18b}
+.admin-main table{color:#f3eafa}
+.admin-main th{color:#f1ce83}
+.admin-main input:focus,.admin-main select:focus,.admin-main textarea:focus{outline:2px solid #c99a52!important;outline-offset:1px}
+.admin-notifications{background:#241532!important;border:1px solid #a47a42!important;color:#fff!important;border-radius:15px!important}
+.admin-notifications strong{color:#f1ce83}
+@media(max-width:700px){.admin-main{padding:14px!important}.admin-topbar{flex-wrap:wrap;gap:10px}.admin-phone{font-size:10px}}
