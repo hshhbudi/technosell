@@ -509,7 +509,6 @@ export async function syncSupplierProducts(
             })
             .from(supplierProducts)
             .where(eq(supplierProducts.subcategory, item.subcategory))
-            .limit(1)
         : [];
       const categoryAlreadyEnabled = categoryProducts.some(
         (product) => product.approved && product.enabled
