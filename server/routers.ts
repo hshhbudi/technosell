@@ -21,6 +21,9 @@ import {
   listAllProducts,
 listProducts,
   listApprovedSupplierProducts,
+  listAllSupplierProducts,
+  setSupplierProductApproval,
+  setSupplierProductEnabled,
   listCustomerOrders,
   listOrders,
   spendCustomerBalance,
@@ -614,8 +617,24 @@ export const appRouter = router({
       }
     }),
 sync: adminProcedure.mutation(async () => {
-  return await syncFast4TopCatalog();
-}),
+      return await syncFast4TopCatalog();
+    }),
+    adminCatalog: adminProcedure.query(async () => {
+      return {
+        connected: true,
+        products: await listAllSupplierProducts(),
+      };
+    }),
+    setApproval: adminProcedure
+      .input(z.object({ id: z.number().int().positive(), approved: z.boolean() }))
+      .mutation(async ({ input }) => {
+        return await setSupplierProductApproval(input.id, input.approved);
+      }),
+    setEnabled: adminProcedure
+      .input(z.object({ id: z.number().int().positive(), enabled: z.boolean() }))
+      .mutation(async ({ input }) => {
+        return await setSupplierProductEnabled(input.id, input.enabled);
+      }),
     catalog: publicProcedure.query(async () => {
       try {
         return {
