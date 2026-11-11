@@ -117,6 +117,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   const products=productsQuery.data??[];
   const supplierProducts=(supplierAdminCatalogQuery.data?.products??[]).filter(p => isGameProduct(p.category ?? "",p.name,p.subcategory ?? "") || isLiveAppProduct(p.category ?? "",p.name,p.subcategory ?? ""));
   const supplierCategories = Array.from(new Set(supplierProducts.map(p => p.subcategory).filter((name): name is string => Boolean(name)))).sort((a,b)=>a.localeCompare(b,"ar"));
+  const sortedSupplierProducts = supplierProducts.slice().sort((left,right)=>{if(productSort==="name-asc")return left.name.localeCompare(right.name,"ar");if(productSort==="name-desc")return right.name.localeCompare(left.name,"ar");if(productSort==="price-asc")return left.sellingPriceCents-right.sellingPriceCents;if(productSort==="price-desc")return right.sellingPriceCents-left.sellingPriceCents;return 0;});
   const categoryOverrides = categoryOverridesQuery.data ?? [];
   const orders=ordersQuery.data??[];
   const visibleProducts=products.filter(p=>activeSection==="games"?isGameProduct(p.category,p.name,""):activeSection==="apps"?p.category.includes("تطبيقات"):activeSection==="offers"?Boolean(p.tag||p.oldPrice):activeSection==="products"?["الهواتف","الإكسسوارات","المنتجات"].includes(p.category):true).slice().sort((left,right)=>{if(productSort==="name-asc")return left.name.localeCompare(right.name,"ar");if(productSort==="name-desc")return right.name.localeCompare(left.name,"ar");const lp=Number(left.priceUsdCents??left.price??0),rp=Number(right.priceUsdCents??right.price??0);if(productSort==="price-asc")return lp-rp;if(productSort==="price-desc")return rp-lp;return 0;});
@@ -183,7 +184,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
         </div>
       </div>
       <div className="supplier-products-grid">
-        {supplierProducts.map(p => (
+        {sortedSupplierProducts.map(p => (
           <div className="supplier-mini-card" key={`${p.externalId}-${p.name}`}>
             {p.imageUrl ? <img src={p.imageUrl} alt={p.name}/> : <div className="product-mini"><Box size={18}/></div>}
             <div>
