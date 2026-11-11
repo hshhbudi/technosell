@@ -59,10 +59,30 @@ export default function Admin() {
   const claim = trpc.admin.claim.useMutation({ onSuccess: (result) => { if (result.claimed) window.location.reload(); } });
   const productsQuery = trpc.admin.products.list.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
   const supplierCatalogQuery = trpc.supplier.catalog.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), staleTime: 60_000, retry: false });
+  const supplierAdminCatalogQuery = trpc.supplier.adminCatalog.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), staleTime: 30_000, retry: false });
   const supplierProfileQuery = trpc.supplier.profile.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), refetchInterval: 60_000, retry: false });
   const ordersQuery = trpc.admin.orders.list.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
   const updateOrder = trpc.admin.orders.updateStatus.useMutation({ onSuccess: ()=>ordersQuery.refetch() });
   const utils = trpc.useUtils();
+  const syncSupplier = trpc.supplier.sync.useMutation({
+    onSuccess: async (result) => {
+      setNotice(`اكتملت مزامنة Fast4Top: ${result.inserted ?? 0} جديد، ${result.updated ?? 0} محدّث`);
+      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
+    },
+    onError: (err) => setError(err.message || "تعذرت مزامنة كتالوج Fast4Top"),
+  });
+  const setSupplierApproval = trpc.supplier.setApproval.useMutation({
+    onSuccess: async () => {
+      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
+    },
+    onError: (err) => setError(err.message || "تعذر تحديث اعتماد المنتج"),
+  });
+  const setSupplierEnabled = trpc.supplier.setEnabled.useMutation({
+    onSuccess: async () => {
+      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
+    },
+    onError: (err) => setError(err.message || "تعذر تحديث حالة المنتج"),
+  });
   const createProduct = trpc.admin.products.create.useMutation({ onSuccess: async()=>{ setForm(emptyForm); setFormOpen(false); setError(""); setNotice("تمت إضافة المنتج وظهر الآن في المتجر"); setTimeout(()=>setNotice(""),3500); await utils.admin.products.list.invalidate(); }, onError: (err)=>setError(err.message || "تعذر حفظ المنتج، حاول مرة أخرى") });
 
 const updateProduct = trpc.admin.products.update.useMutation({ onSuccess: async()=>{ setForm(emptyForm); setFormOpen(false); setError(""); await utils.admin.products.list.invalidate(); }, onError: (err)=>setError(err.message || "تعذر تعديل المنتج، حاول مرة أخرى") });
@@ -75,7 +95,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   if (!auth.user) return <div className="admin-gate"><form className="gate-card" onSubmit={e=>{e.preventDefault();localLogin.mutate({email:localEmail,password:localPassword})}}><span className="brand-mark">TS</span><h1>دخول صاحب المتجر</h1><p>دخول مستقل عن Google وManus. استخدم بيانات المالك التي تم إعدادها بأمان.</p><label className="admin-login-field">البريد الإلكتروني<input required type="email" value={localEmail} onChange={e=>setLocalEmail(e.target.value)} placeholder="owner@example.com"/></label><label className="admin-login-field">كلمة المرور<input required type="password" value={localPassword} onChange={e=>setLocalPassword(e.target.value)} placeholder="كلمة المرور"/></label>{localLogin.error&&<div className="form-error">{localLogin.error.message}</div>}<button className="primary-btn full" disabled={localLogin.isPending}>{localLogin.isPending?"جارٍ تسجيل الدخول...":"تسجيل الدخول كمالك"} <ArrowRight size={17}/></button></form></div>;
   if (auth.user.role !== "admin" || access.isError) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>تجهيز حساب المالك</h1><p>إذا كنت تستخدم الحساب المنفصل الذي تريد تخصيصه للمتجر، اضغط الزر مرة واحدة لاعتماده كمالك. لا تستخدم حساب الزبائن أو حساب MySon.</p><button className="primary-btn" onClick={()=>claim.mutate()} disabled={claim.isPending}>{claim.isPending?"جارٍ اعتماد الحساب...":"اعتماد هذا الحساب كمالك"} <ArrowRight size={17}/></button><Link href="/" className="back-link gate-back">العودة إلى المتجر</Link></div></div>;
   const products=productsQuery.data??[];
-  const supplierProducts=supplierCatalogQuery.data?.products??[];
+  const supplierProducts=supplierAdminCatalogQuery.data?.products??[];
   const orders=ordersQuery.data??[];
   const visibleProducts=products.filter(p=>activeSection==="games"?isGameProduct(p.category,p.name,""):activeSection==="apps"?p.category.includes("تطبيقات"):activeSection==="offers"?Boolean(p.tag||p.oldPrice):activeSection==="products"?["الهواتف","الإكسسوارات","المنتجات"].includes(p.category):true);
   const confirmedOrders=orders.filter(o=>o.paymentStatus==="confirmed");
@@ -102,11 +122,12 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
       <h2>كتالوج Fast4Top المتصل</h2>
       <span>كل منتجات الألعاب والتطبيقات من المزوّد مع صورها وتصنيفاتها</span>
     </div>
-    <span className="status-pill cyan">
-      {supplierCatalogQuery.data?.connected
-        ? `${supplierProducts.length} منتج متصل`
-        : "جاري الاتصال"}
-    </span>
+    <div className="admin-heading-actions">
+      <span className="status-pill cyan">{supplierAdminCatalogQuery.isLoading ? "جاري التحميل" : `${supplierProducts.length} منتج في قاعدة البيانات`}</span>
+      <button className="secondary-btn" onClick={() => syncSupplier.mutate()} disabled={syncSupplier.isPending}>
+        <RefreshCw size={15}/> {syncSupplier.isPending ? "جارٍ التحديث..." : "مزامنة Fast4Top"}
+      </button>
+    </div>
   </div>
   {supplierProducts.length === 0 ? (
     <div className="manager-note">
@@ -142,6 +163,15 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
               <strong>{p.name}</strong>
               <small>{p.category ?? "غير مصنف"} · {p.subcategory ?? ""}</small>
               <b>{money(p.sellingPriceCents)}</b>
+              <small>الاعتماد: {p.approved ? "معتمد" : "بانتظار الاعتماد"} · العرض: {p.enabled ? "مفعّل" : "متوقف"} · التوفر: {p.available ? "متاح" : "غير متاح"}</small>
+              <div className="admin-heading-actions">
+                <button className="text-btn" onClick={() => setSupplierApproval.mutate({id:p.id,approved:!p.approved})} disabled={setSupplierApproval.isPending}>
+                  {p.approved ? "إلغاء الاعتماد" : "اعتماد المنتج"}
+                </button>
+                <button className="text-btn" onClick={() => setSupplierEnabled.mutate({id:p.id,enabled:!p.enabled})} disabled={setSupplierEnabled.isPending || (!p.approved && !p.enabled)}>
+                  {p.enabled ? "إيقاف العرض" : "تفعيل العرض"}
+                </button>
+              </div>
             </div>
           </div>
         ))}
