@@ -175,5 +175,15 @@ export const supplierProducts = mysqlTable(
   })
 );
 
+export const supplierCategories = mysqlTable("supplier_categories", {
+  id: int("id").autoincrement().primaryKey(),
+  sourceName: varchar("sourceName", { length: 255 }).notNull().unique(),
+  displayName: varchar("displayName", { length: 255 }).notNull(),
+  imageUrl: text("imageUrl"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SupplierCategory = typeof supplierCategories.$inferSelect;
+
 export type SupplierProduct = typeof supplierProducts.$inferSelect;
 export type InsertSupplierProduct = typeof supplierProducts.$inferInsert;
