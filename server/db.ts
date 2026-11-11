@@ -395,6 +395,16 @@ export async function listSupplierProducts() {
     .orderBy(desc(supplierProducts.createdAt));
 }
 
+export async function listAllSupplierProducts() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(supplierProducts)
+    .orderBy(desc(supplierProducts.createdAt));
+}
+
 export async function listApprovedSupplierProducts() {
   const db = await getDb();
   if (!db) return [];
