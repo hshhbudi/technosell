@@ -9,9 +9,6 @@ const money=(cents:number)=>`$ ${(cents/100).toFixed(2)}`;
 const isSyriaTopupOrder=(items:string)=>items.includes('"category":"شحن ألعاب"')||items.includes('"category":"شحن تطبيقات"');
 const isWalletTopupOrder=(items:string)=>items.includes('"category":"تعبئة الرصيد"');
 const isGameProduct=(category:string,name="",subcategory="")=>category.includes("ألعاب")||/(pubg|ببجي|free\s*fire|فري\s*فاير|jawaker|جواكر)/i.test(`${name} ${subcategory}`);
-const isFreeFireProduct=(name="",subcategory="")=>/(free\s*fire|فري\s*فاير)/i.test(`${name} ${subcategory}`);
-const isPubgProduct=(name="",subcategory="")=>/(pubg|ببجي)/i.test(`${name} ${subcategory}`);
-const isCodeProduct=(name="",subcategory="",description="")=>/(code|redeem|voucher|gift|كود|بطاقة|كرت)/i.test(`${name} ${subcategory} ${description}`);
 
 type FormState={name:string;category:string;description:string;priceUsd:string;oldPrice:string;stock:string;isDigital:boolean;tag:string;imageData:string};
 const emptyForm:FormState={name:"",category:"التطبيقات",description:"",priceUsd:"",oldPrice:"",stock:"0",isDigital:true,tag:"",imageData:""};
@@ -58,7 +55,6 @@ export default function Admin() {
   const access = trpc.admin.access.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
   const claim = trpc.admin.claim.useMutation({ onSuccess: (result) => { if (result.claimed) window.location.reload(); } });
   const productsQuery = trpc.admin.products.list.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
-  const supplierCatalogQuery = trpc.supplier.catalog.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), staleTime: 60_000, retry: false });
   const supplierAdminCatalogQuery = trpc.supplier.adminCatalog.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), staleTime: 30_000, retry: false });
   const supplierProfileQuery = trpc.supplier.profile.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), refetchInterval: 60_000, retry: false });
   const ordersQuery = trpc.admin.orders.list.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
