@@ -24,6 +24,7 @@ listProducts,
   listAllSupplierProducts,
   setSupplierProductApproval,
   setSupplierProductEnabled,
+  setSupplierCategoryEnabled,
   listCustomerOrders,
   listOrders,
   spendCustomerBalance,
@@ -634,6 +635,11 @@ sync: adminProcedure.mutation(async () => {
       .input(z.object({ id: z.number().int().positive(), enabled: z.boolean() }))
       .mutation(async ({ input }) => {
         return await setSupplierProductEnabled(input.id, input.enabled);
+      }),
+    setCategoryEnabled: adminProcedure
+      .input(z.object({ category: z.string().min(1).max(255), enabled: z.boolean() }))
+      .mutation(async ({ input }) => {
+        return await setSupplierCategoryEnabled(input.category, input.enabled);
       }),
     catalog: publicProcedure.query(async () => {
       try {
