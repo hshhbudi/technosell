@@ -106,6 +106,7 @@ export default function Home() {
   const supplierQuery = trpc.supplier.catalog.useQuery(undefined, {
     staleTime: 60_000,
   });
+  const supplierCategoryOverridesQuery = trpc.supplier.publicCategories.useQuery(undefined, { staleTime: 60_000 });
 
   const customerQuery = trpc.customer.me.useQuery();
 
@@ -170,6 +171,7 @@ export default function Home() {
   });
 
   // منتجات المورد المعتمدة والمفعّلة من قاعدة البيانات
+  const supplierCategoryOverrides = supplierCategoryOverridesQuery.data ?? [];
   const supplierProducts: StoreProduct[] = (
   supplierQuery.data?.products ?? []
 ).map((p) => {
@@ -192,11 +194,12 @@ export default function Home() {
           : "المنتجات"
     ) as StoreProduct["category"],
 
-    subcategory: isFreeFireProduct(p.name, subcategory)
-      ? freeFireSection(p.name, subcategory, description)
-      : /pubg|ببجي/i.test(`${p.name} ${subcategory}`)
-        ? "PUBG"
-        : subcategory,
+    subcategory: (() => {
+      const sourceName = isFreeFireProduct(p.name, subcategory)
+        ? freeFireSection(p.name, subcategory, description)
+        : /pubg|ببجي/i.test(`${p.name} ${subcategory}`) ? "PUBG" : subcategory;
+      return supplierCategoryOverrides.find(item => item.sourceName === sourceName)?.displayName || sourceName;
+    })(),
 
     delivery:
       isFreeFireProduct(p.name, subcategory) &&
@@ -588,7 +591,7 @@ export default function Home() {
             ) : customerNotifications.length ? (
               customerNotifications.map((order) => (
                 <div className="store-notification-item" key={order.id}>
-                  <b>{order.orderNumber}</b>
+                  <b>{(() => { try { const items=JSON.parse(order.items) as Array<{name?:string;quantity?:number}>; return items.map(item => `${item.quantity && item.quantity > 1 ? `${item.quantity} × ` : ""}${item.name || "طلبك"}`).join("، ") || order.orderNumber; } catch { return order.orderNumber; } })()}</b>
                   <p>{notificationText(order)}</p>
                   <small>{new Date(order.createdAt).toLocaleString("ar-SY")}</small>
                 </div>
@@ -923,9 +926,10 @@ export default function Home() {
             ) : shipmentHistory.data?.length ? (
               shipmentHistory.data.map((order) => (
                 <div className="legacy-history-item" key={order.id}>
-                  <strong>{order.orderNumber}</strong>
-                  <span>{order.executionStatus}</span>
-                  <small>{money(order.total)}</small>
+                  <strong>{(() => { try { const items=JSON.parse(order.items) as Array<{name?:string;quantity?:number;targetId?:string}>; return items.map(item => `${item.quantity && item.quantity > 1 ? `${item.quantity} × ` : ""}${item.name || "طلب من المتجر"}`).join("، ") || order.orderNumber; } catch { return order.orderNumber; } })()}</strong>
+                  <span>{order.executionStatus==="completed"?"مكتمل":order.executionStatus==="failed"?"فشل":order.executionStatus==="manual_processing"?"قيد المعالجة اليدوية":order.paymentStatus==="confirmed"?"قيد التنفيذ":"بانتظار تأكيد الدفع"}</span>
+                  <small>{order.orderNumber} · {money(order.total)}</small>
+                  <small>{new Date(order.createdAt).toLocaleString("ar-SY")}</small>
                 </div>
               ))
             ) : (
