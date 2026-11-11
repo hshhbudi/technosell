@@ -85,6 +85,13 @@
       "when": 1794436260000,
       "tag": "0011_database_media_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1794436320000,
+      "tag": "0012_supplier_store_section",
+      "breakpoints": true
     }
   ]
 }
