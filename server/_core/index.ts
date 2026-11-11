@@ -38,7 +38,13 @@ async function startServer() {
   const port = Number(process.env.PORT || "3000");
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Invalid PORT");
   server.on("error", error => { console.error("Server failed:", error.message); process.exit(1); });
-  startFast4TopWorker();
+  console.log("[Fast4Top] Worker startup hook reached");
+  try {
+    startFast4TopWorker();
+    console.log("[Fast4Top] Worker started; catalog sync was triggered");
+  } catch (error) {
+    console.error("[Fast4Top] Worker startup failed:", error instanceof Error ? error.message : error);
+  }
   server.listen(port, "0.0.0.0", () => console.log(`Server listening on port ${port}`));
 }
 
