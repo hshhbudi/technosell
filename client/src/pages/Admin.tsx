@@ -68,6 +68,13 @@ export default function Admin() {
     },
     onError: (err) => setError(err.message || "تعذرت مزامنة كتالوج Fast4Top"),
   });
+  const setSupplierStoreSection = trpc.supplier.setStoreSection.useMutation({
+    onSuccess: async () => {
+      setNotice("تم نقل المنتج إلى القسم المحدد");
+      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
+    },
+    onError: (err) => setError(err.message || "تعذر تغيير قسم المنتج"),
+  });
   const setSupplierApproval = trpc.supplier.setApproval.useMutation({
     onSuccess: async () => {
       await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
@@ -181,6 +188,12 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
             <div>
               <strong>{p.name}</strong>
               <small>{p.category ?? "غير مصنف"} · {p.subcategory ?? ""}</small>
+              <label className="supplier-section-picker">قسم المتجر
+                <select value={p.storeSection || (isGameProduct(p.category ?? "", p.name, p.subcategory ?? "") ? "الألعاب" : "التطبيقات")} onChange={e => setSupplierStoreSection.mutate({id:p.id,storeSection:e.target.value as "الألعاب" | "التطبيقات"})} disabled={setSupplierStoreSection.isPending}>
+                  <option value="الألعاب">الألعاب</option>
+                  <option value="التطبيقات">تطبيقات البث المباشر</option>
+                </select>
+              </label>
               <b>{money(p.sellingPriceCents)}</b>
               <small>الاعتماد: {p.approved ? "معتمد" : "بانتظار الاعتماد"} · العرض: {p.enabled ? "مفعّل" : "متوقف"} · التوفر: {p.available ? "متاح" : "غير متاح"}</small>
               <div className="admin-heading-actions">
