@@ -25,6 +25,8 @@ listProducts,
   setSupplierProductApproval,
   setSupplierProductEnabled,
   setSupplierCategoryEnabled,
+  listSupplierCategoryOverrides,
+  saveSupplierCategoryOverride,
   listCustomerOrders,
   listOrders,
   spendCustomerBalance,
@@ -626,6 +628,15 @@ sync: adminProcedure.mutation(async () => {
         products: await listAllSupplierProducts(),
       };
     }),
+    categoryOverrides: adminProcedure.query(async () => listSupplierCategoryOverrides()),
+    saveCategory: adminProcedure
+      .input(z.object({
+        sourceName: z.string().min(1).max(255),
+        displayName: z.string().min(1).max(255),
+        imageUrl: z.string().max(2_000_000).nullable().optional(),
+      }))
+      .mutation(async ({ input }) => saveSupplierCategoryOverride(input)),
+    publicCategories: publicProcedure.query(async () => listSupplierCategoryOverrides()),
     setApproval: adminProcedure
       .input(z.object({ id: z.number().int().positive(), approved: z.boolean() }))
       .mutation(async ({ input }) => {
