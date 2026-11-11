@@ -217,9 +217,8 @@ export default function Home() {
 
     icon: isGameProduct(category, p.name, subcategory)
       ? "game"
-      : "app",
-
-    quantity: p.quantity,
+      : "app", 
+    
     requires: p.requires,
   };
 });
