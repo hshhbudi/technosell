@@ -359,3 +359,8 @@
 .store-notification-item>p{font-size:11px;line-height:1.7}
 .store-notification-item>small{font-size:10px}
 @media(max-width:600px){.supplier-category-custom .admin-heading-actions{width:100%}.supplier-category-custom .admin-heading-actions button{flex:1}.store-notices{right:8px;left:8px;width:auto}}
+
+.subcategory-row button{display:inline-flex;align-items:center;gap:8px;min-height:42px}
+.subcategory-row .subcategory-image{width:25px;height:25px;object-fit:cover;border-radius:7px;border:1px solid rgba(242,201,109,.42)}
+.legacy-card{transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease}
+.legacy-card:hover{transform:translateY(-5px);border-color:rgba(242,201,109,.55);box-shadow:0 18px 38px rgba(0,0,0,.28)}
