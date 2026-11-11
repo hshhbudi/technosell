@@ -598,7 +598,7 @@ export default function Home() {
             )}
             <small>
               صاحب المتجر:{" "}
-              <a href="tel:+963968057214">+963968057214</a>
+              <a href="tel:+994408440648">+994408440648</a>
             </small>
           </div>
         )}
