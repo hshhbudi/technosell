@@ -364,3 +364,119 @@
 .subcategory-row .subcategory-image{width:25px;height:25px;object-fit:cover;border-radius:7px;border:1px solid rgba(242,201,109,.42)}
 .legacy-card{transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease}
 .legacy-card:hover{transform:translateY(-5px);border-color:rgba(242,201,109,.55);box-shadow:0 18px 38px rgba(0,0,0,.28)}
+
+
+/* RASEED reference direction: midnight black, electric violet and restrained gold */
+.legacy-store{
+  --navy:#10091f;
+  --navy2:#211039;
+  --blue:#8b35ff;
+  --lime:#f0c86a;
+  --muted:#c7b8dc;
+  background:
+    radial-gradient(ellipse at 50% -12%,rgba(111,35,255,.23),transparent 42%),
+    radial-gradient(ellipse at 100% 28%,rgba(96,22,204,.13),transparent 32%),
+    #080711;
+}
+.legacy-topline{background:#07060d;border-color:rgba(139,53,255,.28);color:#e9e0f5}
+.legacy-topline span:first-child,.legacy-topline b{color:#c58aff}
+.legacy-header{background:rgba(9,7,18,.96);border-bottom-color:rgba(151,69,255,.34);box-shadow:0 10px 35px #03020a99}
+.legacy-logo strong{color:#f0c86a}
+.legacy-logo-mark{background:linear-gradient(145deg,#a43cff,#5c12d6 72%,#32105e);color:#fff;box-shadow:0 0 24px #8b35ff55}
+.legacy-header nav button{color:#eee5fb}
+.legacy-header nav button:hover{color:#c58aff}
+.legacy-actions button{background:#171025;color:#f6efff;border-color:rgba(157,83,255,.38)}
+.legacy-actions button:hover{background:#281344;border-color:#a75aff}
+.legacy-hero{
+  background:
+    radial-gradient(ellipse at 12% 50%,rgba(155,38,255,.34),transparent 42%),
+    linear-gradient(115deg,#160b2a 0%,#261044 52%,#0d091b 100%);
+  border-color:rgba(153,65,255,.55);
+  box-shadow:0 24px 65px #020108bb,0 0 34px #751cff18,inset 0 1px #ffffff18;
+}
+.legacy-hero:before{background:repeating-linear-gradient(135deg,transparent 0 34px,rgba(157,70,255,.045) 35px 37px),radial-gradient(circle at 75% 48%,#9d35ff2b,transparent 38%);pointer-events:none}
+.legacy-kicker{color:#c58aff}
+.legacy-hero h1 strong{color:#f0c86a;text-shadow:0 0 28px #8b35ff55}
+.legacy-hero p{color:#d8cde8}
+.legacy-primary{background:linear-gradient(135deg,#a83cff,#6713df 72%,#4b0bb0);color:#fff;border:1px solid #c18aff;box-shadow:0 10px 30px #761cff55}
+.legacy-primary:hover{filter:brightness(1.12)}
+.legacy-hero-buttons span{color:#d6c6eb}
+.hero-glow{background:radial-gradient(circle,#923cff55,transparent 68%)}
+.hero-device{background:linear-gradient(145deg,#4a1d78,#160d29 72%);border-color:#a85cff88;box-shadow:0 28px 65px #03010aaa,0 0 38px #8b35ff25,inset 0 1px #ffffff22}
+.device-brand,.hero-icons{color:#c58aff}
+.hero-device>strong{color:#fff}
+.hero-device>small{color:#d7c2f3}
+.hero-sticker{background:linear-gradient(145deg,#ffe49b,#c28b3d);color:#291632}
+.legacy-category-row{gap:13px}
+.legacy-category-row button{background:linear-gradient(145deg,#1b1230,#100b1d);color:#eee5fb;border-color:rgba(148,69,255,.42);box-shadow:inset 0 1px #ffffff0b,0 9px 22px #03020a66}
+.legacy-category-row button svg{color:#a95cff;filter:drop-shadow(0 0 7px #8b35ff66)}
+.legacy-category-row button.selected{background:linear-gradient(135deg,#a43cff,#6515d6);border-color:#c28aff;color:#fff;box-shadow:0 9px 26px #7b20ff55}
+.legacy-category-row button.selected svg{color:#fff}
+.offers-panel{background:linear-gradient(110deg,#25113d,#120b20 75%);border-color:rgba(151,69,255,.48);box-shadow:0 15px 40px #03020a88}
+.offers-panel h2{color:#fff}
+.offers-panel p{color:#d1c2e5}
+.offers-strip button{background:linear-gradient(145deg,#32164f,#1a102b);border-color:#7540a5;color:#fff}
+.offers-strip button span{background:#a43cff;color:#fff}
+.offers-strip button small{color:#f0c86a}
+.legacy-section-head h2{color:#fff}
+.legacy-search{background:#130d20;border-color:#7442a2;color:#b86bff}
+.legacy-search input{color:#fff}
+.subcategory-row button{background:#1b1230;color:#eee5fb;border-color:#65408a}
+.subcategory-row button.selected{background:linear-gradient(135deg,#a43cff,#6515d6);color:#fff;border-color:#c28aff}
+.legacy-grid{gap:18px}
+.legacy-card{background:linear-gradient(160deg,#211237,#100b1d 82%);border-color:rgba(142,65,226,.42);box-shadow:0 12px 28px #02010899}
+.legacy-card:hover{border-color:#ad65ff;box-shadow:0 20px 40px #05010eaa,0 0 20px #7b20ff22}
+.legacy-card-art{background:radial-gradient(circle at 50% 30%,#542181,#1a102b 75%);border-bottom:1px solid #8c42d544}
+.legacy-card-art.pink{background:linear-gradient(135deg,#63206d,#21102f)}
+.legacy-card-art.gold{background:linear-gradient(135deg,#76522a,#25142f)}
+.legacy-card-art.blue{background:linear-gradient(135deg,#51228a,#17102c)}
+.legacy-card-art.navy{background:linear-gradient(135deg,#3a2860,#171020)}
+.legacy-card-art img{background:linear-gradient(145deg,#24133a,#100b1d);padding:9px}
+.legacy-product-icon{color:#b66aff;filter:drop-shadow(0 0 12px #922fff66)}
+.legacy-tag{background:#a43cff;color:#fff;border:1px solid #d0a0ff}
+.legacy-card-info>span{color:#c58aff;background:#29153f;border-color:#7540a5}
+.legacy-card-info h3{color:#fff}
+.legacy-card-info p{color:#cbbddd}
+.legacy-card-bottom strong{color:#f0c86a}
+.legacy-card-bottom button{background:linear-gradient(135deg,#a43cff,#6515d6);color:#fff;border:1px solid #c28aff;box-shadow:0 6px 18px #741bdf44}
+.legacy-card-bottom button:disabled{background:#352742;color:#b9aabd;border-color:#574363}
+.legacy-empty{border-color:#7540a5;color:#d8c8ea;background:#171025}
+.legacy-footer{border-top-color:rgba(151,69,255,.38);color:#cbbddd}
+.legacy-footer strong,.legacy-footer a,.store-notices a{color:#c58aff}
+.legacy-modal{background:linear-gradient(155deg,#28133f,#10091c);border-color:#8c45c7}
+.legacy-modal h2{color:#c58aff}
+.legacy-modal p,.legacy-modal label{color:#d8cde8}
+.legacy-modal input{background:#130d20;border-color:#68408b;color:#fff}
+.legacy-modal-total{color:#f0c86a}
+.store-notices{background:#160d25;border-color:#8544c1;color:#fff}
+.store-notices p,.store-notification-item>p{color:#d8cde8}
+.store-notification-item{border-color:#4d3268}
+.store-notification-item>b,.store-notification-item>small{color:#c58aff}
+.legacy-toast{background:linear-gradient(135deg,#32164f,#160d25);border:1px solid #a45aff;color:#fff;box-shadow:0 12px 30px #0009,0 0 18px #8b35ff33}
+.shamcash-box{background:#160d25!important;border-color:#8c45c7!important}
+.shamcash-box strong{color:#f0c86a!important}
+.customer-modal{background:linear-gradient(155deg,#28133f,#10091c)!important;border-color:#8c45c7!important;color:#fff!important}
+.customer-modal h2,.customer-modal strong{color:#c58aff}
+.customer-modal p,.customer-modal label{color:#d8cde8}
+.customer-modal input{background:#130d20!important;border-color:#68408b!important;color:#fff!important}
+.wallet-balance{background:linear-gradient(135deg,#57218a,#211033)!important;border-color:#a45aff!important}
+.wallet-balance strong{color:#f0c86a!important}
+.customer-order{background:#1b102c!important;border-color:#65408a!important}
+.customer-order-status,.customer-orders-head strong{color:#c58aff}
+.password-form,.customer-orders{border-color:#65408a!important}
+.primary-btn,.secondary-btn{background:linear-gradient(135deg,#a43cff,#6515d6)!important;color:#fff!important;border:1px solid #c28aff!important}
+.auth-tabs button.active{background:#a43cff!important;color:#fff!important}
+.admin-shell,.admin-gate{background:radial-gradient(ellipse at 80% 0%,#321452,#10091b 55%,#080711)!important;color:#fff!important}
+.admin-topbar{background:#130c20!important;border-color:#63338b!important;color:#fff!important}
+.admin-brand,.admin-heading h1,.admin-heading h2{color:#d2a0ff!important}
+.admin-section-tabs,.admin-main{color:#f4eaf9}
+.admin-section-tabs button,.admin-tab{background:#1d1230!important;color:#e8dced!important;border-color:#65408a!important}
+.admin-section-tabs button.active,.admin-section-tabs button[aria-selected="true"]{background:linear-gradient(135deg,#a43cff,#6515d6)!important;color:#fff!important}
+.admin-main input,.admin-main select,.admin-main textarea{background:#160d25!important;color:#fff!important;border-color:#68408b!important}
+.owner-order-card,.admin-card,.admin-panel,.admin-stat-card{background:#1b102c!important;border-color:#65408a!important;color:#fff!important}
+.owner-order-card strong,.admin-card h3,.admin-panel h3{color:#f0c86a!important}
+@media(max-width:800px){
+  .legacy-header nav{background:#130c20;border-color:#7540a5}
+  .legacy-category-row button{box-shadow:0 7px 18px #03020a88}
+  .legacy-card{border-radius:16px}
+}
