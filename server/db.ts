@@ -11,6 +11,7 @@ import {
   products,
   users,
   supplierProducts,
+  supplierCategories,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -590,6 +591,29 @@ export async function setSupplierProductApproval(
     .where(eq(supplierProducts.id, id));
 
   return getSupplierProductById(id);
+}
+
+export async function listSupplierCategoryOverrides() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(supplierCategories).orderBy(supplierCategories.sourceName);
+}
+
+export async function saveSupplierCategoryOverride(input: {
+  sourceName: string;
+  displayName: string;
+  imageUrl?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(supplierCategories).values({
+    sourceName: input.sourceName,
+    displayName: input.displayName,
+    imageUrl: input.imageUrl ?? null,
+  }).onDuplicateKeyUpdate({
+    set: { displayName: input.displayName, imageUrl: input.imageUrl ?? null },
+  });
+  return { success: true };
 }
 
 export async function setSupplierCategoryEnabled(
