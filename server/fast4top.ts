@@ -195,23 +195,25 @@ async function apiGet<T>(
 
 function detectSection(
   product: Fast4TopProduct
-): "التطبيقات" | "الألعاب" {
+): "التطبيقات" | "الألعاب" | null {
   const value = [
     product.name,
     product.product_name,
     product.category_name,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+    product.product_type,
+  ].filter(Boolean).join(" ").toLowerCase();
 
-  if (
-    /app|apps|تطبيق|تطبيقات|haya|kwai|likee|bigo|تيك توك/i.test(value)
-  ) {
+  // تطبيقات البث المباشر فقط؛ نستبعد الاتصالات والخدمات والتطبيقات الأخرى.
+  if (/(haya|kwai|likee|bigo|tiktok|تيك\s*توك|poppo|mico|chamet|yalla\s*live|buzzcast|liveme|live\s*me|nonolive|uplive|شحن\s*بث|بث\s*مباشر|live\s*stream)/i.test(value)) {
     return "التطبيقات";
   }
 
-  return "الألعاب";
+  // الألعاب فقط، سواء ورد اسم اللعبة أو تصنيف الألعاب من المورد.
+  if (/(game|games|gaming|ألعاب|العاب|pubg|ببجي|free\s*fire|freefire|فري\s*فاير|call\s*of\s*duty|كول\s*اوف\s*ديوتي|mobile\s*legends|mlbb|roblox|minecraft|clash\s*of\s*clans|efootball|فيفا|fortnite|steam|playstation|xbox|valorant|genshin|موبايل\s*ليجند)/i.test(value)) {
+    return "الألعاب";
+  }
+
+  return null;
 }
 
 function normalizeProducts(products: Fast4TopProduct[]) {
@@ -227,7 +229,7 @@ function normalizeProducts(products: Fast4TopProduct[]) {
     }
   }
 
-  return [...unique.values()].map((product) => {
+  return [...unique.values()].filter((product) => detectSection(product) !== null).map((product) => {
     const qtyValues = product.qty_values;
 
     const quantity =
