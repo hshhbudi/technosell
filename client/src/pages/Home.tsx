@@ -1,9 +1,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  Bell,
   ChevronLeft,
-  ClipboardList,
   Gamepad2,
   Headphones,
   Home as HomeIcon,
@@ -15,7 +13,6 @@ import {
   Smartphone,
   Sparkles,
   Sun,
-  WalletCards,
   X,
   Zap,
 } from "lucide-react";
@@ -102,8 +99,6 @@ const fallbackImageFor = (
 ) => null;
 
 export default function Home() {
-  const catalogQuery = trpc.products.list.useQuery();
-
   const supplierQuery = trpc.supplier.catalog.useQuery(undefined, {
     staleTime: 60_000,
   });
@@ -117,25 +112,13 @@ export default function Home() {
   const [subcategory, setSubcategory] = useState("");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<StoreProduct | null>(null);
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [targetId, setTargetId] = useState("");
   const [quantity, setQuantity] = useState("");
   const [toast, setToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [lightMode, setLightMode] = useState(false);
-  const [noticeOpen, setNoticeOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  const customerOrdersQuery = trpc.customer.orders.useQuery(undefined, {
-    enabled: Boolean(customerQuery.data),
-    refetchInterval: 20_000,
-  });
-
-  const shipmentHistory = trpc.customer.orders.useQuery(undefined, {
-    enabled: Boolean(customerQuery.data && historyOpen),
-    refetchInterval: 20_000,
-  });
 
   const customerNotifications = (customerOrdersQuery.data ?? []).slice(0, 8);
   const customerNotificationCount = customerNotifications.filter((order) =>
@@ -398,7 +381,6 @@ export default function Home() {
         <nav className={menuOpen ? "open" : ""}>
           <button onClick={() => { selectCategory("الألعاب"); document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"}); setMenuOpen(false); }}>الألعاب</button>
           <button onClick={() => { selectCategory("التطبيقات"); document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"}); setMenuOpen(false); }}>البث المباشر</button>
-          <button onClick={() => { document.getElementById("offers")?.scrollIntoView({behavior:"smooth"}); setMenuOpen(false); }}>منتجات مميزة</button>
         </nav>
 
         <div className="legacy-actions">
@@ -415,39 +397,6 @@ export default function Home() {
           </button>
 
           <button
-            className="notice-button"
-            onClick={() => setNoticeOpen((v) => !v)}
-            aria-label="الإشعارات"
-          >
-            <Bell size={19} />
-            {customerNotificationCount > 0 && <i>{customerNotificationCount}</i>}
-          </button>
-
-          <button
-            className="history-button"
-            onClick={() =>
-              customerQuery.data
-                ? setHistoryOpen(true)
-                : setAuthOpen(true)
-            }
-            aria-label="السجل"
-          >
-            <ClipboardList size={19} />
-          </button>
-
-          <button
-            onClick={() => setAuthOpen(true)}
-            aria-label="الحساب"
-          >
-            <WalletCards size={20} />
-            <span>
-              {customerQuery.data
-                ? money(customerQuery.data.balanceCents)
-                : "حسابي"}
-            </span>
-          </button>
-
-          <button
             className="legacy-menu"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="القائمة"
@@ -456,30 +405,6 @@ export default function Home() {
           </button>
         </div>
 
-        {noticeOpen && (
-          <div className="store-notices">
-            <strong>إشعارات طلباتك</strong>
-            {!customerQuery.data ? (
-              <p>سجّل الدخول لمتابعة إشعارات طلباتك.</p>
-            ) : customerOrdersQuery.isLoading ? (
-              <p>جارٍ تحميل الإشعارات...</p>
-            ) : customerNotifications.length ? (
-              customerNotifications.map((order) => (
-                <div className="store-notification-item" key={order.id}>
-                  <b>{(() => { try { const items=JSON.parse(order.items) as Array<{name?:string;quantity?:number}>; return items.map(item => `${item.quantity && item.quantity > 1 ? `${item.quantity} × ` : ""}${item.name || "طلبك"}`).join("، ") || order.orderNumber; } catch { return order.orderNumber; } })()}</b>
-                  <p>{notificationText(order)}</p>
-                  <small>{new Date(order.createdAt).toLocaleString("ar-SY")}</small>
-                </div>
-              ))
-            ) : (
-              <p>لا توجد إشعارات جديدة. ستظهر حالة طلباتك هنا تلقائيًا.</p>
-            )}
-            <small>
-              صاحب المتجر:{" "}
-              <a href="tel:+994408440648">+994408440648</a>
-            </small>
-          </div>
-        )}
       </header>
 
       <main>
@@ -539,10 +464,6 @@ export default function Home() {
               <b>100%</b>
             </div>
           </div>
-        </section>
-
-        <section className="store-banner-wrap">
-          
         </section>
 
         <section className="legacy-category-row">
@@ -716,37 +637,6 @@ export default function Home() {
             >
               {directTopup.isPending ? "جارٍ إرسال الطلب..." : "تأكيد الشحن"}
             </button>
-          </div>
-        </div>
-      )}
-
-      {historyOpen && (
-        <div className="legacy-modal-backdrop">
-          <div className="legacy-modal">
-            <button
-              className="legacy-modal-close"
-              onClick={() => setHistoryOpen(false)}
-              aria-label="إغلاق"
-            >
-              <X size={20} />
-            </button>
-
-            <h2>سجل طلباتي</h2>
-
-            {shipmentHistory.isLoading ? (
-              <p>جارٍ تحميل الطلبات...</p>
-            ) : shipmentHistory.data?.length ? (
-              shipmentHistory.data.map((order) => (
-                <div className="legacy-history-item" key={order.id}>
-                  <strong>{(() => { try { const items=JSON.parse(order.items) as Array<{name?:string;quantity?:number;targetId?:string}>; return items.map(item => `${item.quantity && item.quantity > 1 ? `${item.quantity} × ` : ""}${item.name || "طلب من المتجر"}`).join("، ") || order.orderNumber; } catch { return order.orderNumber; } })()}</strong>
-                  <span>{order.executionStatus==="completed"?"مكتمل":order.executionStatus==="failed"?"فشل":order.executionStatus==="manual_processing"?"قيد المعالجة اليدوية":order.paymentStatus==="confirmed"?"قيد التنفيذ":"بانتظار تأكيد الدفع"}</span>
-                  <small>{order.orderNumber} · {money(order.total)}</small>
-                  <small>{new Date(order.createdAt).toLocaleString("ar-SY")}</small>
-                </div>
-              ))
-            ) : (
-              <p>لا توجد طلبات حتى الآن.</p>
-            )}
           </div>
         </div>
       )}
