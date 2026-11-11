@@ -484,8 +484,15 @@ export async function syncSupplierProducts(
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
 
+  // Read the current catalog once instead of issuing one SELECT per supplier item.
+  const existingRows = await db.select().from(supplierProducts);
+  const existingByExternalId = new Map(
+    existingRows.map((product) => [product.externalId, product])
+  );
+
   let inserted = 0;
   let updated = 0;
+  let skipped = 0;
 
   for (const item of items) {
     if (
@@ -494,83 +501,81 @@ export async function syncSupplierProducts(
       !Number.isInteger(item.supplierPriceCents) ||
       item.supplierPriceCents < 0
     ) {
+      skipped++;
       continue;
     }
 
-    const existing = await db
-      .select()
-      .from(supplierProducts)
-      .where(eq(supplierProducts.externalId, item.externalId))
-      .limit(1);
+    const current = existingByExternalId.get(item.externalId);
 
-    if (existing[0]) {
-      const current = existing[0];
+    if (current) {
       const markup = current.markupPercent ?? 8;
 
+      // Missing optional supplier fields must not erase data already curated by the owner.
       await db
         .update(supplierProducts)
         .set({
           name: item.name,
-          category: item.category ?? null,
-          subcategory: item.subcategory ?? null,
+          category: item.category ?? current.category,
+          subcategory: item.subcategory ?? current.subcategory,
           supplierPriceCents: item.supplierPriceCents,
           sellingPriceCents: calculateSellingPrice(
             item.supplierPriceCents,
             markup
           ),
-          quantity: item.quantity ?? 1,
-          quantityValues: item.quantityValues ?? null,
-          requires: item.requires ?? null,
-          productType: item.productType ?? null,
-          imageUrl: item.imageUrl ?? null,
-          description: item.description ?? null,
-          available: item.available ?? true,
+          quantity: item.quantity ?? current.quantity,
+          quantityValues: item.quantityValues ?? current.quantityValues,
+          requires: item.requires ?? current.requires,
+          productType: item.productType ?? current.productType,
+          imageUrl: item.imageUrl ?? current.imageUrl,
+          description: item.description ?? current.description,
+          available: item.available ?? current.available,
         })
         .where(eq(supplierProducts.id, current.id));
 
       updated++;
-    } else {
-      const markup = 8;
-      const categoryProducts = item.subcategory
-        ? await db
-            .select({
-              approved: supplierProducts.approved,
-              enabled: supplierProducts.enabled,
-            })
-            .from(supplierProducts)
-            .where(eq(supplierProducts.subcategory, item.subcategory))
-        : [];
-      const categoryAlreadyEnabled = categoryProducts.some(
-        (product) => product.approved && product.enabled
-      );
-
-      await db.insert(supplierProducts).values({
-        externalId: item.externalId,
-        name: item.name,
-        category: item.category ?? null,
-        subcategory: item.subcategory ?? null,
-        supplierPriceCents: item.supplierPriceCents,
-        markupPercent: markup,
-        sellingPriceCents: calculateSellingPrice(
-          item.supplierPriceCents,
-          markup
-        ),
-        quantity: item.quantity ?? 1,
-        quantityValues: item.quantityValues ?? null,
-        requires: item.requires ?? null,
-        productType: item.productType ?? null,
-        imageUrl: item.imageUrl ?? null,
-        description: item.description ?? null,
-        available: item.available ?? true,
-        approved: categoryAlreadyEnabled,
-        enabled: categoryAlreadyEnabled,
-      });
-
-      inserted++;
+      continue;
     }
+
+    const markup = 8;
+    const categoryProducts = item.subcategory
+      ? await db
+          .select({
+            approved: supplierProducts.approved,
+            enabled: supplierProducts.enabled,
+          })
+          .from(supplierProducts)
+          .where(eq(supplierProducts.subcategory, item.subcategory))
+      : [];
+    const categoryAlreadyEnabled = categoryProducts.some(
+      (product) => product.approved && product.enabled
+    );
+
+    await db.insert(supplierProducts).values({
+      externalId: item.externalId,
+      name: item.name,
+      category: item.category ?? null,
+      subcategory: item.subcategory ?? null,
+      supplierPriceCents: item.supplierPriceCents,
+      markupPercent: markup,
+      sellingPriceCents: calculateSellingPrice(
+        item.supplierPriceCents,
+        markup
+      ),
+      quantity: item.quantity ?? 1,
+      quantityValues: item.quantityValues ?? null,
+      requires: item.requires ?? null,
+      productType: item.productType ?? null,
+      imageUrl: item.imageUrl ?? null,
+      description: item.description ?? null,
+      available: item.available ?? true,
+      approved: categoryAlreadyEnabled,
+      enabled: categoryAlreadyEnabled,
+    });
+
+    inserted++;
   }
 
-  return { inserted, updated, total: items.length };
+  return { inserted, updated, skipped, total: items.length };
 }
 
 export async function updateSupplierProductMarkup(
