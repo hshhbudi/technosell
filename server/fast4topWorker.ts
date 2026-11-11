@@ -229,8 +229,17 @@ export async function processPendingFast4TopOrders() {
 let catalogSyncBusy = false;
 
 async function runCatalogSync() {
-  if (catalogSyncBusy || !isFast4TopConfigured()) return;
+  if (catalogSyncBusy) {
+    console.log("[Fast4Top] Catalog sync skipped: another sync is already running");
+    return;
+  }
 
+  if (!isFast4TopConfigured()) {
+    console.warn("[Fast4Top] Catalog sync skipped: FAST4TOP_API_TOKEN or FAST4TOP_API_KEY is missing");
+    return;
+  }
+
+  console.log("[Fast4Top] Starting catalog sync...");
   catalogSyncBusy = true;
   try {
     const result = await syncFast4TopCatalog();
