@@ -358,22 +358,18 @@ export default function Home() {
       
       <header className="legacy-header">
         <Link href="/" className="legacy-logo">
-          <span className="legacy-logo-mark">ر</span>
+          <span className="legacy-logo-mark">✦</span>
 
           <span>
-            رصيد<strong> ✦</strong>
-            <small>
-              متجر الألعاب وتطبيقات البث المباشر
-            </small>
+            رصيد<strong> RASEED</strong>
+            <small>متجر رقمي وتقني متكامل</small>
           </span>
         </Link>
 
         <nav className={menuOpen ? "open" : ""}>
-          {(["الألعاب", "التطبيقات", "الهواتف", "الإكسسوارات", "المنتجات"] as StoreProduct["category"][]).map((category) => (
-            <button key={category} onClick={() => { selectCategory(category); document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"}); setMenuOpen(false); }}>
-              {category === "التطبيقات" ? "البث المباشر" : category}
-            </button>
-          ))}
+          <button onClick={() => window.scrollTo({top:0,behavior:"smooth"})}><HomeIcon size={17}/> الرئيسية</button>
+          <button onClick={() => document.getElementById("category-links")?.scrollIntoView({behavior:"smooth"})}><Package size={17}/> الأقسام</button>
+          <button onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}><Smartphone size={17}/> المنتجات</button>
         </nav>
 
         <div className="legacy-actions">
@@ -406,20 +402,20 @@ export default function Home() {
       </header>
 
       <main>
-        <section className="legacy-hero">
+        <div className="raseed-store-layout"><div className="raseed-main-column"><section className="legacy-hero">
           <div className="legacy-hero-copy">
             <span className="legacy-kicker">
               <Sparkles size={14} /> رصيد • وجهتك للشحن الرقمي
             </span>
 
             <h1>
-              عالم الألعاب
+              كل ما تحتاجه في مكان واحد
               <br />
-              <strong>والبث المباشر</strong>
+              <strong>ألعاب • تطبيقات • هواتف • إكسسوارات</strong>
             </h1>
 
             <p>
-              كل شحنات ألعابك وتطبيقات البث المباشر بمكان واحد. اختر خدمتك، أدخل بياناتك، وتابع طلبك لحظة بلحظة.
+              شحن ألعابك وتطبيقاتك، وأحدث الهواتف والإكسسوارات والمنتجات التقنية في متجر واحد.
             </p>
 
             <div className="legacy-hero-buttons">
@@ -440,7 +436,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="legacy-hero-art">
+          <div className="legacy-hero-art raseed-hero-art">
             <div className="hero-glow" />
 
             <div className="hero-device">
@@ -464,7 +460,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="legacy-category-row">
+        <section className="legacy-category-row" id="category-links">
           <button
             className={active === "الألعاب" ? "selected" : ""}
             onClick={() => selectCategory("الألعاب")}
@@ -546,9 +542,9 @@ export default function Home() {
 <b className="legacy-tag">{p.tag}</b>
                   )}
 
-                  <div className="legacy-product-icon">
+                  {!p.imageUrl && <div className="legacy-product-icon">
                     {p.icon === "game" ? <Gamepad2 size={42} /> : p.icon === "app" ? <Package size={42} /> : <Smartphone size={42} />}
-                  </div>
+                  </div>}
                   {(p.imageUrl || fallbackImageFor(p)) && (
                     <img
                       src={p.imageUrl || fallbackImageFor(p) || ""}
@@ -584,7 +580,14 @@ export default function Home() {
               <p>لا توجد منتجات في هذا القسم حالياً.</p>
             </div>
           )}
-        </section>
+        </section></div><aside className="raseed-right-sidebar">
+        <div className="raseed-wallet-card"><span>رصيد حسابك</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "سجّل دخولك"}</strong><button onClick={() => customerQuery.data ? showToast("رصيدك الحالي: " + money(customerQuery.data.balanceCents ?? 0)) : setAuthOpen(true)}>＋ شحن الرصيد</button></div>
+        <button className="raseed-sidebar-settings" onClick={() => setSettingsOpen(v => !v)}><Settings size={22}/> الإعدادات <ChevronLeft size={17}/></button>
+        {settingsOpen && <div className="raseed-sidebar-settings-panel"><button onClick={() => {setLightMode(v => !v);setSettingsOpen(false);}}>{lightMode ? <Sun size={16}/> : <Moon size={16}/>} تغيير المظهر</button><button onClick={() => {setAuthOpen(true);setSettingsOpen(false);}}>حسابي</button></div>}
+        <button className="raseed-sidebar-theme" onClick={() => setLightMode(v => !v)}>{lightMode ? <Sun/> : <Moon/>} المظهر</button>
+        <div className="raseed-sidebar-brand"><span>♛</span><strong>رصيد</strong><small>أسرع • آمن • الأفضل</small></div>
+        <div className="raseed-sidebar-benefits"><span><Zap/> شحن فوري</span><span>♢ أمان عالي</span><span>◉ دعم 24/7</span></div>
+      </aside></div>
       </main>
 
       {selected && (
