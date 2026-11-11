@@ -225,7 +225,7 @@ export default function Home() {
 });
 
   // إخفاء منتجات الأكواد المحظورة من قسم الشحن المباشر
-  const supplierOnlyProducts = supplierProducts.filter(
+  const supplierOnlyIdProducts = supplierProducts.filter(
   (product) =>
     !isBlockedCodeProduct(
       product.name,
@@ -435,7 +435,6 @@ export default function Home() {
       totalCents: computedTotal,
     });
   };
-
   // العروض تعرض منتجات المورد فقط
   const offers = products
     .filter(
