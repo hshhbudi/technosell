@@ -607,6 +607,13 @@ export async function updateSupplierProductMarkup(
   return getSupplierProductById(id);
 }
 
+export async function setSupplierProductStoreSection(id: number, storeSection: "الألعاب" | "التطبيقات") {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(supplierProducts).set({ storeSection }).where(eq(supplierProducts.id, id));
+  return getSupplierProductById(id);
+}
+
 export async function setSupplierProductApproval(
   id: number,
   approved: boolean
