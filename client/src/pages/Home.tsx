@@ -97,14 +97,32 @@ const freeFireSection = (
 const fallbackImageFor = (
   product: Pick<StoreProduct, "name" | "subcategory" | "category">
 ): string | null => {
+  const itemName = `${product.name} ${product.subcategory}`.toLowerCase();
+
+  // Official Google Play app icons for products without supplier artwork.
+  if (product.category === "التطبيقات") {
+    if (/(haya|هايا|هيا)/i.test(itemName)) {
+      return "https://play-lh.googleusercontent.com/wcwRELi8XuMjQHavMgULcNXD-WTVfkUs1nVW7x3cIuiuqRnHftHvOri4FLZAIPheewptkTEVBFQhi2lB3PYl2Q=w512-h512";
+    }
+    if (/(kwai|كواي)/i.test(itemName)) {
+      return "https://play-lh.googleusercontent.com/_tbJZAK7486yk-0V2nBqYtH3lyWrZG5aI5MaKtzIsZou_UBEnX8wV5Dwyty2s2WsI3U6JgERB1-rBM_dJJoCcmk=w512-h512";
+    }
+    if (/(likee|لايكي)/i.test(itemName)) {
+      return "https://play-lh.googleusercontent.com/5kFm2Or1bHsU_OEZWkrWPWTBol5V5lMYbZieFg8E_8iXjuarqkb6PEQnKW84nD6KPGvLySi_XZfY90dA0aFL=w512-h512";
+    }
+    if (/(bigo|بيجو)/i.test(itemName)) {
+      return "https://play-lh.googleusercontent.com/8nDM585uK3X3AXiDQJC4lEARF_VLFrgdma-1YkdFMAwKi1LSrg4bMnWMGq7GqsviTKyL_LUfYayflZgs0SqCqQ=w512-h512";
+    }
+    return null;
+  }
+
   if (product.category !== "الألعاب") return null;
-  const gameName = `${product.name} ${product.subcategory}`.toLowerCase();
 
   // Game artwork fallbacks for supplier products that arrive without an image.
-  if (/(free\\s*fire|فري\\s*فاير)/i.test(gameName)) {
+  if (/(free\\s*fire|فري\\s*فاير)/i.test(itemName)) {
     return "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/d6/8f/47/d68f4742-5a10-b375-2114-0f840bd49ec1/AppIcon-1781539049-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg";
   }
-  if (/(pubg|ببجي)/i.test(gameName)) {
+  if (/(pubg|ببجي)/i.test(itemName)) {
     return "https://syimg.3dmgame.com/uploadimg/ico/2025/0515/1747294853476299.png";
   }
   const gameArtwork: Array<[RegExp, string]> = [
@@ -121,7 +139,7 @@ const fallbackImageFor = (
     [/(playstation|psn|بلايستيشن)/i, "playstation"],
     [/(xbox|إكس\\s*بوكس)/i, "xbox"],
   ];
-  const artwork = gameArtwork.find(([pattern]) => pattern.test(gameName));
+  const artwork = gameArtwork.find(([pattern]) => pattern.test(itemName));
   return artwork ? `https://cdn.simpleicons.org/${artwork[1]}/FFFFFF` : null;
 };
 
