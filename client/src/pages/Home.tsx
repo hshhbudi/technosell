@@ -378,11 +378,9 @@ export default function Home() {
   };
   // العروض تعرض منتجات المورد فقط
   const offers = products
-    .filter(
-      (p) =>
-        p.supplierDbId &&
-        (p.tag || p.name.includes("عرض"))
-    )
+    .filter((p) => p.supplierDbId && (p.tag || p.name.includes("عرض")))
+    .concat(products.filter((p) => p.supplierDbId && !(p.tag || p.name.includes("عرض"))))
+    .filter((p, index, all) => all.findIndex((item) => item.id === p.id) === index)
     .slice(0, 6);
 
   return (
@@ -390,20 +388,6 @@ export default function Home() {
       className={`legacy-store ${lightMode ? "theme-light" : ""}`}
       dir="rtl"
     >
-      <div className="legacy-topline">
-        <span>
-          <Sparkles size={14} /> شحن مباشر وموثوق
-        </span>
-
-        <b>رصيد</b>
-
-        <span>
-          {customerQuery.data
-            ? `رصيدك ${money(customerQuery.data.balanceCents)}`
-            : "تسجيل الدخول للشحن"}
-        </span>
-      </div>
-
       <header className="legacy-header">
         <Link href="/" className="legacy-logo">
           <span className="legacy-logo-mark">ر</span>
@@ -411,59 +395,15 @@ export default function Home() {
           <span>
             رصيد<strong> ✦</strong>
             <small>
-              متجر الألعاب والتطبيقات والهواتف والإكسسوارات
+              متجر الألعاب وتطبيقات البث المباشر
             </small>
           </span>
         </Link>
 
         <nav className={menuOpen ? "open" : ""}>
-          <button
-            onClick={() => {
-              selectCategory("التطبيقات");
-              setMenuOpen(false);
-            }}
-          >
-            التطبيقات
-          </button>
-
-          <button
-            onClick={() => {
-              selectCategory("الألعاب");
-              setMenuOpen(false);
-            }}
-          >
-            الألعاب
-          </button>
-
-          <button
-            onClick={() => {
-              selectCategory("الهواتف");
-              setMenuOpen(false);
-            }}
-          >
-            الهواتف
-          </button>
-
-          <button
-            onClick={() => {
-              selectCategory("الإكسسوارات");
-              setMenuOpen(false);
-            }}
-          >
-            الإكسسوارات
-          </button>
-
-          <button
-            onClick={() => {
-              document
-                .getElementById("offers")
-                ?.scrollIntoView({ behavior: "smooth" });
-
-              setMenuOpen(false);
-            }}
-          >
-            العروض
-          </button>
+          <button onClick={() => { selectCategory("الألعاب"); document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"}); setMenuOpen(false); }}>الألعاب</button>
+          <button onClick={() => { selectCategory("التطبيقات"); document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"}); setMenuOpen(false); }}>البث المباشر</button>
+          <button onClick={() => { document.getElementById("offers")?.scrollIntoView({behavior:"smooth"}); setMenuOpen(false); }}>منتجات مميزة</button>
         </nav>
 
         <div className="legacy-actions">
@@ -551,18 +491,17 @@ export default function Home() {
         <section className="legacy-hero">
           <div className="legacy-hero-copy">
             <span className="legacy-kicker">
-              رصيد / متجر رقمي متكامل
+              <Sparkles size={14} /> رصيد • وجهتك للشحن الرقمي
             </span>
 
             <h1>
-              اشحن حسابك
+              عالم الألعاب
               <br />
-              <strong>بضغطة واحدة</strong>
+              <strong>والبث المباشر</strong>
             </h1>
 
             <p>
-              اختر اللعبة أو التطبيق، اكتب الـID والكمية،
-              وسيصل طلبك مباشرة إلى نظام الشحن.
+              كل شحنات ألعابك وتطبيقات البث المباشر بمكان واحد. اختر خدمتك، أدخل بياناتك، وتابع طلبك لحظة بلحظة.
             </p>
 
             <div className="legacy-hero-buttons">
@@ -574,11 +513,11 @@ export default function Home() {
                     ?.scrollIntoView({ behavior: "smooth" })
                 }
               >
-                ابدأ الشحن <ChevronLeft size={17} />
+                اكتشف الخدمات <ChevronLeft size={17} />
               </button>
 
               <span>
-                <Zap size={16} /> لا توجد سلة للمنتجات الرقمية
+                <Zap size={16} /> تنفيذ مباشر • متابعة واضحة • دعم متواصل
               </span>
             </div>
           </div>
@@ -587,7 +526,7 @@ export default function Home() {
             <div className="hero-glow" />
 
             <div className="hero-device">
-              <div className="device-brand">RASEED / رصيد</div>
+              <div className="device-brand">RASEED • DIGITAL STORE</div>
 
               <div className="hero-icons">
                 <Gamepad2 />
@@ -595,8 +534,8 @@ export default function Home() {
                 <Package />
               </div>
 
-              <strong>شحنك مباشر</strong>
-              <small>ID + كمية</small>
+              <strong>شحنك أسهل مع رصيد</strong>
+              <small>GAMES • LIVE APPS</small>
             </div>
 
             <div className="hero-sticker">
@@ -630,13 +569,13 @@ export default function Home() {
         <section className="offers-panel" id="offers">
           <div>
             <span className="legacy-kicker">
-              LIMITED OFFERS / عروض مختارة
+              RASEED PICKS / اختيارات رصيد
             </span>
 
             <h2>عروض اليوم</h2>
 
             <p>
-              اختيارات مميزة بأسعار واضحة وشحن مباشر.
+              اكتشف الخدمات الأكثر تميزًا من ألعابك وتطبيقات البث المباشر.
             </p>
           </div>
 
@@ -646,7 +585,7 @@ export default function Home() {
                 key={`offer-${p.id}`}
                 onClick={() => startTopup(p)}
               >
-                <span>{p.tag || "عرض"}</span>
+                <span>{p.tag || "مميز"}</span>
                 <strong>{p.name}</strong>
                 <small>{money(p.price)}</small>
               </button>
