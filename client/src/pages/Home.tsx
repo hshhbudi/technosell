@@ -176,7 +176,7 @@ export default function Home() {
     stock: p.available ? 99 : 0,
 
     description,
-    imageUrl: p.imageUrl,
+    imageUrl: p.imageUrl || supplierCategoryOverrides.find(item => item.sourceName === subcategory)?.imageUrl || null,
 
     accent: isGameProduct(category, p.name, subcategory)
       ? "blue"
