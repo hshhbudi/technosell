@@ -219,7 +219,7 @@ export default function Home() {
       ? "game"
       : "app", 
     
-    requires: p.requires,
+    requires: Array.isArray(p.requires) ? p.requires : [],
   };
 });
 
