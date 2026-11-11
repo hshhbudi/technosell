@@ -339,3 +339,23 @@
 .admin-notifications{background:#241532!important;border:1px solid #a47a42!important;color:#fff!important;border-radius:15px!important}
 .admin-notifications strong{color:#f1ce83}
 @media(max-width:700px){.admin-main{padding:14px!important}.admin-topbar{flex-wrap:wrap;gap:10px}.admin-phone{font-size:10px}}
+
+/* Raseed refinement: category editor, order detail and notification cards */
+.supplier-category-custom{align-items:center;gap:12px;flex-wrap:wrap}
+.supplier-category-preview{display:flex;align-items:center;gap:12px;min-width:0}
+.supplier-category-preview img,.supplier-category-preview>.product-mini{width:54px;height:54px;object-fit:cover;border-radius:13px;border:1px solid rgba(215,174,98,.28);background:#24143a;display:grid;place-items:center}
+.category-edit-preview{display:block;width:100%;max-height:190px;object-fit:contain;border-radius:14px;margin:10px 0;background:#160b2c}
+.category-edit-modal>p{font-size:12px;color:var(--muted);line-height:1.8}
+.category-edit-modal label{display:grid;gap:8px;margin:14px 0;font-size:12px}
+.category-edit-modal input{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text)}
+.legacy-history-item{display:grid;gap:7px;padding:15px;margin:10px 0;border:1px solid rgba(218,178,102,.2);border-radius:15px;background:linear-gradient(135deg,rgba(84,48,112,.42),rgba(30,17,48,.85));color:#f7eddb}
+.legacy-history-item strong{font-size:14px;color:#f2ce80}
+.legacy-history-item span{font-size:11px;color:#d9c5e8}
+.legacy-history-item small{font-size:10px;color:#bdaecb}
+.store-notices{width:min(360px,calc(100vw - 24px));padding:16px;border:1px solid rgba(229,190,111,.34);border-radius:18px;background:linear-gradient(150deg,#29163f,#130b22);box-shadow:0 22px 55px #000a}
+.store-notices strong{color:#f4d18a;font-size:14px}
+.store-notification-item{margin-top:8px;padding:12px;border:1px solid rgba(221,180,103,.16);border-radius:13px;background:rgba(255,255,255,.035)}
+.store-notification-item>b{color:#f4d18a;font-size:12px}
+.store-notification-item>p{font-size:11px;line-height:1.7}
+.store-notification-item>small{font-size:10px}
+@media(max-width:600px){.supplier-category-custom .admin-heading-actions{width:100%}.supplier-category-custom .admin-heading-actions button{flex:1}.store-notices{right:8px;left:8px;width:auto}}
