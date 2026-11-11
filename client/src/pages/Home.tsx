@@ -102,6 +102,7 @@ export default function Home() {
   const supplierQuery = trpc.supplier.catalog.useQuery(undefined, {
     staleTime: 60_000,
   });
+  const manualProductsQuery = trpc.products.list.useQuery(undefined, { staleTime: 60_000 });
   const supplierCategoryOverridesQuery = trpc.supplier.publicCategories.useQuery(undefined, { staleTime: 60_000 });
 
   const customerQuery = trpc.customer.me.useQuery();
@@ -202,8 +203,16 @@ export default function Home() {
       )
   );
 
-  // نعرض فقط المنتجات المعتمدة القادمة من مورد الشحن؛ لا نخلط معها الهواتف أو الإكسسوارات أو المنتجات اليدوية.
-  const products: StoreProduct[] = supplierOnlyIdProducts;
+  // منتجات المورد الرقمية مع المنتجات اليدوية المنشورة من لوحة الإدارة.
+  const manualProducts: StoreProduct[] = (manualProductsQuery.data ?? []).map((p) => ({
+    id: p.id, externalId: "manual-" + p.id, name: p.name,
+    category: (["الهواتف", "الإكسسوارات", "المنتجات"].includes(p.category) ? p.category : "المنتجات") as StoreProduct["category"],
+    subcategory: p.category, delivery: "id",
+    price: Number(p.priceUsdCents ?? p.price ?? 0), stock: Number(p.stock ?? 0),
+    tag: p.tag ?? undefined, description: p.description ?? "", imageUrl: p.imageUrl ?? null,
+    accent: "gold", icon: "product",
+  }));
+  const products: StoreProduct[] = [...supplierOnlyIdProducts, ...manualProducts];
 
   const subcategories = useMemo(
     () =>
@@ -346,12 +355,7 @@ export default function Home() {
       className={`legacy-store ${lightMode ? "theme-light" : ""}`}
       dir="rtl"
     >
-      <aside className="raseed-side-rail raseed-settings-only" aria-label="إعدادات المتجر">
-        <button onClick={() => setSettingsOpen(v=>!v)} title="الإعدادات"><Settings size={20}/><small>الإعدادات</small></button>
-        {settingsOpen && <div className="raseed-settings-popover"><strong>إعدادات رصيد</strong>
-          <button onClick={() => {setLightMode(v=>!v);setSettingsOpen(false);}}>{lightMode?<Sun size={16}/>:<Moon size={16}/>} تغيير المظهر</button>
-        </div>}
-      </aside>
+      
       <header className="legacy-header">
         <Link href="/" className="legacy-logo">
           <span className="legacy-logo-mark">ر</span>
@@ -365,11 +369,19 @@ export default function Home() {
         </Link>
 
         <nav className={menuOpen ? "open" : ""}>
-          <button onClick={() => { selectCategory("الألعاب"); document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"}); setMenuOpen(false); }}>الألعاب</button>
-          <button onClick={() => { selectCategory("التطبيقات"); document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"}); setMenuOpen(false); }}>البث المباشر</button>
+          {(["الألعاب", "التطبيقات", "الهواتف", "الإكسسوارات", "المنتجات"] as StoreProduct["category"][]).map((category) => (
+            <button key={category} onClick={() => { selectCategory(category); document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"}); setMenuOpen(false); }}>
+              {category === "التطبيقات" ? "البث المباشر" : category}
+            </button>
+          ))}
         </nav>
 
         <div className="legacy-actions">
+          <button className="raseed-balance-button" onClick={() => customerQuery.data ? showToast("رصيدك الحالي: " + money(customerQuery.data.balanceCents ?? 0)) : setAuthOpen(true)} aria-label="رصيدي">
+            <span>رصيدي</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "دخول الحساب"}</strong>
+          </button>
+          <button className="raseed-header-settings" onClick={() => setSettingsOpen(v => !v)} aria-label="الإعدادات" title="الإعدادات"><Settings size={20}/></button>
+          {settingsOpen && <div className="raseed-header-settings-popover"><strong>إعدادات رصيد</strong><button onClick={() => {setLightMode(v => !v);setSettingsOpen(false);}}>{lightMode ? <Sun size={16}/> : <Moon size={16}/>} تغيير المظهر</button></div>}
           <button
             className="theme-toggle"
             onClick={() => setLightMode((v) => !v)}
@@ -466,6 +478,9 @@ export default function Home() {
           >
             <Package /> تطبيقات البث المباشر
           </button>
+          <button className={active === "الهواتف" ? "selected" : ""} onClick={() => selectCategory("الهواتف")}><Smartphone/> الهواتف</button>
+          <button className={active === "الإكسسوارات" ? "selected" : ""} onClick={() => selectCategory("الإكسسوارات")}><Headphones/> الإكسسوارات</button>
+          <button className={active === "المنتجات" ? "selected" : ""} onClick={() => selectCategory("المنتجات")}><Package/> منتجات أخرى</button>
         </section>
 
         <section className="legacy-catalog" id="catalog">
@@ -552,12 +567,11 @@ export default function Home() {
                   <div className="legacy-card-bottom">
                     <strong>{money(p.price)}</strong>
 
-                    <button
-                      onClick={() => startTopup(p)}
-                      disabled={!p.supplierDbId}
-                    >
-                      {p.supplierDbId ? "اشحن الآن" : "غير متاح للشحن"}
-                    </button>
+                    {p.supplierDbId ? (
+                      <button onClick={() => startTopup(p)}>اشحن الآن</button>
+                    ) : (
+                      <a className="legacy-manual-order" href={"https://wa.me/994408440648?text=" + encodeURIComponent("مرحباً، أريد الاستفسار وطلب: " + p.name)} target="_blank" rel="noreferrer">اطلب عبر واتساب</a>
+                    )}
                   </div>
                 </div>
               </article>
