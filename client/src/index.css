@@ -587,3 +587,29 @@
  .legacy-grid{gap:8px}.legacy-card-info{padding:10px}
  .offers-strip button{padding:11px}
 }
+
+/* Raseed account experience and supplier section controls */
+.customer-modal{background:radial-gradient(circle at 85% 0%,#6127a833,transparent 36%),linear-gradient(155deg,#11101c,#090910)!important;color:#f7f3ff!important;border:1px solid #a56bff55!important;border-radius:26px!important;box-shadow:0 28px 90px #0009,0 0 45px #8b3dff22!important;max-height:calc(100dvh - 28px);overflow:auto}
+.customer-modal .close-btn{background:#241b35!important;color:#e7d8ff!important;border:1px solid #67429a}
+.customer-modal .customer-icon{background:linear-gradient(135deg,#9d55ff,#5521a5)!important;color:white!important;box-shadow:0 8px 30px #8b3dff55}
+.customer-modal .eyebrow{color:#c39aff!important}
+.customer-modal h2,.customer-modal strong{color:#fff}
+.customer-modal .modal-copy{color:#b9adc9!important}
+.customer-modal .auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#171321;border:1px solid #38264d;padding:5px;border-radius:14px}
+.customer-modal .auth-tabs button{border-radius:10px;padding:11px;background:transparent;color:#bcaecf}
+.customer-modal .auth-tabs button.active{background:linear-gradient(120deg,#8c3cff,#5721a5);color:#fff;box-shadow:0 5px 18px #792fe855}
+.customer-modal .customer-form label,.customer-modal label{color:#d8cce8!important;font-size:12px}
+.customer-modal input{background:#171421!important;color:#fff!important;border:1px solid #49365e!important;border-radius:12px!important;padding:13px!important;outline:none}
+.customer-modal input:focus{border-color:#ad73ff!important;box-shadow:0 0 0 3px #9b50ff22}
+.customer-modal .primary-btn{background:linear-gradient(115deg,#9b4dff,#6225b5)!important;color:#fff!important;border:1px solid #bd8aff55;box-shadow:0 9px 24px #7d35d944}
+.customer-modal .secondary-btn{background:#211a2d!important;color:#eadfff!important;border:1px solid #60417e}
+.customer-modal .customer-orders,.customer-modal .saved-fields,.customer-modal .wallet-balance{background:#171421!important;border:1px solid #3c2c50!important;border-radius:15px;padding:14px}
+.customer-modal .customer-order,.customer-modal .customer-order-summary{background:#1b1726!important;color:#f5edff!important;border-color:#392b4a!important}
+.supplier-section-picker{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#bcaed0;font-size:11px;margin:9px 0}
+.supplier-section-picker select{min-width:145px;flex:1;background:#171421;color:#fff;border:1px solid #67429a;border-radius:9px;padding:8px;font:inherit}
+.admin-gate{background:radial-gradient(circle at 50% 10%,#6625a633,transparent 38%),#090910!important}
+.admin-gate .gate-card{background:linear-gradient(155deg,#171321,#0e0c15)!important;border:1px solid #6f43a5!important;color:#fff;box-shadow:0 25px 80px #0008,0 0 45px #8b3dff22}
+.admin-gate .gate-card h1{color:#fff}
+.admin-gate .gate-card p{color:#bdb0ce}
+.admin-gate .gate-card .brand-mark{background:linear-gradient(135deg,#9b4dff,#52209b);color:#fff}
+@media(max-width:540px){.customer-modal{width:calc(100% - 20px)!important;padding:24px 18px!important;border-radius:20px!important}.supplier-section-picker select{min-width:100%}}
