@@ -95,8 +95,20 @@ const freeFireSection = (
     : "Free Fire شحن بالـID";
 
 const fallbackImageFor = (
-  _product: Pick<StoreProduct, "name" | "subcategory" | "category">
-) => null;
+  product: Pick<StoreProduct, "name" | "subcategory" | "category">
+): string | null => {
+  if (product.category !== "الألعاب") return null;
+  const gameName = `${product.name} ${product.subcategory}`.toLowerCase();
+
+  // Official/current game artwork fallbacks for supplier products with no image.
+  if (/(free\\s*fire|فري\\s*فاير)/i.test(gameName)) {
+    return "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/d6/8f/47/d68f4742-5a10-b375-2114-0f840bd49ec1/AppIcon-1781539049-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg";
+  }
+  if (/(pubg|ببجي)/i.test(gameName)) {
+    return "https://syimg.3dmgame.com/uploadimg/ico/2025/0515/1747294853476299.png";
+  }
+  return null;
+};
 
 export default function Home() {
   const supplierQuery = trpc.supplier.catalog.useQuery(undefined, {
