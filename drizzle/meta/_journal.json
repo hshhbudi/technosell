@@ -71,6 +71,13 @@
       "when": 1794420000000,
       "tag": "0009_create_supplier_products",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1794436200000,
+      "tag": "0010_supplier_category_customization",
+      "breakpoints": true
     }
   ]
 }
