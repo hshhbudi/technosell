@@ -45,7 +45,7 @@ import {
 import { SignJWT, jwtVerify } from "jose";
 import { parse as parseCookie } from "cookie";
 import { storagePut } from "./storage";
-import { getFast4TopProfile } from "./fast4top";
+import { getFast4TopProfile, syncFast4TopCatalog } from "./fast4top";
 import { dispatchFast4TopOrder } from "./fast4topWorker";
 import {
   clearLocalAdmin,
