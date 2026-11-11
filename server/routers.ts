@@ -23,6 +23,7 @@ listProducts,
   listApprovedSupplierProducts,
   listAllSupplierProducts,
   setSupplierProductApproval,
+  setSupplierProductStoreSection,
   setSupplierProductEnabled,
   setSupplierCategoryEnabled,
   listSupplierCategoryOverrides,
@@ -655,6 +656,9 @@ sync: adminProcedure.mutation(async () => {
         });
       }),
     publicCategories: publicProcedure.query(async () => listSupplierCategoryOverrides()),
+    setStoreSection: adminProcedure
+      .input(z.object({ id: z.number().int().positive(), storeSection: z.enum(["الألعاب", "التطبيقات"]) }))
+      .mutation(async ({ input }) => setSupplierProductStoreSection(input.id, input.storeSection)),
     setApproval: adminProcedure
       .input(z.object({ id: z.number().int().positive(), approved: z.boolean() }))
       .mutation(async ({ input }) => {
