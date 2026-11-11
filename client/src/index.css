@@ -962,3 +962,11 @@
 
 /* Keep the content column on the left and the account rail on the right, as in the approved reference */
 .raseed-store-layout{direction:ltr!important}.raseed-main-column,.raseed-right-sidebar{direction:rtl!important}
+
+
+/* Owner product search */
+.admin-product-search{display:flex;align-items:center;gap:9px;min-width:230px;padding:0 13px;min-height:42px;border:1px solid #68458a;border-radius:12px;background:#171124;color:#d8b7ff}
+.admin-product-search input{width:100%;min-width:0;border:0!important;outline:0!important;background:transparent!important;color:#fff!important;font:inherit}
+.admin-product-search input::placeholder{color:#a99ab8}
+.admin-product-search:focus-within{border-color:#b56cff;box-shadow:0 0 0 3px #9b4dff22}
+@media(max-width:760px){.admin-product-search{width:100%;min-width:0}}
