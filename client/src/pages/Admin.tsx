@@ -8,7 +8,8 @@ import { trpc } from "@/lib/trpc";
 const money=(cents:number)=>`$ ${(cents/100).toFixed(2)}`;
 const isSyriaTopupOrder=(items:string)=>items.includes('"category":"شحن ألعاب"')||items.includes('"category":"شحن تطبيقات"');
 const isWalletTopupOrder=(items:string)=>items.includes('"category":"تعبئة الرصيد"');
-const isGameProduct=(category:string,name="",subcategory="")=>/(ألعاب|العاب|game|games|gaming)/i.test(category)||/(pubg|ببجي|free\s*fire|فري\s*فاير|jawaker|جواكر|call\s*of\s*duty|mobile\s*legends|mlbb|roblox|minecraft|fortnite|steam|playstation|xbox|valorant|genshin)/i.test(`${name} ${subcategory}`);\nconst isLiveAppProduct=(category:string,name="",subcategory="")=>/(haya|kwai|likee|bigo|tiktok|poppo|mico|chamet|yalla\s*live|buzzcast|liveme|nonolive|uplive|live\s*stream|تطبيق|app|application|social|بث\s*مباشر)/i.test(`${category} ${name} ${subcategory}`);
+const isGameProduct=(category:string,name="",subcategory="")=>/(ألعاب|العاب|game|games|gaming)/i.test(category)||/(pubg|ببجي|free\s*fire|فري\s*فاير|jawaker|جواكر|call\s*of\s*duty|mobile\s*legends|mlbb|roblox|minecraft|fortnite|steam|playstation|xbox|valorant|genshin)/i.test(`${name} ${subcategory}`);
+const isLiveAppProduct=(category:string,name="",subcategory="")=>/(haya|kwai|likee|bigo|tiktok|poppo|mico|chamet|yalla\s*live|buzzcast|liveme|nonolive|uplive|live\s*stream|تطبيق|app|application|social|بث\s*مباشر)/i.test(`${category} ${name} ${subcategory}`);
 
 type FormState={name:string;category:string;description:string;priceUsd:string;oldPrice:string;stock:string;isDigital:boolean;tag:string;imageData:string};
 const emptyForm:FormState={name:"",category:"التطبيقات",description:"",priceUsd:"",oldPrice:"",stock:"0",isDigital:true,tag:"",imageData:""};
