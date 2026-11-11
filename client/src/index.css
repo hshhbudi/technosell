@@ -768,3 +768,13 @@
   .offers-strip{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .raseed-side-rail{width:auto!important}
 }
+
+
+/* Product sorting control and simplified storefront utility rail */
+.admin-products-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.admin-products-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.admin-sort-control{display:flex;align-items:center;gap:9px;color:#e8d9f2;font-size:12px;font-weight:800}
+.admin-sort-control select{min-width:170px;padding:10px 12px;border:1px solid #9864bd!important;border-radius:11px;background:#180d26!important;color:#fff!important;font:inherit;font-size:12px}
+.raseed-settings-only{width:68px!important}
+.raseed-settings-only>button{min-height:58px!important}
+@media(max-width:560px){.admin-products-toolbar{align-items:stretch}.admin-products-actions{width:100%;align-items:stretch}.admin-sort-control{width:100%;align-items:flex-start;flex-direction:column}.admin-sort-control select{width:100%}.admin-products-actions>.text-btn{justify-content:center}}
