@@ -186,13 +186,7 @@ export default function Home() {
 
     name: p.name,
 
-    category: (
-      isGameProduct(category, p.name, subcategory)
-        ? "الألعاب"
-        : /(تطبيق|app|application|social)/i.test(category)
-          ? "التطبيقات"
-          : "المنتجات"
-    ) as StoreProduct["category"],
+    category: (p.storeSection || (isGameProduct(category, p.name, subcategory) ? "الألعاب" : "التطبيقات")) as StoreProduct["category"],
 
     subcategory: (() => {
       const sourceName = isFreeFireProduct(p.name, subcategory)
