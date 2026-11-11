@@ -959,3 +959,6 @@
  .legacy-section-head{flex-direction:column!important;align-items:stretch!important;gap:12px!important}
  .legacy-search{width:100%!important}
 }
+
+/* Keep the content column on the left and the account rail on the right, as in the approved reference */
+.raseed-store-layout{direction:ltr!important}.raseed-main-column,.raseed-right-sidebar{direction:rtl!important}
