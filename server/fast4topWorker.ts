@@ -2,6 +2,8 @@
 import {
   checkFast4TopOrders,
   createFast4TopOrder,
+  syncFast4TopCatalog,
+  isFast4TopConfigured,
 } from "./fast4top";
 
 import {
@@ -224,12 +226,39 @@ export async function processPendingFast4TopOrders() {
   }
 }
 
+let catalogSyncBusy = false;
+
+async function runCatalogSync() {
+  if (catalogSyncBusy || !isFast4TopConfigured()) return;
+
+  catalogSyncBusy = true;
+  try {
+    const result = await syncFast4TopCatalog();
+    console.log(
+      `[Fast4Top] Automatic catalog sync complete: ${result.total} total, ${result.inserted} inserted, ${result.updated} updated`
+    );
+  } catch (error) {
+    console.warn(
+      "[Fast4Top] Automatic catalog sync failed:",
+      error instanceof Error ? error.message : "unknown error"
+    );
+  } finally {
+    catalogSyncBusy = false;
+  }
+}
+
 export function startFast4TopWorker() {
   void processPendingFast4TopOrders();
+  void runCatalogSync();
 
   setInterval(() => {
     void processPendingFast4TopOrders();
   }, 60_000);
+
+  // Refresh supplier catalog every six hours while the app is awake.
+  setInterval(() => {
+    void runCatalogSync();
+  }, 6 * 60 * 60 * 1000);
 }
 
 /**
