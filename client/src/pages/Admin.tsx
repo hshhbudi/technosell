@@ -114,7 +114,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   if (!auth.user) return <div className="admin-gate"><form className="gate-card" onSubmit={e=>{e.preventDefault();localLogin.mutate({email:localEmail,password:localPassword})}}><span className="brand-mark">TS</span><h1>دخول صاحب المتجر</h1><p>دخول مستقل عن Google وManus. استخدم بيانات المالك التي تم إعدادها بأمان.</p><label className="admin-login-field">البريد الإلكتروني<input required type="email" value={localEmail} onChange={e=>setLocalEmail(e.target.value)} placeholder="owner@example.com"/></label><label className="admin-login-field">كلمة المرور<input required type="password" value={localPassword} onChange={e=>setLocalPassword(e.target.value)} placeholder="كلمة المرور"/></label>{localLogin.error&&<div className="form-error">{localLogin.error.message}</div>}<button className="primary-btn full" disabled={localLogin.isPending}>{localLogin.isPending?"جارٍ تسجيل الدخول...":"تسجيل الدخول كمالك"} <ArrowRight size={17}/></button></form></div>;
   if (auth.user.role !== "admin" || access.isError) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>تجهيز حساب المالك</h1><p>إذا كنت تستخدم الحساب المنفصل الذي تريد تخصيصه للمتجر، اضغط الزر مرة واحدة لاعتماده كمالك. لا تستخدم حساب الزبائن أو حساب MySon.</p><button className="primary-btn" onClick={()=>claim.mutate()} disabled={claim.isPending}>{claim.isPending?"جارٍ اعتماد الحساب...":"اعتماد هذا الحساب كمالك"} <ArrowRight size={17}/></button><Link href="/" className="back-link gate-back">العودة إلى المتجر</Link></div></div>;
   const products=productsQuery.data??[];
-  const supplierProducts=supplierAdminCatalogQuery.data?.products??[];
+  const supplierProducts=(supplierAdminCatalogQuery.data?.products??[]).filter(p => p.category === "الألعاب" || p.category === "التطبيقات");
   const supplierCategories = Array.from(new Set(supplierProducts.map(p => p.subcategory).filter((name): name is string => Boolean(name)))).sort((a,b)=>a.localeCompare(b,"ar"));
   const categoryOverrides = categoryOverridesQuery.data ?? [];
   const orders=ordersQuery.data??[];
@@ -141,7 +141,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   <div className="panel-head">
     <div>
       <h2>كتالوج Fast4Top المتصل</h2>
-      <span>تتم مزامنة جميع منتجات وأقسام المزوّد تلقائيًا</span>
+      <span>تتم مزامنة الألعاب وتطبيقات البث المباشر فقط؛ ويمكنك تحديد قسم كل منتج بشكل مستقل</span>
     </div>
     <div className="admin-heading-actions">
       <span className="status-pill cyan">{supplierAdminCatalogQuery.isLoading ? "جاري التحميل" : `${supplierProducts.length} منتج · ${supplierCategories.length} قسم`}</span>
@@ -182,7 +182,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
         </div>
       </div>
       <div className="supplier-products-grid">
-        {supplierProducts.map(p => (
+        {supplierProducts.filter(p => p.category === "الألعاب" || p.category === "التطبيقات").map(p => (
           <div className="supplier-mini-card" key={`${p.externalId}-${p.name}`}>
             {p.imageUrl ? <img src={p.imageUrl} alt={p.name}/> : <div className="product-mini"><Box size={18}/></div>}
             <div>
