@@ -124,12 +124,12 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   <div className="panel-head">
     <div>
       <h2>كتالوج Fast4Top المتصل</h2>
-      <span>كل منتجات الألعاب والتطبيقات من المزوّد مع صورها وتصنيفاتها</span>
+      <span>تتم مزامنة جميع منتجات وأقسام المزوّد تلقائيًا</span>
     </div>
     <div className="admin-heading-actions">
-      <span className="status-pill cyan">{supplierAdminCatalogQuery.isLoading ? "جاري التحميل" : `${supplierProducts.length} منتج في قاعدة البيانات`}</span>
+      <span className="status-pill cyan">{supplierAdminCatalogQuery.isLoading ? "جاري التحميل" : `${supplierProducts.length} منتج · ${supplierCategories.length} قسم`}</span>
       <button className="secondary-btn" onClick={() => syncSupplier.mutate()} disabled={syncSupplier.isPending}>
-        <RefreshCw size={15}/> {syncSupplier.isPending ? "جارٍ التحديث..." : "مزامنة Fast4Top"}
+        <RefreshCw size={15}/> {syncSupplier.isPending ? "جارٍ التحديث..." : "مزامنة الآن"}
       </button>
     </div>
   </div>
@@ -140,7 +140,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   ) : (
     <>
       <div className="supplier-category-controls">
-        <h3>أقسام Fast4Top — اختر الأقسام التي تريد عرضها للزبائن</h3>
+        <h3>أقسام Fast4Top — اختر ما تريد عرضه في المتجر</h3>
         <div className="supplier-category-list">
           {supplierCategories.map(category => {
             const categoryProducts = supplierProducts.filter(p => p.subcategory === category);
@@ -157,127 +157,29 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
         </div>
       </div>
       <div className="supplier-products-grid">
-      {supplierProducts
-import { useState, type ReactNode } from "react";
-import { ArrowRight, BadgePercent, Bell, Box, CheckCircle2, Clock3, CreditCard, Gamepad2, LayoutDashboard, Package, Plus, RefreshCw, Search, ShoppingBag, Smartphone, Trash2, TrendingUp, Users, WalletCards, X } from "lucide-react";
-import { Link } from "wouter";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { startLogin } from "@/const";
-import { trpc } from "@/lib/trpc";
-
-const money=(cents:number)=>`$ ${(cents/100).toFixed(2)}`;
-const isSyriaTopupOrder=(items:string)=>items.includes('"category":"شحن ألعاب"')||items.includes('"category":"شحن تطبيقات"');
-const isWalletTopupOrder=(items:string)=>items.includes('"category":"تعبئة الرصيد"');
-const isGameProduct=(category:string,name="",subcategory="")=>category.includes("ألعاب")||/(pubg|ببجي|free\s*fire|فري\s*فاير|jawaker|جواكر)/i.test(`${name} ${subcategory}`);
-
-type FormState={name:string;category:string;description:string;priceUsd:string;oldPrice:string;stock:string;isDigital:boolean;tag:string;imageData:string};
-const emptyForm:FormState={name:"",category:"التطبيقات",description:"",priceUsd:"",oldPrice:"",stock:"0",isDigital:true,tag:"",imageData:""};
-const adminSections=[
-  {id:"dashboard",label:"الرئيسية",hint:"نظرة عامة",icon:<LayoutDashboard size={17}/>},
-  {id:"games",label:"الألعاب",hint:"كتالوج الألعاب",icon:<Gamepad2 size={17}/>},
-  {id:"apps",label:"التطبيقات",hint:"كتالوج التطبيقات",icon:<Smartphone size={17}/>},
-  {id:"products",label:"المنتجات",hint:"الهواتف والإكسسوارات",icon:<ShoppingBag size={17}/>},
-  {id:"offers",label:"العروضات",hint:"الأسعار المميزة",icon:<BadgePercent size={17}/>},
-  {id:"payments",label:"الدفع",hint:"طلبات العملاء",icon:<CreditCard size={17}/>},
-  {id:"balance",label:"الرصيد",hint:"تعبئة العملاء",icon:<WalletCards size={17}/>},
-] as const;
-
-function compressProductImage(file: File, onDone: (data: string) => void, onError: (message: string) => void) {
-  if (!file.type.startsWith("image/")) { onError("اختر ملف صورة صالحًا"); return; }
-  const reader = new FileReader();
-  reader.onerror = () => onError("تعذر قراءة الصورة من الهاتف");
-  reader.onload = () => {
-    const image = new Image();
-    image.onerror = () => onError("تعذر معالجة الصورة، جرّب صورة أخرى");
-    image.onload = () => {
-      const maxSide = 1000;
-      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-      const context = canvas.getContext("2d");
-      if (!context) { onError("تعذر تجهيز الصورة"); return; }
-      context.fillStyle = "#ffffff"; context.fillRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      let data = canvas.toDataURL("image/jpeg", 0.68);
-      if (data.length > 1_400_000) data = canvas.toDataURL("image/jpeg", 0.5);
-      if (data.length > 1_800_000) { onError("الصورة ما زالت كبيرة؛ اختر صورة أصغر أو التقطها بدقة أقل"); return; }
-      onDone(data);
-    };
-    image.src = String(reader.result);
-  };
-  reader.readAsDataURL(file);
-}
-
-export default function Admin() {
-  const auth = useAuth();
-  const localLogin = trpc.adminLocal.login.useMutation({ onSuccess: () => window.location.reload() });
-  const access = trpc.admin.access.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
-  const claim = trpc.admin.claim.useMutation({ onSuccess: (result) => { if (result.claimed) window.location.reload(); } });
-  const productsQuery = trpc.admin.products.list.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
-  const supplierAdminCatalogQuery = trpc.supplier.adminCatalog.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), staleTime: 30_000, retry: false });
-  const supplierProfileQuery = trpc.supplier.profile.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), refetchInterval: 60_000, retry: false });
-  const ordersQuery = trpc.admin.orders.list.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
-  const updateOrder = trpc.admin.orders.updateStatus.useMutation({ onSuccess: ()=>ordersQuery.refetch() });
-  const utils = trpc.useUtils();
-  const syncSupplier = trpc.supplier.sync.useMutation({
-    onSuccess: async (result) => {
-      setNotice(`اكتملت مزامنة Fast4Top: ${result.inserted ?? 0} جديد، ${result.updated ?? 0} محدّث`);
-      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
-    },
-    onError: (err) => setError(err.message || "تعذرت مزامنة كتالوج Fast4Top"),
-  });
-  const setSupplierApproval = trpc.supplier.setApproval.useMutation({
-    onSuccess: async () => {
-      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
-    },
-    onError: (err) => setError(err.message || "تعذر تحديث اعتماد المنتج"),
-  });
-  const setSupplierEnabled = trpc.supplier.setEnabled.useMutation({
-    onSuccess: async () => {
-      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
-    },
-    onError: (err) => setError(err.message || "تعذر تحديث حالة المنتج"),
-  });
-  const setSupplierCategoryEnabled = trpc.supplier.setCategoryEnabled.useMutation({
-    onSuccess: async (_result, variables) => {
-      setNotice(variables.enabled ? `تم تفعيل قسم ${variables.category} بالكامل` : `تم إخفاء قسم ${variables.category} من المتجر`);
-      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
-    },
-    onError: (err) => setError(err.message || "تعذر تحديث القسم"),
-  });
-  const createProduct = trpc.admin.products.create.useMutation({ onSuccess: async()=>{ setForm(emptyForm); setFormOpen(false); setError(""); setNotice("تمت إضافة المنتج وظهر الآن في المتجر"); setTimeout(()=>setNotice(""),3500); await utils.admin.products.list.invalidate(); }, onError: (err)=>setError(err.message || "تعذر حفظ المنتج، حاول مرة أخرى") });
-
-const updateProduct = trpc.admin.products.update.useMutation({ onSuccess: async()=>{ setForm(emptyForm); setFormOpen(false); setError(""); await utils.admin.products.list.invalidate(); }, onError: (err)=>setError(err.message || "تعذر تعديل المنتج، حاول مرة أخرى") });
-
-const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async()=>{ setNotice("تم حذف المنتج من المتجر"); setTimeout(()=>setNotice(""),3000); await utils.admin.products.list.invalidate(); } });
-  const transfer = trpc.admin.transferOwnership.useMutation({ onSuccess: () => { setTransferOpen(false); setTransferEmail(""); auth.logout(); } });
-  const addAdmin = trpc.admin.addAdmin.useMutation({ onSuccess: () => { setTransferOpen(false); setTransferEmail(""); setError("تمت إضافة المدير المشارك بنجاح"); }, onError: e=>setError(e.message) });
-  const [formOpen,setFormOpen]=useState(false); const [form,setForm]=useState<FormState>(emptyForm); const [editingId,setEditingId]=useState<number|null>(null); const [error,setError]=useState(""); const [notice,setNotice]=useState(""); const [activeSection,setActiveSection]=useState<"dashboard"|"games"|"apps"|"products"|"offers"|"payments"|"balance">("dashboard"); const [transferOpen,setTransferOpen]=useState(false); const [transferEmail,setTransferEmail]=useState(""); const [localEmail,setLocalEmail]=useState(""); const [localPassword,setLocalPassword]=useState(""); const [orderFilter,setOrderFilter]=useState<"all"|"pending"|"processing"|"completed"|"failed">("all"); const [orderSearch,setOrderSearch]=useState("");
-  if (auth.loading) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>جاري التحقق من صلاحيات الدخول</h1><p>هذه الصفحة مخصصة لصاحب المتجر وفريق الإدارة فقط.</p></div></div>;
-  if (!auth.user) return <div className="admin-gate"><form className="gate-card" onSubmit={e=>{e.preventDefault();localLogin.mutate({email:localEmail,password:localPassword})}}><span className="brand-mark">TS</span><h1>دخول صاحب المتجر</h1><p>دخول مستقل عن Google وManus. استخدم بيانات المالك التي تم إعدادها بأمان.</p><label className="admin-login-field">البريد الإلكتروني<input required type="email" value={localEmail} onChange={e=>setLocalEmail(e.target.value)} placeholder="owner@example.com"/></label><label className="admin-login-field">كلمة المرور<input required type="password" value={localPassword} onChange={e=>setLocalPassword(e.target.value)} placeholder="كلمة المرور"/></label>{localLogin.error&&<div className="form-error">{localLogin.error.message}</div>}<button className="primary-btn full" disabled={localLogin.isPending}>{localLogin.isPending?"جارٍ تسجيل الدخول...":"تسجيل الدخول كمالك"} <ArrowRight size={17}/></button></form></div>;
-  if (auth.user.role !== "admin" || access.isError) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>تجهيز حساب المالك</h1><p>إذا كنت تستخدم الحساب المنفصل الذي تريد تخصيصه للمتجر، اضغط الزر مرة واحدة لاعتماده كمالك. لا تستخدم حساب الزبائن أو حساب MySon.</p><button className="primary-btn" onClick={()=>claim.mutate()} disabled={claim.isPending}>{claim.isPending?"جارٍ اعتماد الحساب...":"اعتماد هذا الحساب كمالك"} <ArrowRight size={17}/></button><Link href="/" className="back-link gate-back">العودة إلى المتجر</Link></div></div>;
-  const products=productsQuery.data??[];
-  const supplierProducts=supplierAdminCatalogQuery.data?.products??[];
-  const supplierCategories = Array.from(new Set(supplierProducts.map(p => p.subcategory).filter((name): name is string => Boolean(name)))).sort((a,b)=>a.localeCompare(b,"ar"));
-  const orders=ordersQuery.data??[];
-  const visibleProducts=products.filter(p=>activeSection==="games"?isGameProduct(p.category,p.name,""):activeSection==="apps"?p.category.includes("تطبيقات"):activeSection==="offers"?Boolean(p.tag||p.oldPrice):activeSection==="products"?["الهواتف","الإكسسوارات","المنتجات"].includes(p.category):true);
-  const confirmedOrders=orders.filter(o=>o.paymentStatus==="confirmed");
-  const totalSales=confirmedOrders.reduce((sum,o)=>sum+o.total,0);
-  const activeGames=products.filter(p=>p.isActive&&isGameProduct(p.category,p.name,"")).length;
-  const uniqueCustomers=new Set(orders.map(o=>o.customerId||o.customerName)).size;
-  const salesDays=Array.from({length:7},(_,offset)=>{const date=new Date();date.setHours(0,0,0,0);date.setDate(date.getDate()-(6-offset));const key=date.toISOString().slice(0,10);return {key,label:date.toLocaleDateString("ar-SY",{weekday:"short"}),value:confirmedOrders.filter(o=>new Date(o.createdAt).toISOString().slice(0,10)===key).reduce((sum,o)=>sum+o.total,0)};});
-  const maxSales=Math.max(...salesDays.map(day=>day.value),1);
-  const visibleOrders=activeSection==="balance"?orders.filter(o=>isWalletTopupOrder(o.items)):orders;
-  const filteredOrders=visibleOrders.filter(order=>{const status=order.executionStatus==="completed"?"completed":order.executionStatus==="failed"||order.paymentStatus==="rejected"?"failed":order.paymentStatus==="confirmed"?"processing":"pending";const matchesFilter=orderFilter==="all"||status===orderFilter;const term=orderSearch.trim().toLowerCase();const matchesSearch=!term||order.orderNumber.toLowerCase().includes(term)||order.customerName.toLowerCase().includes(term)||String(order.customerId||"").includes(term);return matchesFilter&&matchesSearch;});
-  const openEdit=(p:(typeof products)[number])=>{setEditingId(p.id);setForm({name:p.name,category:p.category,description:p.description||"",priceUsd:((p.priceUsdCents??p.price)/100).toFixed(2),oldPrice:p.oldPrice?((p.oldPrice)/100).toFixed(2):"",stock:String(p.stock),isDigital:p.isDigital,tag:p.tag||"",imageData:""});setError("");setFormOpen(true)};
-  const submit=(e:React.FormEvent)=>{e.preventDefault();setError("");if(!form.name.trim()||!form.priceUsd||Number(form.priceUsd)<0){setError("اكتب اسم المنتج وسعر الدولار بشكل صحيح");return}const payload={name:form.name.trim(),category:form.category,description:form.description.trim()||undefined,priceUsdCents:Math.round(Number(form.priceUsd)*100),oldPrice:form.oldPrice?Math.round(Number(form.oldPrice)*100):undefined,stock:Number(form.stock)||0,isDigital:form.isDigital,tag:form.tag.trim()||undefined,imageData:form.imageData||undefined};if(editingId) updateProduct.mutate({id:editingId,...payload}); else createProduct.mutate(payload)};
-  return <div className="admin-shell">
-      <header className="admin-topbar"><Link href="/" className="back-link"><ArrowRight size={18}/> العودة للمتجر</Link><div className="admin-brand"><span className="brand-mark">TS</span><span>لوحة Tecno Sell</span></div><div className="admin-top-actions"><span className="admin-live-status"><i/> المتجر متصل</span><span className="admin-phone">اتصال: <a href="tel:+963968057214">+963968057214</a></span><button className="icon-btn" title={`${orders.filter(o=>o.paymentStatus==='pending').length} طلب بانتظار المراجعة`}><Bell size={18}/>{orders.filter(o=>o.paymentStatus==='pending').length>0&&<i>{orders.filter(o=>o.paymentStatus==='pending').length}</i>}</button></div></header>
-      <main className="admin-main" data-section={activeSection}>{notice&&<div className="admin-notice"><CheckCircle2 size={17}/>{notice}</div>}{error&&!formOpen&&!transferOpen&&<div className="form-error">{error}</div>}
-      <div className="admin-heading"><div><span className="eyebrow admin-eyebrow">مركز العمليات · إدارة آمنة</span><h1>صاحب المتجر</h1><p>كل ما تحتاجه لإدارة المبيعات والشحن والمنتجات من مكان واحد.</p></div><div className="admin-heading-actions"><button className="secondary-btn" onClick={()=>{setError("");setTransferOpen(true)}}>إضافة مدير مشارك</button><button className="primary-btn" onClick={()=>setFormOpen(true)}><Plus size={17}/> إضافة منتج</button></div></div>
-      <nav className="admin-section-tabs" aria-label="أقسام لوحة المالك">{adminSections.map(section=><button key={section.id} className={activeSection===section.id?"active":""} onClick={()=>setActiveSection(section.id)}><span className="admin-tab-icon">{section.icon}</span><span><b>{section.label}</b><small>{section.hint}</small></span></button>)}</nav>
-      {activeSection==="dashboard"&&<section className="stats-grid"><Stat icon={<Box/>} label="إجمالي المبيعات" value={money(totalSales)} suffix="" delta="من الطلبات المؤكدة"/><Stat icon={<TrendingUp/>} label="ألعاب نشطة" value={String(activeGames)} suffix="لعبة" delta="متاحة في المتجر"/><Stat icon={<Clock3/>} label="طلبات جديدة" value={String(orders.filter(o=>o.paymentStatus==='pending').length)} suffix="طلب" delta="بانتظار المراجعة"/><Stat icon={<Users/>} label="عملاء نشطون" value={String(uniqueCustomers)} suffix="عميل" delta="حسب الطلبات"/><Stat icon={<CreditCard/>} label="رصيد Fast4Top" value={supplierProfileQuery.data?.balance?`$ ${Number(supplierProfileQuery.data.balance).toFixed(3)}`:"—"} suffix="" delta={supplierProfileQuery.data?.connected?"متصل ويُحدّث تلقائيًا":"تحقق من الاتصال"}/></section>}
+        {supplierProducts.map(p => (
+          <div className="supplier-mini-card" key={`${p.externalId}-${p.name}`}>
+            {p.imageUrl ? <img src={p.imageUrl} alt={p.name}/> : <div className="product-mini"><Box size={18}/></div>}
+            <div>
+              <strong>{p.name}</strong>
+              <small>{p.category ?? "غير مصنف"} · {p.subcategory ?? ""}</small>
+              <b>{money(p.sellingPriceCents)}</b>
+              <small>الاعتماد: {p.approved ? "معتمد" : "بانتظار الاعتماد"} · العرض: {p.enabled ? "مفعّل" : "متوقف"} · التوفر: {p.available ? "متاح" : "غير متاح"}</small>
+              <div className="admin-heading-actions">
+                <button className="text-btn" onClick={() => setSupplierApproval.mutate({id:p.id,approved:!p.approved})} disabled={setSupplierApproval.isPending}>
+                  {p.approved ? "إلغاء الاعتماد" : "اعتماد المنتج"}
+                </button>
+                <button className="text-btn" onClick={() => setSupplierEnabled.mutate({id:p.id,enabled:!p.enabled})} disabled={setSupplierEnabled.isPending || (!p.approved && !p.enabled)}>
+                  {p.enabled ? "إيقاف العرض" : "تفعيل العرض"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  )}
+</section>}
       <section className="panel product-manager"><div className="panel-head"><div><h2>منتجات المتجر</h2><span>تطبيقات وألعاب وهواتف وإكسسوارات، وكلها تظهر في أقسامها</span></div><button className="text-btn" onClick={()=>{setEditingId(null);setForm(emptyForm);setFormOpen(true)}}><Plus size={14}/> إضافة منتج</button></div>{visibleProducts.length===0?<div className="manager-empty"><Package size={34}/><h3>لم تضف أي منتج بعد</h3><p>ابدأ بإضافة أول تطبيق أو لعبة أو هاتف أو إكسسوار.</p><button className="primary-btn" onClick={()=>{setEditingId(null);setForm(emptyForm);setFormOpen(true)}}>إضافة أول منتج</button></div>:<div className="managed-products">{visibleProducts.map(p=><div className="managed-product" key={p.id}><div className="product-mini"><Box size={18}/></div><div className="managed-product-main"><strong>{p.name}</strong><span>{p.category} · منتج المتجر</span></div><div className="managed-price"><b>{money(p.priceUsdCents??p.price)}</b><small>المخزون: {p.stock}</small></div><button className="text-btn" title="تعديل المنتج" onClick={()=>openEdit(p)}>تعديل</button><button className="delete-btn" title="حذف المنتج" onClick={()=>{if(window.confirm(`حذف المنتج «${p.name}» من المتجر؟`)) removeProduct.mutate({id:p.id})}} disabled={removeProduct.isPending}><Trash2 size={15}/> حذف</button></div>)}</div>}</section>
         
 <section className="panel supplier-manager">
