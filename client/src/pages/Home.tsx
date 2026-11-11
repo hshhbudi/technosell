@@ -226,79 +226,19 @@ export default function Home() {
 });
 
   // إخفاء منتجات الأكواد المحظورة من قسم الشحن المباشر
+  // المتجر يعرض من المورد قسم الألعاب وتطبيقات البث المباشر فقط.
   const supplierOnlyIdProducts = supplierProducts.filter(
-  (product) =>
-    !isBlockedCodeProduct(
-      product.name,
-      product.subcategory ?? "",
-      product.description ?? ""
-    )
-);
+    (product) =>
+      (product.category === "الألعاب" || product.category === "التطبيقات") &&
+      !isBlockedCodeProduct(
+        product.name,
+        product.subcategory ?? "",
+        product.description ?? ""
+      )
+  );
 
-  // المنتجات اليدوية الموجودة في المتجر
-  const localProducts: StoreProduct[] = (
-    catalogQuery.data ?? []
-  ).map((p) => ({
-    id: p.id,
-    externalId: String(p.id),
-
-    // المنتجات اليدوية لا تملك معرّف شحن لدى المورد
-    supplierDbId: undefined,
-
-    name: p.name,
-
-    category: (
-      [
-        "التطبيقات",
-        "الألعاب",
-        "المنتجات",
-        "الهواتف",
-        "الإكسسوارات",
-      ].includes(p.category)
-        ? p.category
-        : "المنتجات"
-    ) as StoreProduct["category"],
-
-    subcategory: p.category,
-    delivery: "id",
-
-    price: p.priceUsdCents ?? p.price,
-    stock: p.stock,
-
-    tag: p.tag ?? undefined,
-    description: p.description ?? "منتج من متجر رصيد",
-    imageUrl: p.imageUrl,
-
-    accent:
-      p.category === "الألعاب"
-        ? "blue"
-        : p.category === "التطبيقات"
-          ? "pink"
-          : p.category === "الهواتف"
-            ? "navy"
-            : "gold",
-
-    icon:
-      p.category === "الألعاب"
-        ? "game"
-        : p.category === "التطبيقات"
-          ? "app"
-          : "product",
-  }));
-
-  // دمج منتجات المورد مع المنتجات اليدوية دون تكرار الاسم
-  const remoteAndLocalProducts = [
-    ...supplierOnlyIdProducts,
-    ...localProducts.filter(
-      (local) =>
-        !supplierProducts.some(
-          (remote) => remote.name === local.name
-        )
-    ),
-  ];
-
-  // لا نضيف منتجات تجريبية أو أسعار وهمية
-  const products: StoreProduct[] = remoteAndLocalProducts;
+  // نعرض فقط المنتجات المعتمدة القادمة من مورد الشحن؛ لا نخلط معها الهواتف أو الإكسسوارات أو المنتجات اليدوية.
+  const products: StoreProduct[] = supplierOnlyIdProducts;
 
   const subcategories = useMemo(
     () =>
@@ -673,48 +613,17 @@ export default function Home() {
 
         <section className="legacy-category-row">
           <button
-            className={
-              active === "التطبيقات" ? "selected" : ""
-            }
-            onClick={() => selectCategory("التطبيقات")}
-          >
-            <Package /> التطبيقات
-          </button>
-
-          <button
-            className={
-              active === "الألعاب" ? "selected" : ""
-            }
+            className={active === "الألعاب" ? "selected" : ""}
             onClick={() => selectCategory("الألعاب")}
           >
             <Gamepad2 /> الألعاب
           </button>
 
           <button
-            className={
-              active === "الهواتف" ? "selected" : ""
-            }
-            onClick={() => selectCategory("الهواتف")}
+            className={active === "التطبيقات" ? "selected" : ""}
+            onClick={() => selectCategory("التطبيقات")}
           >
-            <Smartphone /> الهواتف
-          </button>
-
-          <button
-            className={
-              active === "الإكسسوارات" ? "selected" : ""
-            }
-            onClick={() => selectCategory("الإكسسوارات")}
-          >
-            <Headphones /> الإكسسوارات
-          </button>
-
-          <button
-            className={
-              active === "المنتجات" ? "selected" : ""
-            }
-            onClick={() => selectCategory("المنتجات")}
-          >
-            <Package /> المنتجات
+            <Package /> تطبيقات البث المباشر
           </button>
         </section>
 
