@@ -348,10 +348,12 @@ export async function readDigitalCatalog() {
 export async function syncFast4TopCatalog() {
   const products = await readDigitalCatalog();
 
-  await syncSupplierProducts(products);
+  const syncResult = await syncSupplierProducts(products);
 
   return {
-    total: products.length,
+    total: syncResult.total,
+    inserted: syncResult.inserted,
+    updated: syncResult.updated,
     message: "تم جلب المنتجات ومزامنتها مع قاعدة البيانات",
   };
 }
