@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { startFast4TopWorker } from "../fast4topWorker";
+import { readStoredMedia } from "../storage";
 
 async function startServer() {
   const app = express();
@@ -16,6 +17,19 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+  app.get("/api/media/:key", async (req, res) => {
+    try {
+      const key = decodeURIComponent(req.params.key);
+      const media = await readStoredMedia(key);
+      if (!media) return res.status(404).json({ error: "Media not found" });
+      res.setHeader("Content-Type", media.contentType);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      return res.status(200).send(Buffer.from(media.dataBase64, "base64"));
+    } catch (error) {
+      console.error("[Media] Failed to read upload:", error);
+      return res.status(500).json({ error: "Unable to load media" });
+    }
+  });
   app.get("/api/platform/config.js", (_req, res) => {
     res.set("Cache-Control", "no-store").type("application/javascript").send(publicPlatformScript());
   });
