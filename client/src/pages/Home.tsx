@@ -100,14 +100,29 @@ const fallbackImageFor = (
   if (product.category !== "الألعاب") return null;
   const gameName = `${product.name} ${product.subcategory}`.toLowerCase();
 
-  // Official/current game artwork fallbacks for supplier products with no image.
+  // Game artwork fallbacks for supplier products that arrive without an image.
   if (/(free\\s*fire|فري\\s*فاير)/i.test(gameName)) {
     return "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/d6/8f/47/d68f4742-5a10-b375-2114-0f840bd49ec1/AppIcon-1781539049-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg";
   }
   if (/(pubg|ببجي)/i.test(gameName)) {
     return "https://syimg.3dmgame.com/uploadimg/ico/2025/0515/1747294853476299.png";
   }
-  return null;
+  const gameArtwork: Array<[RegExp, string]> = [
+    [/(mobile\\s*legends|mlbb|موبايل\\s*ليجند)/i, "mobilelegendsbangbang"],
+    [/(call\\s*of\\s*duty|cod|كول\\s*اوف\\s*ديوتي)/i, "callofduty"],
+    [/(roblox|روبلوكس)/i, "roblox"],
+    [/(minecraft|ماين\\s*كرافت)/i, "minecraft"],
+    [/(clash\\s*of\\s*clans|كلاش\\s*اوف\\s*كلانس)/i, "clashofclans"],
+    [/(fortnite|فورتنايت)/i, "fortnite"],
+    [/(valorant|فالورانت)/i, "valorant"],
+    [/(genshin\\s*impact|جينشن)/i, "genshinimpact"],
+    [/(efootball|\\bpes\\b|بيس)/i, "konami"],
+    [/(steam|ستيم)/i, "steam"],
+    [/(playstation|psn|بلايستيشن)/i, "playstation"],
+    [/(xbox|إكس\\s*بوكس)/i, "xbox"],
+  ];
+  const artwork = gameArtwork.find(([pattern]) => pattern.test(gameName));
+  return artwork ? `https://cdn.simpleicons.org/${artwork[1]}/FFFFFF` : null;
 };
 
 export default function Home() {
