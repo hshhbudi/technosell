@@ -480,3 +480,110 @@
   .legacy-category-row button{box-shadow:0 7px 18px #03020a88}
   .legacy-card{border-radius:16px}
 }
+
+
+/* Raseed AI-inspired storefront refresh: editorial layout, clear hierarchy and premium interaction */
+.legacy-store{font-family:Tahoma,"Segoe UI",Arial,sans-serif;min-height:100vh}
+.legacy-topline{display:none!important}
+.legacy-header{position:sticky;top:0;z-index:30;min-height:82px;padding:12px clamp(16px,4vw,58px);display:flex;align-items:center;gap:clamp(16px,3vw,42px);backdrop-filter:blur(18px)}
+.legacy-logo{gap:12px;min-width:180px}
+.legacy-logo-mark{width:48px;height:48px;border-radius:16px;font-size:23px}
+.legacy-logo>span:last-child{font-size:22px;font-weight:900;letter-spacing:-.5px}
+.legacy-logo small{font-size:10px;color:#b8a7cc;margin-top:5px}
+.legacy-header nav{display:flex;align-items:center;justify-content:center;gap:8px;flex:1}
+.legacy-header nav button{padding:11px 17px;border:1px solid transparent;border-radius:12px;background:transparent;font-size:13px;font-weight:700;transition:.2s}
+.legacy-header nav button:hover{background:#26133b;border-color:#7540a5}
+.legacy-actions{gap:8px}
+.legacy-actions button{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;transition:.2s}
+.legacy-actions button[aria-label="الحساب"]{width:auto;padding:0 14px;display:flex;gap:8px}
+.legacy-hero{width:min(1320px,calc(100% - 48px));margin:34px auto 28px;min-height:430px;padding:clamp(28px,5vw,68px);grid-template-columns:1.1fr .9fr;border-radius:30px;overflow:hidden;position:relative}
+.legacy-hero-copy{position:relative;z-index:2;max-width:650px}
+.legacy-kicker{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border:1px solid #a75aff55;border-radius:30px;background:#8b35ff16;font-size:11px;font-weight:800;letter-spacing:.2px}
+.legacy-hero h1{font-size:clamp(42px,5.2vw,70px);line-height:1.17;letter-spacing:-2px;margin:24px 0 16px;font-weight:950}
+.legacy-hero p{font-size:15px;line-height:2.1;max-width:510px}
+.legacy-hero-buttons{gap:20px;margin-top:28px}
+.legacy-primary{border-radius:14px;padding:14px 23px;font-weight:900}
+.legacy-hero-art{min-height:300px;position:relative}
+.hero-device{width:285px;height:245px;border-radius:32px;transform:rotate(-5deg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;backdrop-filter:blur(12px)}
+.hero-icons{display:flex;align-items:center;gap:18px}
+.hero-icons svg{width:64px;height:64px;filter:drop-shadow(0 0 16px #a43cff66)}
+.hero-device>strong{font-size:24px;text-align:center}
+.hero-device>small{font-size:11px;letter-spacing:2px}
+.hero-sticker{font-weight:900;box-shadow:0 12px 30px #0007}
+.legacy-category-row{width:min(1320px,calc(100% - 48px));margin:0 auto 30px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.legacy-category-row button{min-height:88px;border-radius:20px;justify-content:center;font-size:17px;font-weight:900;gap:14px;transition:transform .2s,box-shadow .2s}
+.legacy-category-row button:hover{transform:translateY(-3px)}
+.legacy-category-row button svg{width:26px;height:26px}
+.offers-panel{width:min(1320px,calc(100% - 48px));margin:0 auto 34px;padding:27px 30px;border-radius:23px;display:grid;grid-template-columns:minmax(190px,.65fr) 1.35fr;gap:25px;align-items:center}
+.offers-panel h2{font-size:25px;margin:12px 0 8px;font-weight:900}
+.offers-panel p{font-size:12px;line-height:1.9}
+.offers-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.offers-strip button{min-height:105px;padding:15px;border-radius:16px;text-align:right;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:8px;transition:transform .2s,border-color .2s}
+.offers-strip button:hover{transform:translateY(-3px);border-color:#c58aff}
+.offers-strip button strong{font-size:12px;line-height:1.6}
+.offers-strip button small{font-size:14px;font-weight:900}
+.legacy-catalog{width:min(1320px,calc(100% - 48px));margin:0 auto}
+.legacy-section-head{align-items:end;margin-bottom:22px}
+.legacy-section-head h2{font-size:30px;font-weight:950;margin-top:12px}
+.legacy-search{border-radius:14px;padding:0 15px;min-width:260px}
+.legacy-search input{height:46px;font-size:12px}
+.subcategory-row{display:flex;gap:9px;overflow-x:auto;padding:3px 1px 15px;scrollbar-width:thin}
+.subcategory-row button{padding:10px 15px;border-radius:13px;white-space:nowrap;font-weight:700}
+.legacy-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.legacy-card{border-radius:20px;overflow:hidden;min-width:0}
+.legacy-card-art{height:190px;position:relative;display:grid;place-items:center;overflow:hidden}
+.legacy-card-art img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0;z-index:1;padding:14px;transition:transform .35s}
+.legacy-card:hover .legacy-card-art img{transform:scale(1.07)}
+.legacy-product-icon{opacity:.28}
+.legacy-card-info{min-height:190px;padding:18px}
+.legacy-card-info h3{font-size:15px;min-height:46px}
+.legacy-card-info p{font-size:11px;line-height:1.9;min-height:40px}
+.legacy-card-bottom{margin-top:17px}
+.legacy-card-bottom strong{font-size:18px}
+.legacy-card-bottom button{border-radius:12px;padding:11px 15px;font-weight:900}
+.legacy-footer{width:min(1320px,calc(100% - 48px));margin-top:65px;padding:35px 10px}
+.store-notices{position:absolute;top:calc(100% + 10px);left:clamp(12px,4vw,55px);z-index:50;max-height:min(70vh,560px);overflow:auto;backdrop-filter:blur(15px)}
+.legacy-toast{border-radius:15px;padding:15px 19px}
+@media(max-width:1050px){.legacy-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.legacy-header{gap:12px}.legacy-logo{min-width:155px}.legacy-logo small{font-size:9px}.offers-panel{grid-template-columns:1fr}.offers-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:800px){
+ .legacy-header{min-height:70px;padding:10px 14px;flex-wrap:wrap}
+ .legacy-logo{min-width:0}.legacy-logo-mark{width:42px;height:42px}.legacy-logo>span:last-child{font-size:19px}
+ .legacy-header nav{display:none;order:3;width:100%;flex-basis:100%;padding:9px;flex-direction:row;justify-content:stretch;gap:6px}
+ .legacy-header nav.open{display:flex}
+ .legacy-header nav button{flex:1;padding:11px 7px;font-size:11px}
+ .legacy-actions{margin-right:auto}.legacy-actions button{width:38px;height:38px}
+ .legacy-hero{width:calc(100% - 24px);margin:16px auto 20px;padding:25px 18px 22px;grid-template-columns:1fr;gap:0;border-radius:23px}
+ .legacy-hero-art{height:220px;min-height:220px;order:-1}
+ .hero-device{width:230px;height:185px;border-radius:25px;gap:12px}
+ .hero-icons svg{width:48px;height:48px}
+ .hero-device>strong{font-size:19px}
+ .legacy-hero-copy{text-align:center}
+ .legacy-hero h1{font-size:clamp(36px,10vw,48px);margin:15px 0 10px}
+ .legacy-hero p{font-size:12px;margin-inline:auto}
+ .legacy-hero-buttons{justify-content:center;flex-wrap:wrap}
+ .legacy-category-row{width:calc(100% - 24px);grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:22px}
+ .legacy-category-row button{min-height:72px;padding:11px 8px;font-size:12px;gap:8px}
+ .legacy-category-row button svg{width:21px;height:21px}
+ .offers-panel{width:calc(100% - 24px);display:block;padding:19px;margin-bottom:25px}
+ .offers-strip{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:15px}
+ .legacy-catalog{width:calc(100% - 24px)}
+ .legacy-section-head{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+ .legacy-section-head h2{font-size:25px}
+ .legacy-search{min-width:0;width:100%}
+ .legacy-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+ .legacy-card-art{height:145px}
+ .legacy-card-info{padding:12px;min-height:180px}
+ .legacy-card-info h3{font-size:12px;min-height:40px}
+ .legacy-card-info p{font-size:10px;min-height:38px}
+ .legacy-card-bottom{align-items:stretch;flex-direction:column}
+ .legacy-card-bottom button{width:100%}
+ .legacy-footer{width:calc(100% - 24px)}
+ .store-notices{left:8px;right:8px;width:auto}
+}
+@media(max-width:390px){
+ .legacy-actions{gap:5px}.legacy-actions button{width:34px;height:34px}
+ .legacy-actions button[aria-label="الحساب"]{padding:0 9px}
+ .legacy-logo small{max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .legacy-grid{gap:8px}.legacy-card-info{padding:10px}
+ .offers-strip button{padding:11px}
+}
