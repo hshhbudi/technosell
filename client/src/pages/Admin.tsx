@@ -137,18 +137,9 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
     <div className="supplier-products-grid">
       {supplierProducts
         .filter(p =>
-          !(
-            (
-              isFreeFireProduct(p.name, p.subcategory ?? "") ||
-              isPubgProduct(p.name, p.subcategory ?? "")
-            ) &&
-            isCodeProduct(p.name, p.subcategory ?? "", p.description ?? "")
-          ) &&
-          (
-            activeSection === "games"
-              ? isGameProduct(p.category ?? "", p.name, p.subcategory ?? "")
-              : (p.category ?? "").includes("تطبيقات")
-          )
+          activeSection === "games"
+            ? isGameProduct(p.category ?? "", p.name, p.subcategory ?? "")
+            : (p.category ?? "").includes("تطبيقات")
         )
         .map(p => (
           <div className="supplier-mini-card" key={`${p.externalId}-${p.name}`}>
