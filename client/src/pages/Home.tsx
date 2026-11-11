@@ -372,28 +372,15 @@ export default function Home() {
       totalCents: computedTotal,
     });
   };
-  // العروض تعرض منتجات المورد فقط
-  const offers = products
-    .filter((p) => p.supplierDbId && (p.tag || p.name.includes("عرض")))
-    .concat(products.filter((p) => p.supplierDbId && !(p.tag || p.name.includes("عرض"))))
-    .filter((p, index, all) => all.findIndex((item) => item.id === p.id) === index)
-    .slice(0, 6);
-
   return (
     <div
       className={`legacy-store ${lightMode ? "theme-light" : ""}`}
       dir="rtl"
     >
-      <aside className="raseed-side-rail" aria-label="اختصارات الحساب">
-        <button className="raseed-rail-balance" onClick={() => setAuthOpen(true)} title="رصيد الحساب"><WalletCards size={19}/><span>{customerQuery.data ? money(customerQuery.data.balanceCents) : "حسابي"}</span></button>
-        <button onClick={() => customerQuery.data ? setHistoryOpen(true) : setAuthOpen(true)} title="طلباتي"><ClipboardList size={19}/><small>طلباتي</small></button>
-        <button onClick={() => {setNoticeOpen(v=>!v);setSettingsOpen(false);}} title="الإشعارات"><Bell size={19}/><small>الإشعارات</small>{customerNotificationCount>0&&<i>{customerNotificationCount}</i>}</button>
+      <aside className="raseed-side-rail raseed-settings-only" aria-label="إعدادات المتجر">
         <button onClick={() => setSettingsOpen(v=>!v)} title="الإعدادات"><Settings size={20}/><small>الإعدادات</small></button>
         {settingsOpen && <div className="raseed-settings-popover"><strong>إعدادات رصيد</strong>
-          <button onClick={() => {setAuthOpen(true);setSettingsOpen(false);}}><WalletCards size={16}/> الحساب والمحفظة</button>
-          <button onClick={() => {setHistoryOpen(true);setSettingsOpen(false);}}><ClipboardList size={16}/> سجل الطلبات</button>
           <button onClick={() => {setLightMode(v=>!v);setSettingsOpen(false);}}>{lightMode?<Sun size={16}/>:<Moon size={16}/>} تغيير المظهر</button>
-          <button onClick={() => {setNoticeOpen(true);setSettingsOpen(false);}}><Bell size={16}/> مركز الإشعارات</button>
         </div>}
       </aside>
       <header className="legacy-header">
@@ -572,39 +559,6 @@ export default function Home() {
           >
             <Package /> تطبيقات البث المباشر
           </button>
-        </section>
-
-        <section className="offers-panel" id="offers">
-          <div>
-            <span className="legacy-kicker">
-              RASEED PICKS / اختيارات رصيد
-            </span>
-
-            <h2>عروض اليوم</h2>
-
-            <p>
-              اكتشف الخدمات الأكثر تميزًا من ألعابك وتطبيقات البث المباشر.
-            </p>
-          </div>
-
-          <div className="offers-strip">
-            {offers.map((p) => (
-              <button
-                key={`offer-${p.id}`}
-                onClick={() => startTopup(p)}
-              >
-                <span>{p.tag || "مميز"}</span>
-                <strong>{p.name}</strong>
-                <small>{money(p.price)}</small>
-              </button>
-            ))}
-
-            {offers.length === 0 && (
-              <span>
-                ستظهر العروض عند توفرها من المزوّد.
-              </span>
-            )}
-          </div>
         </section>
 
         <section className="legacy-catalog" id="catalog">
