@@ -97,30 +97,8 @@ const freeFireSection = (
     : "Free Fire شحن بالـID";
 
 const fallbackImageFor = (
-  product: Pick<StoreProduct, "name" | "subcategory" | "category">
-) => {
-  const key = `${product.name} ${product.subcategory}`.toLowerCase();
-
-  if (/pubg|ببجي/.test(key))
-    return "/manus-storage/async-images/a9Pzhfk5LY7hLwr9h95SIk/image-1.webp";
-
-  if (/free\s*fire|فري\s*فاير/.test(key))
-    return "/manus-storage/async-images/a9Pzhfk5LY7hLwr9h95SIk/image-2.webp";
-
-  if (/jawaker|جواكر/.test(key))
-    return "/manus-storage/async-images/a9Pzhfk5LY7hLwr9h95SIk/image-3.webp";
-
-  if (/tiktok|تيك/.test(key))
-    return "/manus-storage/async-images/a9Pzhfk5LY7hLwr9h95SIk/image-4.webp";
-
-  if (/mico/.test(key))
-    return "/manus-storage/async-images/a9Pzhfk5LY7hLwr9h95SIk/image-5.webp";
-
-  if (/soulchill|soul chill/.test(key))
-    return "/manus-storage/async-images/dC7hOVU80fiYkfMtnZv0ow/image-1.webp";
-
-  return null;
-};
+  _product: Pick<StoreProduct, "name" | "subcategory" | "category">
+) => null;
 
 export default function Home() {
   const catalogQuery = trpc.products.list.useQuery();
@@ -799,21 +777,16 @@ export default function Home() {
 <b className="legacy-tag">{p.tag}</b>
                   )}
 
-                  {p.imageUrl || fallbackImageFor(p) ? (
+                  <div className="legacy-product-icon">
+                    {p.icon === "game" ? <Gamepad2 size={42} /> : p.icon === "app" ? <Package size={42} /> : <Smartphone size={42} />}
+                  </div>
+                  {(p.imageUrl || fallbackImageFor(p)) && (
                     <img
                       src={p.imageUrl || fallbackImageFor(p) || ""}
                       alt={p.name}
+                      loading="lazy"
+                      onError={(event) => { event.currentTarget.style.display = "none"; }}
                     />
-                  ) : (
-                    <div className="legacy-product-icon">
-                      {p.icon === "game" ? (
-                        <Gamepad2 size={42} />
-                      ) : p.icon === "app" ? (
-                        <Package size={42} />
-                      ) : (
-                        <Smartphone size={42} />
-                      )}
-                    </div>
                   )}
                 </div>
 
