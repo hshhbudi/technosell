@@ -501,6 +501,19 @@ export async function syncSupplierProducts(
       updated++;
     } else {
       const markup = 8;
+      const categoryProducts = item.subcategory
+        ? await db
+            .select({
+              approved: supplierProducts.approved,
+              enabled: supplierProducts.enabled,
+            })
+            .from(supplierProducts)
+            .where(eq(supplierProducts.subcategory, item.subcategory))
+            .limit(1)
+        : [];
+      const categoryAlreadyEnabled = categoryProducts.some(
+        (product) => product.approved && product.enabled
+      );
 
       await db.insert(supplierProducts).values({
         externalId: item.externalId,
@@ -520,8 +533,8 @@ export async function syncSupplierProducts(
         imageUrl: item.imageUrl ?? null,
         description: item.description ?? null,
         available: item.available ?? true,
-        approved: false,
-        enabled: false,
+        approved: categoryAlreadyEnabled,
+        enabled: categoryAlreadyEnabled,
       });
 
       inserted++;
