@@ -590,7 +590,7 @@ export default function Home() {
                 <div className="store-notification-item" key={order.id}>
                   <b>{order.orderNumber}</b>
                   <p>{notificationText(order)}</p>
-                  <small>{new Date(order.updatedAt ?? order.createdAt).toLocaleString("ar-SY")}</small>
+                  <small>{new Date(order.createdAt).toLocaleString("ar-SY")}</small>
                 </div>
               ))
             ) : (
