@@ -117,7 +117,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
       <main className="admin-main" data-section={activeSection}>{notice&&<div className="admin-notice"><CheckCircle2 size={17}/>{notice}</div>}{error&&!formOpen&&!transferOpen&&<div className="form-error">{error}</div>}
       <div className="admin-heading"><div><span className="eyebrow admin-eyebrow">مركز العمليات · إدارة آمنة</span><h1>صاحب المتجر</h1><p>كل ما تحتاجه لإدارة المبيعات والشحن والمنتجات من مكان واحد.</p></div><div className="admin-heading-actions"><button className="secondary-btn" onClick={()=>{setError("");setTransferOpen(true)}}>إضافة مدير مشارك</button><button className="primary-btn" onClick={()=>setFormOpen(true)}><Plus size={17}/> إضافة منتج</button></div></div>
       <nav className="admin-section-tabs" aria-label="أقسام لوحة المالك">{adminSections.map(section=><button key={section.id} className={activeSection===section.id?"active":""} onClick={()=>setActiveSection(section.id)}><span className="admin-tab-icon">{section.icon}</span><span><b>{section.label}</b><small>{section.hint}</small></span></button>)}</nav>
-      {activeSection==="dashboard"&&<section className="stats-grid"><Stat icon={<Box/>} label="إجمالي المبيعات" value={money(totalSales)} suffix="" delta="من الطلبات المؤكدة"/><Stat icon={<TrendingUp/>} label="ألعاب نشطة" value={String(activeGames)} suffix="لعبة" delta="متاحة في المتجر"/><Stat icon={<Clock3/>} label="طلبات جديدة" value={String(orders.filter(o=>o.paymentStatus==='pending').length)} suffix="طلب" delta="بانتظار المراجعة"/><Stat icon={<Users/>} label="عملاء نشطون" value={String(uniqueCustomers)} suffix="عميل" delta="حسب الطلبات"/><Stat icon={<CreditCard/>} label="رصيد Fast4Top" value={supplierProfileQuery.data?.balance?`$ ${Number(supplierProfileQuery.data.balance).toFixed(3)}`:"—"} suffix="" delta={supplierProfileQuery.data?.connected?"متصل ويُحدّث تلقائيًا":"تحقق من الاتصال"}/></section>}
+      {activeSection==="dashboard"&&<section className="stats-grid"><Stat icon={<Box/>} label="إجمالي المبيعات" value={money(totalSales)} suffix="" delta="من الطلبات المؤكدة"/><Stat icon={<TrendingUp/>} label="ألعاب نشطة" value={String(activeGames)} suffix="لعبة" delta="متاحة في المتجر"/><Stat icon={<Clock3/>} label="طلبات جديدة" value={String(orders.filter(o=>o.paymentStatus==='pending').length)} suffix="طلب" delta="بانتظار المراجعة"/><Stat icon={<Users/>} label="عملاء نشطون" value={String(uniqueCustomers)} suffix="عميل" delta="حسب الطلبات"/><Stat icon={<CreditCard/>} label="رصيد Fast4Top" value={supplierProfileQuery.data?.balance?`$ ${Number(supplierProfileQuery.data.balance).toFixed(3)}`:"—"} suffix="" delta={supplierProfileQuery.data?.connected?"متصل ويُحدّث تلقائيًا":"تحقق من الاتصال"}/></section>
       <section className="panel product-manager"><div className="panel-head"><div><h2>منتجات المتجر</h2><span>تطبيقات وألعاب وهواتف وإكسسوارات، وكلها تظهر في أقسامها</span></div><button className="text-btn" onClick={()=>{setEditingId(null);setForm(emptyForm);setFormOpen(true)}}><Plus size={14}/> إضافة منتج</button></div>{visibleProducts.length===0?<div className="manager-empty"><Package size={34}/><h3>لم تضف أي منتج بعد</h3><p>ابدأ بإضافة أول تطبيق أو لعبة أو هاتف أو إكسسوار.</p><button className="primary-btn" onClick={()=>{setEditingId(null);setForm(emptyForm);setFormOpen(true)}}>إضافة أول منتج</button></div>:<div className="managed-products">{visibleProducts.map(p=><div className="managed-product" key={p.id}><div className="product-mini"><Box size={18}/></div><div className="managed-product-main"><strong>{p.name}</strong><span>{p.category} · منتج المتجر</span></div><div className="managed-price"><b>{money(p.priceUsdCents??p.price)}</b><small>المخزون: {p.stock}</small></div><button className="text-btn" title="تعديل المنتج" onClick={()=>openEdit(p)}>تعديل</button><button className="delete-btn" title="حذف المنتج" onClick={()=>{if(window.confirm(`حذف المنتج «${p.name}» من المتجر؟`)) removeProduct.mutate({id:p.id})}} disabled={removeProduct.isPending}><Trash2 size={15}/> حذف</button></div>)}</div>}</section>
         
 <section className="panel supplier-manager">
@@ -180,58 +180,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
     </>
   )}
 </section>}
-      <section className="panel product-manager"><div className="panel-head"><div><h2>منتجات المتجر</h2><span>تطبيقات وألعاب وهواتف وإكسسوارات، وكلها تظهر في أقسامها</span></div><button className="text-btn" onClick={()=>{setEditingId(null);setForm(emptyForm);setFormOpen(true)}}><Plus size={14}/> إضافة منتج</button></div>{visibleProducts.length===0?<div className="manager-empty"><Package size={34}/><h3>لم تضف أي منتج بعد</h3><p>ابدأ بإضافة أول تطبيق أو لعبة أو هاتف أو إكسسوار.</p><button className="primary-btn" onClick={()=>{setEditingId(null);setForm(emptyForm);setFormOpen(true)}}>إضافة أول منتج</button></div>:<div className="managed-products">{visibleProducts.map(p=><div className="managed-product" key={p.id}><div className="product-mini"><Box size={18}/></div><div className="managed-product-main"><strong>{p.name}</strong><span>{p.category} · منتج المتجر</span></div><div className="managed-price"><b>{money(p.priceUsdCents??p.price)}</b><small>المخزون: {p.stock}</small></div><button className="text-btn" title="تعديل المنتج" onClick={()=>openEdit(p)}>تعديل</button><button className="delete-btn" title="حذف المنتج" onClick={()=>{if(window.confirm(`حذف المنتج «${p.name}» من المتجر؟`)) removeProduct.mutate({id:p.id})}} disabled={removeProduct.isPending}><Trash2 size={15}/> حذف</button></div>)}</div>}</section>
-        
-<section className="panel supplier-manager">
-  <div className="panel-head">
-    <div>
-      <h2>كتالوج Fast4Top المتصل</h2>
-      <span>كل منتجات الألعاب والتطبيقات من المزوّد مع صورها وتصنيفاتها</span>
-    </div>
-    <div className="admin-heading-actions">
-      <span className="status-pill cyan">{supplierAdminCatalogQuery.isLoading ? "جاري التحميل" : `${supplierProducts.length} منتج في قاعدة البيانات`}</span>
-      <button className="secondary-btn" onClick={() => syncSupplier.mutate()} disabled={syncSupplier.isPending}>
-        <RefreshCw size={15}/> {syncSupplier.isPending ? "جارٍ التحديث..." : "مزامنة Fast4Top"}
-      </button>
-    </div>
-  </div>
-  {supplierProducts.length === 0 ? (
-    <div className="manager-note">
-      <Clock3 size={17}/> جاري تحميل كتالوج المزوّد أو لا توجد منتجات متاحة.
-    </div>
-  ) : (
-    <div className="supplier-products-grid">
-      {supplierProducts.map(p => (
-          <div className="supplier-mini-card" key={`${p.externalId}-${p.name}`}>
-            {p.imageUrl ? (
-              <img src={p.imageUrl} alt={p.name}/>
-            ) : (
-              <div className="product-mini">
-                <Box size={18}/>
-              </div>
-            )}
-            <div>
-              <strong>{p.name}</strong>
-              <small>{p.category ?? "غير مصنف"} · {p.subcategory ?? ""}</small>
-              <b>{money(p.sellingPriceCents)}</b>
-              <small>الاعتماد: {p.approved ? "معتمد" : "بانتظار الاعتماد"} · العرض: {p.enabled ? "مفعّل" : "متوقف"} · التوفر: {p.available ? "متاح" : "غير متاح"}</small>
-              <div className="admin-heading-actions">
-                <button className="text-btn" onClick={() => setSupplierApproval.mutate({id:p.id,approved:!p.approved})} disabled={setSupplierApproval.isPending}>
-                  {p.approved ? "إلغاء الاعتماد" : "اعتماد المنتج"}
-                </button>
-                <button className="text-btn" onClick={() => setSupplierEnabled.mutate({id:p.id,enabled:!p.enabled})} disabled={setSupplierEnabled.isPending || (!p.approved && !p.enabled)}>
-                  {p.enabled ? "إيقاف العرض" : "تفعيل العرض"}
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
-  )}
-</section>
-        
-        </main>
+      </main>
     {formOpen&&<div className="overlay"><form className="product-modal" onSubmit={submit}><button type="button" className="close-btn modal-close" onClick={()=>setFormOpen(false)}><X/></button><span className="eyebrow">إدارة كتالوج التطبيقات والألعاب</span><h2>{editingId?"تعديل المنتج":"إضافة منتج جديد"}</h2><div className="form-grid"><label>اسم المنتج<input required value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="مثال: Free Fire Diamonds أو TikTok Coins"/></label><label>الفئة<select value={form.category} onChange={e=>setForm({...form,category:e.target.value})}><option>التطبيقات</option><option>الألعاب</option><option>الهواتف</option><option>الإكسسوارات</option><option>المنتجات</option></select></label><label>السعر بالدولار<input required type="number" min="0" step="0.01" value={form.priceUsd} onChange={e=>setForm({...form,priceUsd:e.target.value})} placeholder="بالدولار الأمريكي"/></label><label>السعر السابق بالدولار<input type="number" min="0" step="0.01" value={form.oldPrice} onChange={e=>setForm({...form,oldPrice:e.target.value})} placeholder="اختياري للخصم"/></label><label>المخزون<input required type="number" min="0" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})}/></label><label>شارة المنتج<input value={form.tag} onChange={e=>setForm({...form,tag:e.target.value})} placeholder="الأكثر مبيعًا، عرض خاص..."/></label><label>صورة المنتج<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={e=>{const file=e.target.files?.[0];if(!file)return;setError("جاري تجهيز الصورة...");compressProductImage(file,data=>{setForm({...form,imageData:data});setError("")},message=>setError(message))}}/></label><label className="wide">الوصف<textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} placeholder="وصف مختصر يظهر للزبائن"/></label></div>{error&&<div className="form-error">{error}</div>}<button className="primary-btn full" disabled={createProduct.isPending||updateProduct.isPending}>{createProduct.isPending||updateProduct.isPending?"جارٍ الحفظ...":editingId?"حفظ تعديلات المنتج":"حفظ المنتج وإظهاره في المتجر"}</button></form></div>}
     {transferOpen&&<div className="overlay"><form className="product-modal" onSubmit={e=>{e.preventDefault();addAdmin.mutate({email:transferEmail})}}><button type="button" className="close-btn modal-close" onClick={()=>setTransferOpen(false)}><X/></button><span className="eyebrow">صلاحيات المتجر</span><h2>إضافة مدير مشارك</h2><p className="modal-copy">اكتب بريد الحساب الثاني بعد أن يسجل دخوله إلى Manus مرة واحدة. سيبقى المالك الحالي فعالًا ولن يتم فصل المتجر عن أي حساب.</p><label>بريد المدير المشارك<input required type="email" value={transferEmail} onChange={e=>setTransferEmail(e.target.value)} placeholder="manager@example.com"/></label>{error&&<div className="form-error">{error}</div>}<button className="primary-btn full" disabled={addAdmin.isPending}>{addAdmin.isPending?"جارٍ إضافة المدير...":"إضافة المدير المشارك"}</button></form></div>}
   </div>
