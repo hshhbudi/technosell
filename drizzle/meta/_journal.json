@@ -64,6 +64,13 @@
       "when": 1793468999938,
       "tag": "0008_blue_wraith",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1794420000000,
+      "tag": "0009_create_supplier_products",
+      "breakpoints": true
     }
   ]
 }
