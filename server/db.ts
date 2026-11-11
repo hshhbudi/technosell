@@ -12,6 +12,7 @@ import {
   users,
   supplierProducts,
   supplierCategories,
+  mediaFiles,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -28,6 +29,34 @@ export async function getDb() {
     }
   }
   return _db;
+}
+
+// ===============================
+// DATABASE-BACKED MEDIA STORAGE
+// ===============================
+
+export async function saveStoredMedia(input: {
+  storageKey: string;
+  contentType: string;
+  dataBase64: string;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(mediaFiles).values(input);
+}
+
+export async function getStoredMedia(storageKey: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const rows = await db
+    .select({
+      contentType: mediaFiles.contentType,
+      dataBase64: mediaFiles.dataBase64,
+    })
+    .from(mediaFiles)
+    .where(eq(mediaFiles.storageKey, storageKey))
+    .limit(1);
+  return rows[0] ?? null;
 }
 
 // ===============================
