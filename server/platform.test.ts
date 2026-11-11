@@ -5,6 +5,13 @@ import { sdk } from "./_core/sdk";
 import { listLLMModels } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
 import { COOKIE_NAME } from "../shared/const";
+import { saveStoredMedia } from "./db";
+
+// The image-generation unit test must not require a live MySQL database.
+vi.mock("./db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./db")>();
+  return { ...actual, saveStoredMedia: vi.fn().mockResolvedValue(undefined) };
+});
 
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 describe("current platform integration", () => {
@@ -35,9 +42,13 @@ describe("current platform integration", () => {
       .mockResolvedValueOnce(new Response(""));
     vi.stubGlobal("fetch", request);
     const image = await generateImage({ prompt: "test", originalImages: [] });
-    expect(image.url).toMatch(/^\/manus-storage\/generated\//);
-    expect(request).toHaveBeenCalledTimes(4);
+    expect(image.url).toMatch(/^\/api\/media\/generated\//);
+    expect(request).toHaveBeenCalledTimes(2);
     expect(JSON.parse(request.mock.calls[0][1].body)).toHaveProperty("originalImages");
+    expect(saveStoredMedia).toHaveBeenCalledWith(expect.objectContaining({
+      contentType: "image/png",
+      dataBase64: Buffer.from([1, 2, 3]).toString("base64"),
+    }));
   });
   it("uses a distinct secure app cookie behind the HTTPS Preview proxy", () => {
     expect(COOKIE_NAME).not.toBe("app_session_id");
