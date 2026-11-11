@@ -16,6 +16,10 @@ type Fast4TopProduct = {
   available?: boolean;
   visible?: number;
   photo?: string | null;
+  image?: string | null;
+  image_url?: string | null;
+  icon?: string | null;
+  logo?: string | null;
   category_img?: string | null;
   description?: string | null;
   offer?: boolean;
@@ -259,7 +263,8 @@ function normalizeProducts(products: Fast4TopProduct[]) {
       `منتج ${product.id}`;
 
     const categoryName = product.category_name || name;
-    const photo = product.photo || product.category_img;
+    // Fast4Top's documented catalog field is `image`; keep legacy aliases too.
+    const photo = product.image || product.photo || product.image_url || product.category_img || product.icon || product.logo;
 
     const requires =
       product.requires ||
