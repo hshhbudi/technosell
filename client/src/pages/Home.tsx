@@ -124,10 +124,29 @@ export default function Home() {
   const [lightMode, setLightMode] = useState(false);
   const [noticeOpen, setNoticeOpen] = useState(false);
 
+  const customerOrdersQuery = trpc.customer.orders.useQuery(undefined, {
+    enabled: Boolean(customerQuery.data),
+    refetchInterval: 20_000,
+  });
+
   const shipmentHistory = trpc.customer.orders.useQuery(undefined, {
     enabled: Boolean(customerQuery.data && historyOpen),
     refetchInterval: 20_000,
   });
+
+  const customerNotifications = (customerOrdersQuery.data ?? []).slice(0, 8);
+  const customerNotificationCount = customerNotifications.filter((order) =>
+    order.paymentStatus === "pending" ||
+    order.executionStatus === "completed" ||
+    order.executionStatus === "failed" ||
+    order.paymentStatus === "rejected"
+  ).length;
+  const notificationText = (order: (typeof customerNotifications)[number]) => {
+    if (order.paymentStatus === "rejected" || order.executionStatus === "failed") return "تعذر تنفيذ الطلب أو تم رفض الدفع";
+    if (order.executionStatus === "completed") return "اكتمل طلبك بنجاح";
+    if (order.paymentStatus === "confirmed") return "تم تأكيد الدفع والطلب قيد المعالجة";
+    return "طلبك وصل وينتظر مراجعة الدفع";
+  };
 
   const directTopup = trpc.customer.directTopup.useMutation({
     onSuccess: async () => {
@@ -523,7 +542,7 @@ export default function Home() {
             aria-label="الإشعارات"
           >
             <Bell size={19} />
-            <i>2</i>
+            {customerNotificationCount > 0 && <i>{customerNotificationCount}</i>}
           </button>
 
           <button
@@ -561,14 +580,25 @@ export default function Home() {
 
         {noticeOpen && (
           <div className="store-notices">
-            <strong>إشعارات المتجر</strong>
-            <p>العروض الجديدة متاحة الآن.</p>
-            <p>الشحن يتم من رصيدك مباشرة.</p>
+            <strong>إشعارات طلباتك</strong>
+            {!customerQuery.data ? (
+              <p>سجّل الدخول لمتابعة إشعارات طلباتك.</p>
+            ) : customerOrdersQuery.isLoading ? (
+              <p>جارٍ تحميل الإشعارات...</p>
+            ) : customerNotifications.length ? (
+              customerNotifications.map((order) => (
+                <div className="store-notification-item" key={order.id}>
+                  <b>{order.orderNumber}</b>
+                  <p>{notificationText(order)}</p>
+                  <small>{new Date(order.updatedAt ?? order.createdAt).toLocaleString("ar-SY")}</small>
+                </div>
+              ))
+            ) : (
+              <p>لا توجد إشعارات جديدة. ستظهر حالة طلباتك هنا تلقائيًا.</p>
+            )}
             <small>
               صاحب المتجر:{" "}
-              <a href="tel:+963968057214">
-                +963968057214
-              </a>
+              <a href="tel:+963968057214">+963968057214</a>
             </small>
           </div>
         )}
