@@ -299,13 +299,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
     </div>
   ) : (
     <div className="supplier-products-grid">
-      {supplierProducts
-        .filter(p =>
-          activeSection === "games"
-            ? isGameProduct(p.category ?? "", p.name, p.subcategory ?? "")
-            : (p.category ?? "").includes("تطبيقات")
-        )
-        .map(p => (
+      {supplierProducts.map(p => (
           <div className="supplier-mini-card" key={`${p.externalId}-${p.name}`}>
             {p.imageUrl ? (
               <img src={p.imageUrl} alt={p.name}/>
