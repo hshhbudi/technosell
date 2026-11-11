@@ -1,11 +1,23 @@
 import { parse as parseCookie } from "cookie";
+import { createHash } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import type { Request, Response } from "express";
 import type { User } from "../../drizzle/schema";
 import { ENV } from "./env";
 
 export const LOCAL_ADMIN_COOKIE = "technosell_admin";
-const secret = () => new TextEncoder().encode(ENV.cookieSecret || "technosell-development-secret");
+// Never sign admin cookies with a public development fallback.
+const secret = () => {
+  const configured = ENV.cookieSecret.trim();
+  const fallback = ENV.localAdminPassword;
+  if (configured) return new TextEncoder().encode(configured);
+  if (fallback) {
+    return createHash("sha256")
+      .update("raseed-local-admin-session:" + fallback)
+      .digest();
+  }
+  throw new Error("Admin session signing secret is not configured");
+};
 
 export function localAdminUser(): User {
   const now = new Date();
