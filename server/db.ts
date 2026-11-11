@@ -537,19 +537,9 @@ export async function syncSupplierProducts(
     }
 
     const markup = 8;
-    const categoryProducts = item.subcategory
-      ? await db
-          .select({
-            approved: supplierProducts.approved,
-            enabled: supplierProducts.enabled,
-          })
-          .from(supplierProducts)
-          .where(eq(supplierProducts.subcategory, item.subcategory))
-      : [];
-    const categoryAlreadyEnabled = categoryProducts.some(
-      (product) => product.approved && product.enabled
-    );
 
+    // New Fast4Top products are published automatically when available.
+    // Existing products retain the owner's approval/enabled choices above.
     await db.insert(supplierProducts).values({
       externalId: item.externalId,
       name: item.name,
@@ -568,8 +558,8 @@ export async function syncSupplierProducts(
       imageUrl: item.imageUrl ?? null,
       description: item.description ?? null,
       available: item.available ?? true,
-      approved: categoryAlreadyEnabled,
-      enabled: categoryAlreadyEnabled,
+      approved: true,
+      enabled: item.available ?? true,
     });
 
     inserted++;
