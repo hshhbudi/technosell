@@ -1,0 +1,23 @@
+CREATE TABLE `supplier_products` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `externalId` varchar(100) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `category` varchar(100),
+  `subcategory` varchar(100),
+  `supplierPriceCents` int NOT NULL,
+  `markupPercent` int NOT NULL DEFAULT 8,
+  `sellingPriceCents` int NOT NULL,
+  `quantity` int DEFAULT 1,
+  `quantityValues` json,
+  `requires` json,
+  `productType` varchar(100),
+  `imageUrl` text,
+  `description` text,
+  `available` boolean NOT NULL DEFAULT true,
+  `approved` boolean NOT NULL DEFAULT false,
+  `enabled` boolean NOT NULL DEFAULT false,
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `supplier_products_id` PRIMARY KEY(`id`),
+  CONSTRAINT `supplier_products_external_id_unique` UNIQUE(`externalId`)
+);
