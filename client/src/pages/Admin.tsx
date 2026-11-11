@@ -61,7 +61,7 @@ export default function Admin() {
   const supplierCatalogQuery = trpc.supplier.catalog.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), staleTime: 60_000, retry: false });
   const supplierProfileQuery = trpc.supplier.profile.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), refetchInterval: 60_000, retry: false });
   const ordersQuery = trpc.admin.orders.list.useQuery(undefined, { enabled: Boolean(auth.user?.role === "admin"), retry: false });
-  const updateOrder = trpc.trpc.admin.orders.updateStatus({ onSuccess: ()=>ordersQuery.refetch() });
+  const updateOrder = trpc.admin.orders.updateStatus.useMutation({ onSuccess: ()=>ordersQuery.refetch() });
   const utils = trpc.useUtils();
   const createProduct = trpc.admin.products.create.useMutation({ onSuccess: async()=>{ setForm(emptyForm); setFormOpen(false); setError(""); setNotice("تمت إضافة المنتج وظهر الآن في المتجر"); setTimeout(()=>setNotice(""),3500); await utils.admin.products.list.invalidate(); }, onError: (err)=>setError(err.message || "تعذر حفظ المنتج، حاول مرة أخرى") });
 
