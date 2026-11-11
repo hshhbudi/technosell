@@ -788,7 +788,9 @@ export default function Home() {
                 }
                 onClick={() => setSubcategory(s)}
               >
-                {active === "الألعاب" ? (
+                {supplierCategoryOverrides.find(item => item.displayName === s)?.imageUrl ? (
+                  <img className="subcategory-image" src={supplierCategoryOverrides.find(item => item.displayName === s)?.imageUrl || ""} alt="" />
+                ) : active === "الألعاب" ? (
                   <Gamepad2 size={14} />
                 ) : (
                   <Package size={14} />
