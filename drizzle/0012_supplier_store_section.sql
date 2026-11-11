@@ -1,0 +1,1 @@
+ALTER TABLE `supplier_products` ADD COLUMN `storeSection` varchar(50) NULL;
