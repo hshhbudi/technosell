@@ -613,7 +613,9 @@ export const appRouter = router({
         };
       }
     }),
-
+sync: adminProcedure.mutation(async () => {
+  return await syncFast4TopCatalog();
+}),
     catalog: publicProcedure.query(async () => {
       try {
         return {
