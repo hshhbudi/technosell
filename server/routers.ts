@@ -633,9 +633,27 @@ sync: adminProcedure.mutation(async () => {
       .input(z.object({
         sourceName: z.string().min(1).max(255),
         displayName: z.string().min(1).max(255),
-        imageUrl: z.string().max(2_000_000).nullable().optional(),
+        imageUrl: z.string().max(2000).nullable().optional(),
+        imageData: z.string().max(2_000_000).optional(),
       }))
-      .mutation(async ({ input }) => saveSupplierCategoryOverride(input)),
+      .mutation(async ({ input }) => {
+        let imageUrl = input.imageUrl ?? null;
+        if (input.imageData) {
+          const match = input.imageData.match(/^data:(image\/(?:png|jpe?g|webp));base64,([A-Za-z0-9+/=]+)$/);
+          if (!match) throw new TRPCError({ code: "BAD_REQUEST", message: "صيغة صورة القسم غير صالحة" });
+          const uploaded = await storagePut(
+            `supplier-categories/category-${Date.now()}-${randomUUID()}`,
+            Buffer.from(match[2], "base64"),
+            match[1]
+          );
+          imageUrl = uploaded.url;
+        }
+        return saveSupplierCategoryOverride({
+          sourceName: input.sourceName,
+          displayName: input.displayName,
+          imageUrl,
+        });
+      }),
     publicCategories: publicProcedure.query(async () => listSupplierCategoryOverrides()),
     setApproval: adminProcedure
       .input(z.object({ id: z.number().int().positive(), approved: z.boolean() }))
