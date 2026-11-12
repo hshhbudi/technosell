@@ -530,7 +530,8 @@ export async function syncSupplierProducts(
           quantityValues: item.quantityValues ?? null,
           requires: item.requires ?? current.requires,
           productType: item.productType ?? current.productType,
-          imageUrl: item.imageUrl ?? current.imageUrl,
+          // Preserve an image uploaded by the store owner; only fill an empty image from Fast4Top.
+          imageUrl: current.imageUrl ?? item.imageUrl ?? null,
           description: item.description ?? current.description,
           available: item.available ?? current.available,
           // Supplier catalog is the source of truth: keep synced available items visible.
