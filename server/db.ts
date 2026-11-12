@@ -517,6 +517,7 @@ export async function syncSupplierProducts(
           name: item.name,
           category: item.category ?? current.category,
           subcategory: item.subcategory ?? current.subcategory,
+          storeSection: item.category ?? current.storeSection,
           supplierPriceCents: item.supplierPriceCents,
           sellingPriceCents: calculateSellingPrice(
             item.supplierPriceCents,
@@ -529,6 +530,9 @@ export async function syncSupplierProducts(
           imageUrl: item.imageUrl ?? current.imageUrl,
           description: item.description ?? current.description,
           available: item.available ?? current.available,
+          // Supplier catalog is the source of truth: keep synced available items visible.
+          approved: item.available ?? current.available,
+          enabled: item.available ?? current.available,
         })
         .where(eq(supplierProducts.id, current.id));
 
@@ -558,7 +562,8 @@ export async function syncSupplierProducts(
       imageUrl: item.imageUrl ?? null,
       description: item.description ?? null,
       available: item.available ?? true,
-      approved: true,
+      storeSection: item.category ?? null,
+      approved: item.available ?? true,
       enabled: item.available ?? true,
     });
 
