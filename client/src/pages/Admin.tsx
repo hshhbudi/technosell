@@ -164,7 +164,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   <div className="panel-head">
     <div>
       <h2>كتالوج Fast4Top المتصل</h2>
-      <span>تتم مزامنة كتالوج Fast4Top بالكامل، مع تصنيف المنتجات حسب المصدر واختيار ما يظهر للزبائن</span>
+      <span>تتم مزامنة كتالوج Fast4Top بالكامل ونشر المنتجات المتاحة تلقائيًا في المتجر</span>
     </div>
     <div className="admin-heading-actions">
       <span className="status-pill cyan">{supplierAdminCatalogQuery.isLoading ? "جاري التحميل" : `${supplierProducts.length} منتج · ${supplierCategories.length} قسم`}</span>
@@ -206,7 +206,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   </div>
   <div className="supplier-folder-all"><button className={supplierSyncSection==="all"?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection("all");setSupplierView("all");}}>عرض كل المجلدات والمنتجات ({supplierProducts.length})</button></div>
   <div className="supplier-category-controls">
-        <h3>أقسام Fast4Top — اختر ما تريد عرضه في المتجر</h3>
+        <h3>أقسام Fast4Top — المنتجات المتاحة تُعرض تلقائيًا في المتجر</h3>
         <div className="supplier-category-list">
           {supplierCategories.map(category => {
             const categoryProducts = supplierProducts.filter(p => p.subcategory === category && (supplierSyncSection==="all"||(p.storeSection||"خدمات رقمية")===supplierSyncSection));
@@ -233,10 +233,10 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
       </div>
       <div className="panel" style={{marginBottom:18,border:"1px solid var(--border-color, #ddd)"}}>
     <div className="panel-head">
-      <div><h2>المساعد الذكي لإدارة المتجر</h2><span>يراجع تصنيف كتالوج Fast4Top ويعرض لك المنتجات حسب مجموعتها</span></div>
+      <div><h2>إدارة كتالوج Fast4Top</h2><span>تصنيف المنتجات ومتابعة ظهورها في أقسام المتجر</span></div>
       <span className="status-pill cyan">مساعد التصنيف</span>
     </div>
-    <p className="manager-note">التصنيف يعتمد على أسماء المنتجات وبيانات المورد، ولا ينشئ منتجات أو كميات من عنده. المنتجات الجديدة تبقى غير معروضة للزبائن حتى تختارها أنت.</p>
+    <p className="manager-note">يتم نشر كل منتج متاح لدى Fast4Top تلقائيًا بعد المزامنة. المنتجات غير المتاحة تبقى مخفية حتى يؤكد المورد توفرها.</p>
     <div className="supplier-sync-tabs">
       {smartCounts.map(item=><button key={item.section} className={supplierSyncSection===item.section?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection(item.section);setSupplierView("all");}}>
         {item.section} · {item.count} منتج · {item.selected} مختار
@@ -259,7 +259,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
         <button className={supplierView==="selected" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("selected")}>المنتجات المختارة للمتجر ({supplierProducts.filter(p=>p.ownerSelected).length})</button>
         <button className={supplierView==="unselected" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("unselected")}>غير المضافة ({supplierProducts.filter(p=>!p.ownerSelected).length})</button>
       </div>
-      <p className="manager-note">المزامنة تجلب الكتالوج فقط. لن يظهر أي منتج للزبائن إلا بعد اختيارك له من هنا.</p>
+      <p className="manager-note">المزامنة تجلب المنتجات المتاحة وتنشرها تلقائيًا. يمكنك إيقاف أي منتج يدويًا من بطاقة المنتج.</p>
       <div className="supplier-products-grid">
         {sortedSupplierProducts.map(p => (
           <div className="supplier-mini-card" key={`${p.externalId}-${p.name}`}>
@@ -276,10 +276,10 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
                 </select>
               </label>
               <b>{money(p.sellingPriceCents)}</b>
-              <small>الحالة: {p.ownerSelected ? "مختار للمتجر" : "مزامن فقط وغير معروض"} · التوفر لدى المزوّد: {p.available ? "متاح" : "غير متاح"}</small>
+              <small>الحالة: {p.ownerSelected ? "منشور في المتجر" : "غير منشور"} · التوفر لدى المزوّد: {p.available ? "متاح" : "غير متاح"}</small>
               <div className="admin-heading-actions">
                 <button className={p.ownerSelected ? "secondary-btn" : "primary-btn"} onClick={() => setSupplierSelection.mutate({id:p.id,selected:!p.ownerSelected})} disabled={setSupplierSelection.isPending || (!p.ownerSelected && !p.available)}>
-                  {p.ownerSelected ? "إزالة من المنتجات المختارة" : "إضافة إلى المتجر"}
+                  {p.ownerSelected ? "إخفاء من المتجر" : "نشر في المتجر"}
                 </button>
                 {p.ownerSelected && <button className="text-btn" onClick={() => setSupplierEnabled.mutate({id:p.id,enabled:!p.enabled})} disabled={setSupplierEnabled.isPending}>
                   {p.enabled ? "إيقاف العرض مؤقتًا" : "إعادة عرض المنتج"}
