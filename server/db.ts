@@ -607,6 +607,13 @@ export async function updateSupplierProductMarkup(
   return getSupplierProductById(id);
 }
 
+export async function setSupplierProductImage(id: number, imageUrl: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(supplierProducts).set({ imageUrl }).where(eq(supplierProducts.id, id));
+  return getSupplierProductById(id);
+}
+
 export async function setSupplierProductStoreSection(id: number, storeSection: "الألعاب" | "التطبيقات") {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
