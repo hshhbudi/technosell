@@ -92,6 +92,13 @@
       "when": 1794436320000,
       "tag": "0012_supplier_store_section",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1794510000000,
+      "tag": "0013_supplier_owner_selection",
+      "breakpoints": true
     }
   ]
 }
