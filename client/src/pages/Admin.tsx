@@ -211,7 +211,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
               </label>
               <small>{p.category ?? "غير مصنف"} · {p.subcategory ?? ""}</small>
               <label className="supplier-section-picker">قسم المتجر
-                <select value={p.storeSection || "خدمات رقمية"} onChange={e => setSupplierStoreSection.mutate({id:p.id,storeSection:e.target.value})} disabled={setSupplierStoreSection.isPending}>
+                <select value={p.storeSection || "خدمات رقمية"} onChange={e => setSupplierStoreSection.mutate({id:p.id,storeSection:e.target.value as "الألعاب" | "التطبيقات" | "الخدمات والاتصالات" | "البطاقات الرقمية" | "خدمات رقمية"})} disabled={setSupplierStoreSection.isPending}>
                   <option value="الألعاب">الألعاب</option>
                   <option value="التطبيقات">التطبيقات</option><option value="الخدمات والاتصالات">الخدمات والاتصالات</option><option value="البطاقات الرقمية">البطاقات الرقمية</option><option value="خدمات رقمية">خدمات رقمية أخرى</option>
                 </select>
