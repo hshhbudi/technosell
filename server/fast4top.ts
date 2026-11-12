@@ -211,7 +211,7 @@ async function apiGet<T>(
 
 function detectStoreSection(product: Fast4TopProduct): string {
   const source = [product.category_name, product.category, product.category_type, product.parent_name, product.parent_category_name, product.section, product.product_type, product.type, product.name, product.product_name].filter(Boolean).join(" ").toLowerCase();
-  if (/(game|games|gaming|لعبة|العاب|ألعاب|شحن ألعاب|pubg|ببجي|free\\s*fire|فري\\s*فاير|mobile\\s*legends|mlbb|roblox|minecraft|fortnite|call\\s*of\\s*duty|genshin|valorant|clash\\s*of\\s*clans|efootball|playstation|xbox|steam|جواكر)/i.test(source)) return "الألعاب";
+  if (/(game|games|gaming|لعبة|العاب|ألعاب|شحن ألعاب|pubg|ببجي|free\s*fire|فري\s*فاير|mobile\s*legends|mlbb|roblox|minecraft|fortnite|call\s*of\s*duty|genshin|valorant|clash\s*of\s*clans|efootball|playstation|xbox|steam|جواكر)/i.test(source)) return "الألعاب";
   if (/(mtn|syriatel|سيريتل|سيرياتيل|خدمات سورية|مزودات الإنترنت|رصيد الهاتف|تعبئة رصيد|باقات الهاتف|اتصالات|telecom|mobile top.?up)/i.test(source)) return "الخدمات والاتصالات";
   if (/(gift.?card|voucher|بطاقات|كروت|بطاقة|اشتراك|subscription|netflix|spotify premium|google play|itunes|steam card)/i.test(source)) return "البطاقات الرقمية";
   if (/(app|apps|application|applications|social|live app|تطبيق|برامج|دردشة|بث مباشر|tiktok|tik tok|likee|kwai|bigo|haya|hayachat|yalla live|poppo|mico|chamet|livu|imo chat|لايكي|كواي|بيجو|هيا)/i.test(source)) return "التطبيقات";
