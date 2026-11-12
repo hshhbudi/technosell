@@ -41,6 +41,7 @@ type StoreProduct = {
   accent: string;
   icon: "app" | "game" | "product";
   quantity?: { min?: string; max?: string } | null;
+  quantityValues?: number[] | { min: number; max: number } | null;
   requires?: Array<{
     name?: string;
     question?: string;
@@ -236,6 +237,19 @@ export default function Home() {
 
     price: p.sellingPriceCents,
     stock: p.available ? 99 : 0,
+    quantity: p.quantity ? {
+      min: String(p.quantity),
+      max: String(
+        p.quantityValues && !Array.isArray(p.quantityValues)
+          ? (p.quantityValues as { min?: number; max?: number }).max
+          : p.quantity
+      ),
+    } : null,
+    quantityValues: Array.isArray(p.quantityValues)
+      ? p.quantityValues.map(Number).filter((value: number) => Number.isSafeInteger(value) && value > 0)
+      : p.quantityValues && typeof p.quantityValues === "object"
+        ? { min: Number((p.quantityValues as { min?: number; max?: number }).min), max: Number((p.quantityValues as { min?: number; max?: number }).max) }
+        : null,
 
     description,
     imageUrl: p.imageUrl || supplierCategoryOverrides.find(item => item.sourceName === subcategory)?.imageUrl || null,
@@ -317,19 +331,8 @@ export default function Home() {
   };
 
   const hasQuantity = (p: StoreProduct) =>
-    p.category === "التطبيقات" &&
-    (Boolean(p.quantity?.min) ||
-      Boolean(
-        p.requires?.some(
-          (r) =>
-            r.type === "quantity" ||
-            r.type === "amount" ||
-            r.name?.toLowerCase().includes("qty") ||
-            r.name?.toLowerCase().includes("amount") ||
-            r.question?.includes("كمية") ||
-            r.question?.includes("عدد")
-        )
-      ));
+    Boolean(Array.isArray(p.quantityValues) && p.quantityValues.length) ||
+    Boolean(p.quantityValues && !Array.isArray(p.quantityValues));
 
   const computedTotal = selected
     ? (() => {
@@ -369,9 +372,11 @@ export default function Home() {
     setSelected(product);
     setTargetId("");
     setQuantity(
-      product.category === "التطبيقات"
-        ? product.quantity?.min || ""
-        : ""
+      Array.isArray(product.quantityValues) && product.quantityValues.length
+        ? String(product.quantityValues[0])
+        : product.quantityValues && !Array.isArray(product.quantityValues)
+          ? String(product.quantityValues.min)
+          : ""
     );
   };
 
@@ -681,14 +686,27 @@ export default function Home() {
 
             {hasQuantity(selected) && (
               <label>
-                الكمية
-                <input
-                  type="number"
-                  min={selected.quantity?.min || 1}
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="أدخل الكمية"
-                />
+                الكمية المتاحة لدى Fast4Top
+                {Array.isArray(selected.quantityValues) && selected.quantityValues.length ? (
+                  <select
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                  >
+                    {selected.quantityValues.map((value) => (
+                      <option key={value} value={value}>{value.toLocaleString("en-US")}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="number"
+                    min={selected.quantity?.min || 1}
+                    max={selected.quantity?.max || undefined}
+                    step="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    placeholder="أدخل كمية ضمن حدود المورد"
+                  />
+                )}
               </label>
             )}
 
