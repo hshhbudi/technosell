@@ -10,6 +10,9 @@ import {
   Wifi,
   Home as HomeIcon,
   Menu,
+  MessageCircle,
+  Send,
+  Bot,
   Moon,
   Package,
   Search,
@@ -189,6 +192,11 @@ export default function Home() {
   const [authOpen, setAuthOpen] = useState(false);
   const [lightMode, setLightMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantDraft, setAssistantDraft] = useState("");
+  const [assistantMessages, setAssistantMessages] = useState<Array<{ role: "assistant" | "customer"; text: string }>>([
+    { role: "assistant", text: "أهلاً بك في رصيد 👋 اسألني عن المنتجات والأسعار وشحن الألعاب والتطبيقات، أو اختر أحد الأزرار بالأسفل." },
+  ]);
 
   const directTopup = trpc.customer.directTopup.useMutation({
     onSuccess: async () => {
@@ -383,6 +391,58 @@ export default function Home() {
           ? String(product.quantityValues.min)
           : ""
     );
+  };
+
+  const sendAssistantMessage = (rawText: string) => {
+    const message = rawText.trim();
+    if (!message) return;
+    setAssistantMessages((items) => [...items, { role: "customer", text: message }]);
+    setAssistantDraft("");
+
+    const normalized = message.toLowerCase();
+    const categoryMatch =
+      /(ببجي|pubg|فري فاير|free fire|العاب|ألعاب|لعبة|game)/i.test(message)
+        ? "الألعاب"
+        : /(تطبيق|تطبيقات|هايا|haya|كواي|kwai|لايكي|likee|تيك.?توك|tiktok|بيجو|bigo)/i.test(message)
+          ? "التطبيقات"
+          : /(هاتف|موبايل|جوال|اكسسوار|إكسسوار|سماعة|شاحن)/i.test(message)
+            ? "المنتجات"
+            : /(بطاقة|بطاقات|اشتراك|كرت)/i.test(message)
+              ? "البطاقات الرقمية"
+              : null;
+
+    const matchedProducts = products.filter((product) =>
+      [product.name, product.subcategory, product.description]
+        .filter(Boolean)
+        .some((value) => normalized.includes(String(value).toLowerCase()) || String(value).toLowerCase().includes(normalized))
+    );
+
+    let answer = "";
+    if (/(طلب|طلبي|حالة الشحن|وين وصل|تتبع|متابعة)/i.test(message)) {
+      answer = customerQuery.data
+        ? "لمتابعة طلباتك افتح حسابك من زر «حسابي» في أعلى المتجر. إذا لم تظهر الحالة أو احتجت مساعدة، تواصل مع الدعم البشري عبر واتساب."
+        : "لمتابعة طلبك سجّل الدخول أولاً من زر «تسجيل الدخول»، ثم افتح حسابك والطلبات. ويمكنك التواصل مع الدعم عبر واتساب.";
+    } else if (/(رصيد|محفظة|تعبئة|شحن رصيد الحساب)/i.test(message)) {
+      answer = "لتعبئة رصيد حسابك اضغط «تعبئة الرصيد» وسجّل الدخول، ثم اتبع خطوات الدفع الظاهرة في المتجر. لا ترسل كلمة المرور أو رمز التحقق لأي شخص.";
+    } else if (matchedProducts.length) {
+      answer = "وجدت هذه المنتجات المنشورة حالياً في المتجر:\n" +
+        matchedProducts.slice(0, 5).map((product) => `• ${product.name} — ${money(product.price)}`).join("\n") +
+        "\nيمكنك فتح القسم والضغط على «اشحن الآن» للمنتجات المتاحة للشحن المباشر.";
+    } else if (categoryMatch) {
+      const categoryProducts = products.filter((product) => product.category === categoryMatch).slice(0, 5);
+      answer = categoryProducts.length
+        ? `قسم ${categoryMatch} يحتوي حالياً على:\n` + categoryProducts.map((product) => `• ${product.name} — ${money(product.price)}`).join("\n") + "\nاضغط زر القسم لعرض جميع المنتجات المتاحة."
+        : `قسم ${categoryMatch} لا يحتوي حالياً على منتجات منشورة. يمكنك مراسلة الدعم للتأكد من توفر الخدمة.`;
+      selectCategory(categoryMatch as StoreProduct["category"]);
+    } else if (/(دفع|ادفع|شام كاش|shamcash)/i.test(message)) {
+      answer = "طرق الدفع المتاحة تظهر لك أثناء تعبئة الرصيد أو تأكيد الطلب. لا تحول أي مبلغ إلى جهة غير موضحة داخل المتجر، وإذا واجهت مشكلة تواصل مع الدعم.";
+    } else if (/(مرحبا|السلام|اهلا|أهلا|هاي|hello)/i.test(message)) {
+      answer = "أهلاً وسهلاً فيك 🌟 كيف بقدر أساعدك؟ اسأل عن لعبة أو تطبيق أو سعر منتج، أو اختر أحد الأقسام.";
+    } else {
+      answer = "فيني أساعدك بمعلومات المنتجات المنشورة وأسعارها وأقسام الألعاب والتطبيقات، وبإرشادات الطلب وتعبئة الرصيد. إذا سؤالك يحتاج متابعة من موظف، اضغط «تواصل مع الدعم».";
+    }
+
+    setAssistantMessages((items) => [...items, { role: "assistant", text: answer }]);
   };
 
   const submitTopup = () => {
@@ -739,6 +799,60 @@ export default function Home() {
       )}
 
       {toast && <div className="legacy-toast">{toast}</div>}
+
+      <div className="raseed-assistant-root" dir="rtl">
+        {assistantOpen && (
+          <section className="raseed-assistant-panel" aria-label="مساعد رصيد">
+            <header className="raseed-assistant-head">
+              <span className="raseed-assistant-avatar"><Bot size={21} /></span>
+              <div><strong>مساعد رصيد</strong><small>مساعدة آلية • الدعم البشري متاح</small></div>
+              <button type="button" aria-label="إغلاق المحادثة" onClick={() => setAssistantOpen(false)}><X size={19} /></button>
+            </header>
+            <div className="raseed-assistant-messages" aria-live="polite">
+              {assistantMessages.map((item, index) => (
+                <div key={index} className={item.role === "customer" ? "raseed-chat-message customer" : "raseed-chat-message assistant"}>
+                  {item.text.split("\n").map((line, lineIndex) => <span key={lineIndex}>{line}</span>)}
+                </div>
+              ))}
+            </div>
+            <div className="raseed-assistant-quick">
+              <button type="button" onClick={() => sendAssistantMessage("أريد شحن ألعاب")}>شحن ألعاب</button>
+              <button type="button" onClick={() => sendAssistantMessage("أريد شحن تطبيقات")}>شحن تطبيقات</button>
+              <button type="button" onClick={() => sendAssistantMessage("كيف أتابع طلبي؟")}>متابعة طلب</button>
+            </div>
+            <form className="raseed-assistant-compose" onSubmit={(event) => { event.preventDefault(); sendAssistantMessage(assistantDraft); }}>
+              <input value={assistantDraft} onChange={(event) => setAssistantDraft(event.target.value)} placeholder="اكتب سؤالك هنا..." aria-label="اكتب سؤالك" />
+              <button type="submit" aria-label="إرسال السؤال" disabled={!assistantDraft.trim()}><Send size={18} /></button>
+            </form>
+            <a className="raseed-assistant-human" href={"https://wa.me/994408440648?text=" + encodeURIComponent("مرحباً، أحتاج مساعدة من فريق رصيد")} target="_blank" rel="noreferrer">تواصل مع الدعم البشري عبر واتساب</a>
+            <small className="raseed-assistant-note">الإجابات آلية وتعتمد على المنتجات المنشورة؛ لا تنفّذ دفعاً أو طلب شحن نيابةً عنك.</small>
+          </section>
+        )}
+        <button className="raseed-assistant-launcher" type="button" onClick={() => setAssistantOpen((open) => !open)} aria-label="افتح مساعد رصيد">
+          {assistantOpen ? <X size={23} /> : <><MessageCircle size={22} /><span>اسأل مساعد رصيد</span></>}
+        </button>
+      </div>
+      <style>{`
+        .raseed-assistant-root{position:fixed;right:18px;bottom:18px;z-index:90;font-family:Tahoma,"Segoe UI",Arial,sans-serif}
+        .raseed-assistant-launcher{display:flex;align-items:center;gap:9px;padding:13px 17px;border-radius:999px;background:#19b8d2;color:#07152d;font-weight:800;box-shadow:0 8px 28px #0005}
+        .raseed-assistant-panel{position:absolute;right:0;bottom:66px;width:min(365px,calc(100vw - 28px));height:min(540px,calc(100dvh - 115px));display:flex;flex-direction:column;overflow:hidden;border:1px solid #36517b;border-radius:19px;background:#091536;color:#eef5ff;box-shadow:0 18px 55px #0009}
+        .raseed-assistant-head{display:flex;align-items:center;gap:10px;padding:13px;background:#112653;border-bottom:1px solid #29416e}
+        .raseed-assistant-avatar{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;background:#19b8d2;color:#07152d}
+        .raseed-assistant-head div{display:grid;gap:4px;flex:1}.raseed-assistant-head strong{font-size:13px}.raseed-assistant-head small{font-size:10px;color:#a9bddc}
+        .raseed-assistant-head>button{background:transparent;color:#dce9ff;padding:6px}
+        .raseed-assistant-messages{flex:1;overflow:auto;padding:13px;display:flex;flex-direction:column;gap:9px}
+        .raseed-chat-message{max-width:90%;padding:10px 12px;border-radius:13px;font-size:11px;line-height:1.8;white-space:pre-wrap;display:grid;gap:2px}
+        .raseed-chat-message.assistant{align-self:flex-start;background:#142b57;color:#e7f2ff;border-bottom-right-radius:4px}
+        .raseed-chat-message.customer{align-self:flex-end;background:#087f9d;color:#fff;border-bottom-left-radius:4px}
+        .raseed-assistant-quick{display:flex;gap:6px;overflow-x:auto;padding:0 11px 10px}
+        .raseed-assistant-quick button{white-space:nowrap;border:1px solid #34517f;background:#10234a;color:#cde9ff;border-radius:999px;padding:7px 10px;font-size:10px}
+        .raseed-assistant-compose{display:flex;gap:7px;padding:10px;border-top:1px solid #263c65}
+        .raseed-assistant-compose input{min-width:0;flex:1;border:1px solid #344b75;border-radius:11px;background:#101f42;color:#fff;padding:11px;font-size:12px;outline:none}
+        .raseed-assistant-compose button{width:42px;border-radius:11px;background:#19b8d2;color:#07152d;display:grid;place-items:center}.raseed-assistant-compose button:disabled{opacity:.45}
+        .raseed-assistant-human{display:block;text-align:center;color:#75e4f2;text-decoration:none;font-size:10px;padding:8px}
+        .raseed-assistant-note{display:block;text-align:center;color:#8297ba;font-size:9px;padding:0 10px 10px}
+        @media(max-width:480px){.raseed-assistant-root{right:12px;bottom:12px}.raseed-assistant-panel{right:0;width:calc(100vw - 24px);height:min(520px,calc(100dvh - 100px))}.raseed-assistant-launcher{padding:12px 15px}}
+      `}</style>
 
       <footer className="legacy-footer">
         <strong>رصيد</strong>
