@@ -495,8 +495,11 @@ export async function readDigitalCatalog() {
  * جلب المنتجات من Fast4Top وحفظها في قاعدة البيانات.
  * المنتجات الجديدة تُحفظ غير معتمدة وغير مفعلة افتراضياً.
  */
-export async function syncFast4TopCatalog() {
-  const products = await readDigitalCatalog();
+export async function syncFast4TopCatalog(section?: string) {
+  const allProducts = await readDigitalCatalog();
+  const products = section && section !== "all"
+    ? allProducts.filter((product) => detectStoreSection(product) === section)
+    : allProducts;
 
   const syncResult = await syncSupplierProducts(products);
 
