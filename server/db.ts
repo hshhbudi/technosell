@@ -444,6 +444,7 @@ export async function listApprovedSupplierProducts() {
     .from(supplierProducts)
     .where(
       and(
+        eq(supplierProducts.ownerSelected, true),
         eq(supplierProducts.approved, true),
         eq(supplierProducts.enabled, true),
         eq(supplierProducts.available, true)
@@ -543,8 +544,8 @@ export async function syncSupplierProducts(
 
     const markup = 8;
 
-    // New Fast4Top products are published automatically when available.
-    // Existing products retain the owner's approval/enabled choices above.
+    // New Fast4Top products stay hidden until the owner explicitly selects them.
+    // Existing owner selections are preserved during later catalog syncs.
     await db.insert(supplierProducts).values({
       externalId: item.externalId,
       name: item.name,
@@ -564,8 +565,9 @@ export async function syncSupplierProducts(
       description: item.description ?? null,
       available: item.available ?? true,
       storeSection: item.category ?? null,
-      approved: item.available ?? true,
-      enabled: item.available ?? true,
+      approved: false,
+      enabled: false,
+      ownerSelected: false,
     });
 
     inserted++;
@@ -667,12 +669,28 @@ export async function setSupplierCategoryEnabled(
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
 
-  await db
-    .update(supplierProducts)
-    .set(enabled ? { approved: true, enabled: true } : { enabled: false })
-    .where(eq(supplierProducts.subcategory, categoryName));
+  if (enabled) {
+    await db.update(supplierProducts).set({ enabled: true }).where(and(
+      eq(supplierProducts.subcategory, categoryName),
+      eq(supplierProducts.ownerSelected, true),
+      eq(supplierProducts.approved, true),
+      eq(supplierProducts.available, true)
+    ));
+  } else {
+    await db.update(supplierProducts).set({ enabled: false })
+      .where(eq(supplierProducts.subcategory, categoryName));
+  }
 
   return { category: categoryName, enabled };
+}
+
+export async function setSupplierProductSelection(id: number, selected: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(supplierProducts)
+    .set({ ownerSelected: selected, approved: selected, enabled: selected })
+    .where(eq(supplierProducts.id, id));
+  return getSupplierProductById(id);
 }
 
 export async function setSupplierProductEnabled(
