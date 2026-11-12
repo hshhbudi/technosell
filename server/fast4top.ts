@@ -41,11 +41,11 @@ type Fast4TopProduct = {
   description?: string | null;
   offer?: boolean;
   product_type?: string;
-  qty?: { min?: string; max?: string } | null;
-  amount?: { min?: string; max?: string } | null;
+  qty?: { min?: string | number; max?: string | number } | null;
+  amount?: { min?: string | number; max?: string | number } | null;
   qty_values?:
     | { min?: string | number; max?: string | number }
-    | string[]
+    | Array<string | number>
     | null;
   requires?: Array<{
     name?: string;
