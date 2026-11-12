@@ -636,7 +636,7 @@ export const appRouter = router({
       }
     }),
 sync: adminProcedure.input(z.object({
-      section: z.enum(["all", "الألعاب", "التطبيقات", "الخدمات والاتصالات", "البطاقات الرقمية", "خدمات رقمية"]).default("all"),
+      section: z.enum(["all", "الألعاب", "التطبيقات", "الخدمات والاتصالات", "البطاقات الرقمية", "العملات الرقمية", "تفعيل الأرقام", "السوشيال ميديا", "الخدمات السورية", "مزودات الإنترنت", "التصميم", "خدمات رقمية"]).default("all"),
     })).mutation(async ({ input }) => {
       return await syncFast4TopCatalog(input.section);
     }),
@@ -674,7 +674,7 @@ sync: adminProcedure.input(z.object({
       }),
     publicCategories: publicProcedure.query(async () => listSupplierCategoryOverrides()),
     setStoreSection: adminProcedure
-      .input(z.object({ id: z.number().int().positive(), storeSection: z.enum(["الألعاب", "التطبيقات", "الخدمات والاتصالات", "البطاقات الرقمية", "خدمات رقمية"]) }))
+      .input(z.object({ id: z.number().int().positive(), storeSection: z.enum(["الألعاب", "التطبيقات", "الخدمات والاتصالات", "البطاقات الرقمية", "العملات الرقمية", "تفعيل الأرقام", "السوشيال ميديا", "الخدمات السورية", "مزودات الإنترنت", "التصميم", "خدمات رقمية"]) }))
       .mutation(async ({ input }) => setSupplierProductStoreSection(input.id, input.storeSection)),
     setImage: adminProcedure
       .input(z.object({
