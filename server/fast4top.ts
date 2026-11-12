@@ -500,19 +500,18 @@ export async function readDigitalCatalog() {
  * جلب المنتجات من Fast4Top وحفظها في قاعدة البيانات.
  * المنتجات الجديدة تُحفظ غير معتمدة وغير مفعلة افتراضياً.
  */
-export async function syncFast4TopCatalog(section?: string) {
-  const allProducts = await readDigitalCatalog();
-  const products = section && section !== "all"
-    ? allProducts.filter((product) => product.storeSection === section)
-    : allProducts;
-
+export async function syncFast4TopCatalog(_section?: string) {
+  // Always import the complete supplier catalog. Section detection is only
+  // for organizing the owner panel; it must never exclude supplier products.
+  const products = await readDigitalCatalog();
   const syncResult = await syncSupplierProducts(products);
 
   return {
     total: syncResult.total,
     inserted: syncResult.inserted,
     updated: syncResult.updated,
-    message: "تم جلب المنتجات ومزامنتها مع قاعدة البيانات",
+    skipped: syncResult.skipped,
+    message: "تم جلب كتالوج Fast4Top بالكامل وحفظ المنتجات في قاعدة البيانات",
   };
 }
 
