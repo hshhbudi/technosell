@@ -26,6 +26,7 @@ listProducts,
   setSupplierProductStoreSection,
   setSupplierProductImage,
   setSupplierProductEnabled,
+  setSupplierProductSelection,
   setSupplierCategoryEnabled,
   listSupplierCategoryOverrides,
   saveSupplierCategoryOverride,
@@ -699,6 +700,9 @@ sync: adminProcedure.mutation(async () => {
       .mutation(async ({ input }) => {
         return await setSupplierProductEnabled(input.id, input.enabled);
       }),
+    setSelection: adminProcedure
+      .input(z.object({ id: z.number().int().positive(), selected: z.boolean() }))
+      .mutation(async ({ input }) => setSupplierProductSelection(input.id, input.selected)),
     setCategoryEnabled: adminProcedure
       .input(z.object({ category: z.string().min(1).max(255), enabled: z.boolean() }))
       .mutation(async ({ input }) => {
