@@ -294,7 +294,7 @@ export default function Home() {
   // منتجات المورد الرقمية مع المنتجات اليدوية المنشورة من لوحة الإدارة.
   const manualProducts: StoreProduct[] = (manualProductsQuery.data ?? []).map((p) => ({
     id: p.id, externalId: "manual-" + p.id, name: p.name,
-    category: (["الهواتف", "الإكسسوارات", "المنتجات"].includes(p.category) ? p.category : "المنتجات") as StoreProduct["category"],
+    category: (["التطبيقات", "الألعاب", "المنتجات", "الهواتف", "الإكسسوارات", "الخدمات والاتصالات", "البطاقات الرقمية", "خدمات رقمية"].includes(p.category) ? p.category : "المنتجات") as StoreProduct["category"],
     subcategory: p.category, delivery: "id",
     price: Number(p.priceUsdCents ?? p.price ?? 0), stock: Number(p.stock ?? 0),
     tag: p.tag ?? undefined, description: p.description ?? "", imageUrl: p.imageUrl ?? null,
