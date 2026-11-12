@@ -220,7 +220,7 @@ function detectSection(
   }
 
   // Fast4Top social/live application catalog (including brands shown in its Apps section).
-  if (/(haya|kwai|likee|bigo|tiktok|تيك\s*توك|poppo|mico|chamet|yalla\s*live|yalla\s*ludo|buzzcast|liveme|live\s*me|nonolive|uplive|soul\s*chill|mey[o]?\s*live|mey[o]?\s*chat|tumile|4fun|talk\s*talk|bo?bo\s*chat|yoho\s*waka|yoyo\s*chat|haki\s*chat|azal\s*live|lami\s*chat|lama\s*chat|falla\s*chat|migo\s*live|hawa\s*chat|beela\s*chat|mr.?7ba|light\s*chat|party\s*star|ligo\s*live|binmo\s*chat|hlah\s*chat|hayyakom|dream\s*chat|super\s*live|fancy\s*live|kiyo\s*chat|imo\s*chat|honey\s*jar|sky\s*chat|soyo\s*chat|livu|xena\s*live|ayome\s*chat|lit\s*chat|tango\s*live|yaahlan|momo\s*live|hicat\s*chat|yooy\s*chat|hallame|sugo|tami\s*chat|سول\s*تشيل|هاي\s*شات|كواي|لايكي|بيجو)/i.test(value)) {
+  if (/(haya|kwai|likee|bigo|tiktok|تيك\s*توك|poppo|mico|chamet|yalla\s*live|buzzcast|liveme|live\s*me|nonolive|uplive|soul\s*chill|mey[o]?\s*live|mey[o]?\s*chat|tumile|4fun|talk\s*talk|bo?bo\s*chat|yoho\s*waka|yoyo\s*chat|haki\s*chat|azal\s*live|lami\s*chat|lama\s*chat|falla\s*chat|migo\s*live|hawa\s*chat|beela\s*chat|mr.?7ba|light\s*chat|party\s*star|ligo\s*live|binmo\s*chat|hlah\s*chat|hayyakom|dream\s*chat|super\s*live|fancy\s*live|kiyo\s*chat|imo\s*chat|honey\s*jar|sky\s*chat|soyo\s*chat|livu|xena\s*live|ayome\s*chat|lit\s*chat|tango\s*live|yaahlan|momo\s*live|hicat\s*chat|yooy\s*chat|hallame|sugo|tami\s*chat|سول\s*تشيل|هاي\s*شات|كواي|لايكي|بيجو)/i.test(value)) {
     return "التطبيقات";
   }
 
