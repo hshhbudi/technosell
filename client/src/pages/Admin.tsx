@@ -82,6 +82,13 @@ export default function Admin() {
     },
     onError: (err) => setError(err.message || "تعذر تحديث اعتماد المنتج"),
   });
+  const setSupplierImage = trpc.supplier.setImage.useMutation({
+    onSuccess: async () => {
+      setNotice("تم حفظ صورة المنتج");
+      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
+    },
+    onError: (err) => setError(err.message || "تعذر حفظ صورة المنتج"),
+  });
   const setSupplierEnabled = trpc.supplier.setEnabled.useMutation({
     onSuccess: async () => {
       await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
@@ -115,7 +122,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   if (!auth.user) return <div className="admin-gate"><form className="gate-card" onSubmit={e=>{e.preventDefault();localLogin.mutate({email:localEmail,password:localPassword})}}><span className="brand-mark">TS</span><h1>دخول صاحب المتجر</h1><p>دخول مستقل عن Google وManus. استخدم بيانات المالك التي تم إعدادها بأمان.</p><label className="admin-login-field">البريد الإلكتروني<input required type="email" value={localEmail} onChange={e=>setLocalEmail(e.target.value)} placeholder="owner@example.com"/></label><label className="admin-login-field">كلمة المرور<input required type="password" value={localPassword} onChange={e=>setLocalPassword(e.target.value)} placeholder="كلمة المرور"/></label>{localLogin.error&&<div className="form-error">{localLogin.error.message}</div>}<button className="primary-btn full" disabled={localLogin.isPending}>{localLogin.isPending?"جارٍ تسجيل الدخول...":"تسجيل الدخول كمالك"} <ArrowRight size={17}/></button></form></div>;
   if (auth.user.role !== "admin" || access.isError) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>تجهيز حساب المالك</h1><p>إذا كنت تستخدم الحساب المنفصل الذي تريد تخصيصه للمتجر، اضغط الزر مرة واحدة لاعتماده كمالك. لا تستخدم حساب الزبائن أو حساب MySon.</p><button className="primary-btn" onClick={()=>claim.mutate()} disabled={claim.isPending}>{claim.isPending?"جارٍ اعتماد الحساب...":"اعتماد هذا الحساب كمالك"} <ArrowRight size={17}/></button><Link href="/" className="back-link gate-back">العودة إلى المتجر</Link></div></div>;
   const products=productsQuery.data??[];
-  const supplierProducts=(supplierAdminCatalogQuery.data?.products??[]).filter(p => isGameProduct(p.category ?? "",p.name,p.subcategory ?? "") || isLiveAppProduct(p.category ?? "",p.name,p.subcategory ?? ""));
+  const supplierProducts=(supplierAdminCatalogQuery.data?.products??[]).filter(p => p.storeSection === "الألعاب" || p.storeSection === "التطبيقات" || isGameProduct(p.category ?? "",p.name,p.subcategory ?? "") || isLiveAppProduct(p.category ?? "",p.name,p.subcategory ?? ""));
   const supplierCategories = Array.from(new Set(supplierProducts.map(p => p.subcategory).filter((name): name is string => Boolean(name)))).sort((a,b)=>a.localeCompare(b,"ar"));
   const productTerm = productSearch.trim().toLocaleLowerCase("ar");
   const matchesProductSearch = (name:string, category:string, extra="") => !productTerm || `${name} ${category} ${extra}`.toLocaleLowerCase("ar").includes(productTerm);
@@ -191,6 +198,9 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
             {p.imageUrl ? <img src={p.imageUrl} alt={p.name}/> : <div className="product-mini"><Box size={18}/></div>}
             <div>
               <strong>{p.name}</strong>
+              <label className="supplier-section-picker">صورة المنتج
+                <input type="file" accept="image/png,image/jpeg,image/webp" aria-label={`رفع صورة ${p.name}`} onChange={e=>{const file=e.target.files?.[0];if(file)compressProductImage(file,data=>setSupplierImage.mutate({id:p.id,imageData:data}),setError);e.currentTarget.value="";}} disabled={setSupplierImage.isPending}/>
+              </label>
               <small>{p.category ?? "غير مصنف"} · {p.subcategory ?? ""}</small>
               <label className="supplier-section-picker">قسم المتجر
                 <select value={p.storeSection || (isGameProduct(p.category ?? "", p.name, p.subcategory ?? "") ? "الألعاب" : "التطبيقات")} onChange={e => setSupplierStoreSection.mutate({id:p.id,storeSection:e.target.value as "الألعاب" | "التطبيقات"})} disabled={setSupplierStoreSection.isPending}>
