@@ -123,7 +123,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   if (!auth.user) return <div className="admin-gate"><form className="gate-card" onSubmit={e=>{e.preventDefault();localLogin.mutate({email:localEmail,password:localPassword})}}><span className="brand-mark">TS</span><h1>دخول صاحب المتجر</h1><p>دخول مستقل عن Google وManus. استخدم بيانات المالك التي تم إعدادها بأمان.</p><label className="admin-login-field">البريد الإلكتروني<input required type="email" value={localEmail} onChange={e=>setLocalEmail(e.target.value)} placeholder="owner@example.com"/></label><label className="admin-login-field">كلمة المرور<input required type="password" value={localPassword} onChange={e=>setLocalPassword(e.target.value)} placeholder="كلمة المرور"/></label>{localLogin.error&&<div className="form-error">{localLogin.error.message}</div>}<button className="primary-btn full" disabled={localLogin.isPending}>{localLogin.isPending?"جارٍ تسجيل الدخول...":"تسجيل الدخول كمالك"} <ArrowRight size={17}/></button></form></div>;
   if (auth.user.role !== "admin" || access.isError) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>تجهيز حساب المالك</h1><p>إذا كنت تستخدم الحساب المنفصل الذي تريد تخصيصه للمتجر، اضغط الزر مرة واحدة لاعتماده كمالك. لا تستخدم حساب الزبائن أو حساب MySon.</p><button className="primary-btn" onClick={()=>claim.mutate()} disabled={claim.isPending}>{claim.isPending?"جارٍ اعتماد الحساب...":"اعتماد هذا الحساب كمالك"} <ArrowRight size={17}/></button><Link href="/" className="back-link gate-back">العودة إلى المتجر</Link></div></div>;
   const products=productsQuery.data??[];
-  const supplierProducts=(supplierAdminCatalogQuery.data?.products??[]).filter(p => p.storeSection === "الألعاب" || p.storeSection === "التطبيقات" || isGameProduct(p.category ?? "",p.name,p.subcategory ?? "") || isLiveAppProduct(p.category ?? "",p.name,p.subcategory ?? ""));
+  const supplierProducts=(supplierAdminCatalogQuery.data?.products??[]);
   const supplierCategories = Array.from(new Set(supplierProducts.map(p => p.subcategory).filter((name): name is string => Boolean(name)))).sort((a,b)=>a.localeCompare(b,"ar"));
   const productTerm = productSearch.trim().toLocaleLowerCase("ar");
   const matchesProductSearch = (name:string, category:string, extra="") => !productTerm || `${name} ${category} ${extra}`.toLocaleLowerCase("ar").includes(productTerm);
@@ -153,7 +153,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   <div className="panel-head">
     <div>
       <h2>كتالوج Fast4Top المتصل</h2>
-      <span>تتم مزامنة الألعاب وتطبيقات البث المباشر فقط؛ ويمكنك تحديد قسم كل منتج بشكل مستقل</span>
+      <span>تتم مزامنة كتالوج Fast4Top بالكامل، مع تصنيف المنتجات حسب المصدر واختيار ما يظهر للزبائن</span>
     </div>
     <div className="admin-heading-actions">
       <span className="status-pill cyan">{supplierAdminCatalogQuery.isLoading ? "جاري التحميل" : `${supplierProducts.length} منتج · ${supplierCategories.length} قسم`}</span>
@@ -211,9 +211,9 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
               </label>
               <small>{p.category ?? "غير مصنف"} · {p.subcategory ?? ""}</small>
               <label className="supplier-section-picker">قسم المتجر
-                <select value={p.storeSection || (isGameProduct(p.category ?? "", p.name, p.subcategory ?? "") ? "الألعاب" : "التطبيقات")} onChange={e => setSupplierStoreSection.mutate({id:p.id,storeSection:e.target.value as "الألعاب" | "التطبيقات"})} disabled={setSupplierStoreSection.isPending}>
+                <select value={p.storeSection || "خدمات رقمية"} onChange={e => setSupplierStoreSection.mutate({id:p.id,storeSection:e.target.value})} disabled={setSupplierStoreSection.isPending}>
                   <option value="الألعاب">الألعاب</option>
-                  <option value="التطبيقات">تطبيقات البث المباشر</option>
+                  <option value="التطبيقات">التطبيقات</option><option value="الخدمات والاتصالات">الخدمات والاتصالات</option><option value="البطاقات الرقمية">البطاقات الرقمية</option><option value="خدمات رقمية">خدمات رقمية أخرى</option>
                 </select>
               </label>
               <b>{money(p.sellingPriceCents)}</b>
