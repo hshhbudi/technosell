@@ -1074,3 +1074,52 @@
 
 /* Fast4Top owner catalog folders */
 .supplier-folder-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:14px;margin:18px 0}.supplier-folder{min-width:0;border:1px solid var(--border-color,#d7e1ee);border-radius:16px;padding:12px;background:var(--card-bg,#fff);display:flex;flex-direction:column;gap:10px}.supplier-folder.active{border-color:#159bd0;box-shadow:0 0 0 2px #159bd022}.supplier-folder-open{border:0;background:transparent;color:inherit;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;text-align:center;min-height:135px}.supplier-folder-art{width:100%;height:92px;border-radius:12px;background:linear-gradient(135deg,#102d58,#176aa5);color:#fff;display:grid;place-items:center;overflow:hidden}.supplier-folder-art img{width:100%;height:100%;object-fit:cover}.supplier-folder-open strong{font-size:15px}.supplier-folder-open small{opacity:.75}.supplier-folder-actions{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}.supplier-folder-all{display:flex;justify-content:center;margin:8px 0 20px}
+
+
+/* Raseed owner panel — match the storefront's midnight and gold visual system */
+.admin-shell{background:#090d17!important;color:#f5f1e6!important;min-height:100vh}
+.admin-shell .admin-topbar{background:#101625!important;border-bottom:1px solid #2a3047!important;color:#f5f1e6!important}
+.admin-shell .admin-brand,.admin-shell .admin-topbar .back-link,.admin-shell .admin-phone{color:#f5f1e6!important}
+.admin-shell .brand-mark{background:#151b2e!important;color:#e6c875!important;border:1px solid #5a4a1e}
+.admin-shell .admin-main{max-width:1240px!important}
+.admin-shell .admin-heading h1,.admin-shell .admin-heading p{color:#f5f1e6!important}
+.admin-shell .admin-heading p,.admin-shell .eyebrow{color:#b6ad98!important}
+.admin-shell .panel,.admin-shell .stat-card,.admin-shell .product-modal,.admin-shell .category-edit-modal,.admin-shell .admin-notifications{background:#101625!important;border:1px solid #2a3047!important;border-radius:18px!important;color:#f5f1e6!important;box-shadow:0 12px 28px #0003}
+.admin-shell .panel h2,.admin-shell .panel h3,.admin-shell .panel strong,.admin-shell .stat-card>strong{color:#f5f1e6!important}
+.admin-shell .panel span,.admin-shell .panel p,.admin-shell .panel small,.admin-shell .stat-card>span,.admin-shell .stat-card small{color:#b6c0d0!important}
+.admin-shell .admin-section-tabs{display:flex!important;gap:9px!important;overflow-x:auto!important;padding:10px!important;margin:0 0 22px!important;border:1px solid #2a3047!important;border-radius:16px!important;background:#101625!important}
+.admin-shell .admin-section-tabs button{flex:0 0 auto!important;border:1px solid #2a3047!important;border-radius:13px!important;background:#151b2e!important;color:#e6c875!important}
+.admin-shell .admin-section-tabs button small{color:#b6ad98!important}
+.admin-shell .admin-section-tabs button.active{background:linear-gradient(135deg,#f2d98b,#c49a2e)!important;border-color:#d5b75f!important;color:#0b0f1a!important}
+.admin-shell .admin-section-tabs button.active b,.admin-shell .admin-section-tabs button.active small{color:#0b0f1a!important}
+.admin-shell .primary-btn{background:linear-gradient(135deg,#f2d98b,#c49a2e)!important;color:#0b0f1a!important;border:1px solid #d8ba64!important;box-shadow:none!important}
+.admin-shell .secondary-btn,.admin-shell .text-btn{background:#151b2e!important;color:#e6c875!important;border:1px solid #5a4a1e!important}
+.admin-shell .delete-btn{background:#351b25!important;color:#ffb5bd!important;border:1px solid #713744!important}
+.admin-shell input,.admin-shell select,.admin-shell textarea{background:#0b1220!important;color:#f5f1e6!important;border:1px solid #3a4358!important;border-radius:10px!important}
+.admin-shell input::placeholder,.admin-shell textarea::placeholder{color:#8995a8!important}
+.admin-shell .supplier-folder,.admin-shell .supplier-category-control,.admin-shell .supplier-mini-card,.admin-shell .managed-product{background:#151b2e!important;border:1px solid #2a3047!important;border-radius:15px!important;color:#f5f1e6!important}
+.admin-shell .supplier-folder.active{border-color:#d4b45b!important;box-shadow:0 0 0 2px #d4b45b25!important}
+.admin-shell .supplier-folder-art{background:linear-gradient(135deg,#222b43,#665126)!important}
+.admin-shell .supplier-sync-tabs{background:#0b1220!important;border-color:#2a3047!important}
+.admin-shell .supplier-category-controls h3,.admin-shell .supplier-category-control strong{color:#f2d98b!important}
+.admin-shell .supplier-products-grid{gap:14px!important}
+.admin-shell .supplier-mini-card{padding:14px!important;gap:14px!important}
+.admin-shell .admin-notice{background:#17291f!important;color:#a9e8c2!important;border:1px solid #285a3c!important}
+.admin-shell .form-error{background:#351b25!important;color:#ffc1c8!important;border:1px solid #713744!important}
+.admin-shell .admin-live-status{color:#a9e8c2!important}
+.admin-shell .admin-live-status i{background:#39c980!important}
+@media(max-width:760px){
+ .admin-shell .admin-main{width:calc(100% - 20px)!important;margin:18px auto!important}
+ .admin-shell .admin-topbar{height:auto!important;min-height:64px!important;padding:10px 12px!important;gap:8px!important;flex-wrap:wrap!important}
+ .admin-shell .admin-phone{display:none!important}
+ .admin-shell .admin-heading{align-items:flex-start!important;gap:12px!important;flex-wrap:wrap!important}
+ .admin-shell .admin-section-tabs{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .admin-shell .admin-section-tabs button{min-width:0!important}
+ .admin-shell .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ .admin-shell .supplier-folder-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ .admin-shell .supplier-folder{padding:9px!important}
+ .admin-shell .supplier-folder-actions{flex-direction:column!important;align-items:stretch!important}
+ .admin-shell .supplier-folder-actions button,.admin-shell .supplier-folder-actions select{width:100%!important}
+ .admin-shell .supplier-products-grid{grid-template-columns:1fr!important}
+ .admin-shell .supplier-mini-card{grid-template-columns:64px minmax(0,1fr)!important}
+}
