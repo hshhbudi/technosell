@@ -10,6 +10,14 @@ type Fast4TopProduct = {
   name?: string;
   product_name?: string;
   category_name?: string;
+  category?: string;
+  category_type?: string;
+  category_id?: number | string;
+  parent_id?: number | string;
+  parent_name?: string;
+  parent_category_name?: string;
+  section?: string;
+  type?: string;
   price?: number | string;
   base_price?: number | string;
   product_currency_price?: string;
@@ -204,28 +212,23 @@ async function apiGet<T>(
 function detectSection(
   product: Fast4TopProduct
 ): "التطبيقات" | "الألعاب" | null {
-  const value = [
-    product.name,
-    product.product_name,
+  // Classify from supplier category/type metadata, never from a hard-coded
+  // list of individual game or app names.
+  const categoryValue = [
     product.category_name,
+    product.category,
+    product.category_type,
+    product.parent_name,
+    product.parent_category_name,
+    product.section,
     product.product_type,
+    product.type,
   ].filter(Boolean).join(" ").toLowerCase();
 
-  // Use explicit supplier type/category labels first, then known Fast4Top catalog brands.
-  if ((/\b(app|apps|application|applications|live app|social app)\b|قسم التطبيقات|تطبيقات/i.test(value))) {
+  if (/(\bapp\b|\bapps\b|application|applications|social|live app|تطبيق|برامج|دردشة|بث مباشر)/i.test(categoryValue)) {
     return "التطبيقات";
   }
-  if ((/\b(game|games|gaming)\b|قسم الألعاب|قسم الالعاب|ألعاب|العاب/i.test(value))) {
-    return "الألعاب";
-  }
-
-  // Fast4Top social/live application catalog (including brands shown in its Apps section).
-  if (/(haya|kwai|likee|bigo|tiktok|تيك\s*توك|poppo|mico|chamet|yalla\s*live|buzzcast|liveme|live\s*me|nonolive|uplive|soul\s*chill|mey[o]?\s*live|mey[o]?\s*chat|tumile|4fun|talk\s*talk|bo?bo\s*chat|yoho\s*waka|yoyo\s*chat|haki\s*chat|azal\s*live|lami\s*chat|lama\s*chat|falla\s*chat|migo\s*live|hawa\s*chat|beela\s*chat|mr.?7ba|light\s*chat|party\s*star|ligo\s*live|binmo\s*chat|hlah\s*chat|hayyakom|dream\s*chat|super\s*live|fancy\s*live|kiyo\s*chat|imo\s*chat|honey\s*jar|sky\s*chat|soyo\s*chat|livu|xena\s*live|ayome\s*chat|lit\s*chat|tango\s*live|yaahlan|momo\s*live|hicat\s*chat|yooy\s*chat|hallame|sugo|tami\s*chat|سول\s*تشيل|هاي\s*شات|كواي|لايكي|بيجو)/i.test(value)) {
-    return "التطبيقات";
-  }
-
-  // Fast4Top games catalog.
-  if (/(pubg|ببجي|free\s*fire|freefire|فري\s*فاير|call\s*of\s*duty|كول\s*اوف\s*ديوتي|mobile\s*legends|mlbb|roblox|minecraft|clash\s*of\s*clans|clash\s*royale|8\s*ball\s*pool|8ball|jawaker|جواكر|fifa\s*mobile|efootball|فيفا|fortnite|steam|playstation|xbox|valorant|genshin|whiteout\s*survival|football\s*rising|ludo\s*world|rise\s*of\s*the\s*kings|wepla|undawn|stumble\s*guys|last\s*war|brawl\s*stars|yalla\s*ludo|موبايل\s*ليجند)/i.test(value)) {
+  if (/(\bgame\b|\bgames\b|gaming|لعبة|العاب|ألعاب|ألعاب|شحن ألعاب)/i.test(categoryValue)) {
     return "الألعاب";
   }
 
@@ -366,11 +369,31 @@ export async function readDigitalCatalog() {
     Fast4TopProduct[] | ApiEnvelope<Fast4TopProduct[]>
   >("/client/api/products");
 
+  const envelope = response as ApiEnvelope<unknown> & {
+    products?: unknown;
+    items?: unknown;
+    data?: unknown;
+  };
+  const nestedData = envelope?.data as
+    | { products?: unknown; items?: unknown; data?: unknown }
+    | unknown;
   const productsRaw = Array.isArray(response)
     ? response
-    : Array.isArray(response?.data)
-      ? response.data
-      : null;
+    : Array.isArray(envelope?.data)
+      ? envelope.data
+      : Array.isArray(envelope?.products)
+        ? envelope.products
+        : Array.isArray(envelope?.items)
+          ? envelope.items
+          : nestedData && typeof nestedData === "object" && !Array.isArray(nestedData)
+            ? Array.isArray((nestedData as { products?: unknown }).products)
+              ? (nestedData as { products: Fast4TopProduct[] }).products
+              : Array.isArray((nestedData as { items?: unknown }).items)
+                ? (nestedData as { items: Fast4TopProduct[] }).items
+                : Array.isArray((nestedData as { data?: unknown }).data)
+                  ? (nestedData as { data: Fast4TopProduct[] }).data
+                  : null
+            : null;
 
   if (!productsRaw) {
     throw new Fast4TopError(
@@ -381,6 +404,19 @@ export async function readDigitalCatalog() {
   }
 
   const products = normalizeProducts(productsRaw);
+  console.log(
+    `[Fast4Top] Supplier returned ${productsRaw.length} raw products; ${products.length} matched Games/Apps categories`
+  );
+  if (products.length === 0 && productsRaw.length > 0) {
+    const categorySamples = [...new Set(
+      productsRaw.slice(0, 20).map((item) => {
+        const p = item as Fast4TopProduct;
+        return [p.category_name, p.category, p.category_type, p.product_type]
+          .filter(Boolean).join(" / ");
+      }).filter(Boolean)
+    )];
+    console.warn("[Fast4Top] No products matched Games/Apps. Supplier category samples:", categorySamples);
+  }
 
   catalogCache = {
     at: Date.now(),
