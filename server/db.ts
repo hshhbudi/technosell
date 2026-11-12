@@ -524,7 +524,8 @@ export async function syncSupplierProducts(
             markup
           ),
           quantity: item.quantity ?? current.quantity,
-          quantityValues: item.quantityValues ?? current.quantityValues,
+          // Quantity choices belong to Fast4Top; clear stale choices if the supplier no longer sends them.
+          quantityValues: item.quantityValues ?? null,
           requires: item.requires ?? current.requires,
           productType: item.productType ?? current.productType,
           imageUrl: item.imageUrl ?? current.imageUrl,
