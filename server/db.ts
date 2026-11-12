@@ -1,5 +1,5 @@
 
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertCustomerAccount,
@@ -624,6 +624,19 @@ export async function setSupplierProductStoreSection(id: number, storeSection: s
   if (!db) throw new Error("Database is not available");
   await db.update(supplierProducts).set({ storeSection }).where(eq(supplierProducts.id, id));
   return getSupplierProductById(id);
+}
+
+export async function moveSupplierFolderProducts(fromSection: string, toSection: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  if (fromSection === toSection) return { moved: 0, fromSection, toSection };
+  const where = fromSection === "خدمات رقمية"
+    ? or(eq(supplierProducts.storeSection, fromSection), isNull(supplierProducts.storeSection))
+    : eq(supplierProducts.storeSection, fromSection);
+  const result = await db.update(supplierProducts)
+    .set({ storeSection: toSection })
+    .where(where);
+  return { moved: Number(result[0].affectedRows ?? 0), fromSection, toSection };
 }
 
 export async function setSupplierProductApproval(
