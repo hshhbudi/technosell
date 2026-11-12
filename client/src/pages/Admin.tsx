@@ -124,7 +124,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   if (auth.user.role !== "admin" || access.isError) return <div className="admin-gate"><div className="gate-card"><span className="brand-mark">TS</span><h1>تجهيز حساب المالك</h1><p>إذا كنت تستخدم الحساب المنفصل الذي تريد تخصيصه للمتجر، اضغط الزر مرة واحدة لاعتماده كمالك. لا تستخدم حساب الزبائن أو حساب MySon.</p><button className="primary-btn" onClick={()=>claim.mutate()} disabled={claim.isPending}>{claim.isPending?"جارٍ اعتماد الحساب...":"اعتماد هذا الحساب كمالك"} <ArrowRight size={17}/></button><Link href="/" className="back-link gate-back">العودة إلى المتجر</Link></div></div>;
   const products=productsQuery.data??[];
   const supplierProducts=(supplierAdminCatalogQuery.data?.products??[]);
-  const supplierCategories = Array.from(new Set(supplierProducts.map(p => p.subcategory).filter((name): name is string => Boolean(name)))).sort((a,b)=>a.localeCompare(b,"ar"));
+  const supplierCategories = Array.from(new Set(supplierProducts.filter(p=>supplierSyncSection==="all"||(p.storeSection||"خدمات رقمية")===supplierSyncSection).map(p => p.subcategory).filter((name): name is string => Boolean(name)))).sort((a,b)=>a.localeCompare(b,"ar"));
   const productTerm = productSearch.trim().toLocaleLowerCase("ar");
   const matchesProductSearch = (name:string, category:string, extra="") => !productTerm || `${name} ${category} ${extra}`.toLocaleLowerCase("ar").includes(productTerm);
   const sortedSupplierProducts = supplierProducts.filter(p=>(supplierSyncSection==="all" || (p.storeSection || "خدمات رقمية")===supplierSyncSection) && (supplierView==="all" || (supplierView==="selected" ? p.ownerSelected : !p.ownerSelected)) && matchesProductSearch(p.name,p.category ?? "",p.subcategory ?? "")).slice().sort((left,right)=>{if(productSort==="name-asc")return left.name.localeCompare(right.name,"ar");if(productSort==="name-desc")return right.name.localeCompare(left.name,"ar");if(productSort==="price-asc")return left.sellingPriceCents-right.sellingPriceCents;if(productSort==="price-desc")return right.sellingPriceCents-left.sellingPriceCents;return 0;});
@@ -172,7 +172,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
         <h3>أقسام Fast4Top — اختر ما تريد عرضه في المتجر</h3>
         <div className="supplier-category-list">
           {supplierCategories.map(category => {
-            const categoryProducts = supplierProducts.filter(p => p.subcategory === category);
+            const categoryProducts = supplierProducts.filter(p => p.subcategory === category && (supplierSyncSection==="all"||(p.storeSection||"خدمات رقمية")===supplierSyncSection));
             const selectedCount = categoryProducts.filter(p => p.ownerSelected).length;
             const enabled = selectedCount > 0 && categoryProducts.filter(p => p.ownerSelected).every(p => p.approved && p.enabled);
             return (
