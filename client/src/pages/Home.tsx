@@ -257,7 +257,8 @@ export default function Home() {
     tag: p.tag ?? undefined, description: p.description ?? "", imageUrl: p.imageUrl ?? null,
     accent: "gold", icon: "product",
   }));
-  const products: StoreProduct[] = [...supplierOnlyIdProducts, ...manualProducts];
+  // The public store shows only the automatically synchronized Fast4Top Games and Apps catalog.
+  const products: StoreProduct[] = supplierOnlyIdProducts;
 
   const subcategories = useMemo(
     () =>
@@ -454,13 +455,13 @@ export default function Home() {
             </span>
 
             <h1>
-              كل ما تحتاجه في مكان واحد
+              شحن ألعابك وتطبيقاتك بسهولة
               <br />
-              <strong>ألعاب • تطبيقات • هواتف • إكسسوارات</strong>
+              <strong>ألعاب • تطبيقات</strong>
             </h1>
 
             <p>
-              شحن ألعابك وتطبيقاتك، وأحدث الهواتف والإكسسوارات والمنتجات التقنية في متجر واحد.
+              جميع الألعاب والتطبيقات الرقمية في مكان واحد، مع تحديث تلقائي للمنتجات.
             </p>
 
             <div className="legacy-hero-buttons">
@@ -519,9 +520,7 @@ export default function Home() {
           >
             <Package /> تطبيقات البث المباشر
           </button>
-          <button className={active === "الهواتف" ? "selected" : ""} onClick={() => selectCategory("الهواتف")}><Smartphone/> الهواتف</button>
-          <button className={active === "الإكسسوارات" ? "selected" : ""} onClick={() => selectCategory("الإكسسوارات")}><Headphones/> الإكسسوارات</button>
-          <button className={active === "المنتجات" ? "selected" : ""} onClick={() => selectCategory("المنتجات")}><Package/> منتجات أخرى</button>
+
         </section>
 
         <section className="legacy-catalog" id="catalog">
