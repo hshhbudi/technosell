@@ -4,6 +4,8 @@ import {
   ChevronLeft,
   Gamepad2,
   Headphones,
+  CreditCard,
+  Wifi,
   Home as HomeIcon,
   Menu,
   Moon,
@@ -30,7 +32,10 @@ type StoreProduct = {
     | "الألعاب"
     | "المنتجات"
     | "الهواتف"
-    | "الإكسسوارات";
+    | "الإكسسوارات"
+    | "الخدمات والاتصالات"
+    | "البطاقات الرقمية"
+    | "خدمات رقمية";
   subcategory: string;
   delivery: "id" | "code";
   price: number;
@@ -220,7 +225,7 @@ export default function Home() {
 
     name: p.name,
 
-    category: (p.storeSection || (isGameProduct(category, p.name, subcategory) ? "الألعاب" : "التطبيقات")) as StoreProduct["category"],
+    category: (p.storeSection || (isGameProduct(category, p.name, subcategory) ? "الألعاب" : /(mtn|syriatel|سيريتل|سيرياتيل|اتصالات|رصيد الهاتف)/i.test(`${category} ${p.name} ${subcategory}`) ? "الخدمات والاتصالات" : /(بطاقات|كروت|voucher|gift.?card|اشتراك|subscription)/i.test(`${category} ${p.name} ${subcategory}`) ? "البطاقات الرقمية" : /(app|application|تطبيق|بث مباشر|social)/i.test(`${category} ${p.name} ${subcategory}`) ? "التطبيقات" : "خدمات رقمية")) as StoreProduct["category"],
 
     subcategory: (() => {
       const sourceName = isFreeFireProduct(p.name, subcategory)
@@ -266,11 +271,9 @@ export default function Home() {
   };
 });
 
-  // إخفاء منتجات الأكواد المحظورة من قسم الشحن المباشر
-  // المتجر يعرض من المورد قسم الألعاب وتطبيقات البث المباشر فقط.
+  // إخفاء منتجات الأكواد المحظورة من الشحن المباشر مع إبقاء بقية أقسام المورد.
   const supplierOnlyIdProducts = supplierProducts.filter(
     (product) =>
-      (product.category === "الألعاب" || product.category === "التطبيقات") &&
       !isBlockedCodeProduct(
         product.name,
         product.subcategory ?? "",
@@ -287,8 +290,8 @@ export default function Home() {
     tag: p.tag ?? undefined, description: p.description ?? "", imageUrl: p.imageUrl ?? null,
     accent: "gold", icon: "product",
   }));
-  // The public store shows only the automatically synchronized Fast4Top Games and Apps catalog.
-  const products: StoreProduct[] = supplierOnlyIdProducts;
+  // يعرض المتجر المنتجات التي اختارها المالك من Fast4Top إضافة إلى المنتجات اليدوية المنشورة.
+  const products: StoreProduct[] = [...supplierOnlyIdProducts, ...manualProducts];
 
   const subcategories = useMemo(
     () =>
@@ -425,12 +428,8 @@ export default function Home() {
       
       <header className="legacy-header">
         <Link href="/" className="legacy-logo">
-          <span className="legacy-logo-mark">✦</span>
-
-          <span>
-            رصيد<strong> RASEED</strong>
-            <small>متجر رقمي وتقني متكامل</small>
-          </span>
+          <span className="legacy-logo-mark">ر</span>
+          <span>رصيد</span>
         </Link>
 
         <nav className={menuOpen ? "open" : ""}>
@@ -444,7 +443,7 @@ export default function Home() {
             <Search size={19}/>
           </button>
           <button className="raseed-balance-button" onClick={() => customerQuery.data ? showToast("رصيدك الحالي: " + money(customerQuery.data.balanceCents ?? 0)) : setAuthOpen(true)} aria-label="رصيدي">
-            <span>رصيدي</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "دخول الحساب"}</strong>
+            <span>رصيد الحساب</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "تسجيل الدخول"}</strong>
           </button>
           <button className="raseed-header-settings" onClick={() => setSettingsOpen(v => !v)} aria-label="الإعدادات" title="الإعدادات"><Settings size={20}/></button>
           {settingsOpen && <div className="raseed-header-settings-popover"><strong>إعدادات رصيد</strong><button onClick={() => {setLightMode(v => !v);setSettingsOpen(false);}}>{lightMode ? <Sun size={16}/> : <Moon size={16}/>} تغيير المظهر</button></div>}
@@ -479,13 +478,11 @@ export default function Home() {
             </span>
 
             <h1>
-              شحن ألعابك وتطبيقاتك بسهولة
-              <br />
-              <strong>ألعاب • تطبيقات</strong>
+              كل ما تحتاجه، <strong>في مكان واحد</strong>
             </h1>
 
             <p>
-              جميع الألعاب والتطبيقات الرقمية في مكان واحد، مع تحديث تلقائي للمنتجات.
+              أجهزة وإكسسوارات وألعاب وشحن وخدمات الاتصالات، بتجربة راقية وسريعة.
             </p>
 
             <div className="legacy-hero-buttons">
@@ -531,21 +528,20 @@ export default function Home() {
         </section>
 
         <section className="legacy-category-row" id="category-links">
-          <button
-            className={active === "الألعاب" ? "selected" : ""}
-            onClick={() => selectCategory("الألعاب")}
-          >
-            <Gamepad2 /> الألعاب
-          </button>
-
-          <button
-            className={active === "التطبيقات" ? "selected" : ""}
-            onClick={() => selectCategory("التطبيقات")}
-          >
-            <Package /> تطبيقات البث المباشر
-          </button>
-
-        </section>
+  {([
+    {category:"الإكسسوارات",icon:<Headphones/>,title:"إكسسوارات",hint:"سماعات وكفرات وشواحن"},
+    {category:"الهواتف",icon:<Smartphone/>,title:"هواتف",hint:"أحدث الأجهزة"},
+    {category:"الألعاب",icon:<Gamepad2/>,title:"ألعاب",hint:"شحن وبطاقات ألعاب"},
+    {category:"التطبيقات",icon:<Package/>,title:"شحن تطبيقات",hint:"رصيد وعملات للتطبيقات"},
+    {category:"الخدمات والاتصالات",icon:<Wifi/>,title:"خدمات MTN وسيريتل",hint:"رصيد وباقات وخدمات"},
+    {category:"البطاقات الرقمية",icon:<CreditCard/>,title:"بطاقات رقمية",hint:"هدايا واشتراكات"},
+    {category:"خدمات رقمية",icon:<Sparkles/>,title:"خدمات رقمية",hint:"اكتشف المزيد"},
+  ] as const).filter(item => products.some(product => product.category === item.category)).map(item => (
+    <button key={item.category} className={active === item.category ? "selected" : ""} onClick={() => selectCategory(item.category)}>
+      <span className="category-card-icon">{item.icon}</span><strong>{item.title}</strong><small>{item.hint}</small>
+    </button>
+  ))}
+</section>
 
         <section className="legacy-catalog" id="catalog">
           <div className="legacy-section-head">
