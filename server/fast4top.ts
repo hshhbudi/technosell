@@ -40,7 +40,6 @@ type Fast4TopProduct = {
   description?: string | null;
   offer?: boolean;
   product_type?: string;
-  parent_id?: number;
   qty?: { min?: string; max?: string } | null;
   amount?: { min?: string; max?: string } | null;
   qty_values?:
