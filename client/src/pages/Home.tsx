@@ -419,6 +419,9 @@ export default function Home() {
         </nav>
 
         <div className="legacy-actions">
+          <button className="theme-toggle" aria-label="بحث" title="بحث" onClick={() => { document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" }); window.setTimeout(() => document.querySelector<HTMLInputElement>(".legacy-search input")?.focus(), 350); }}>
+            <Search size={19}/>
+          </button>
           <button className="raseed-balance-button" onClick={() => customerQuery.data ? showToast("رصيدك الحالي: " + money(customerQuery.data.balanceCents ?? 0)) : setAuthOpen(true)} aria-label="رصيدي">
             <span>رصيدي</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "دخول الحساب"}</strong>
           </button>
