@@ -997,3 +997,31 @@
 .legacy-catalog{background:#101625!important;border:1px solid #2a3047!important;border-radius:20px!important}.legacy-card{background:#121829!important;border-color:#2a3047!important}.legacy-card-art{background:#1b2238!important}.legacy-card-info h3{color:#f5f1e6!important}.legacy-card-bottom strong{color:var(--raseed-gold)!important}
 .legacy-card-bottom button,.legacy-manual-order,.legacy-primary{background:linear-gradient(135deg,#f2d98b,#c49a2e)!important;color:#0b0f1a!important}.legacy-footer{background:#090d17!important;color:var(--raseed-muted)!important}
 @media(max-width:760px){.legacy-header{min-height:0!important;flex-wrap:wrap!important;padding:12px!important;gap:12px!important}.legacy-logo{font-size:26px!important}.legacy-header nav{order:3!important;width:100%!important;margin:0!important;justify-content:space-around!important}.legacy-actions{order:2!important}.legacy-actions .raseed-balance-button{min-width:0!important;min-height:44px!important;padding:6px 10px!important;gap:6px!important}.raseed-balance-button span{font-size:10px!important}.raseed-balance-button strong{font-size:11px!important}.legacy-hero{min-height:0!important;margin:20px 0!important;padding:16px 4px!important}.legacy-hero h1{font-size:34px!important}.legacy-hero p{font-size:14px!important}.legacy-category-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.legacy-category-row button{min-height:150px!important;padding:16px!important}.legacy-category-row button strong{font-size:18px!important}}
+
+
+/* Restore all essential storefront actions; never hide account, wallet or settings controls */
+.legacy-header{position:relative!important;flex-wrap:wrap!important}
+.legacy-actions .theme-toggle,.legacy-actions .raseed-header-settings,.legacy-actions .legacy-menu{display:inline-flex!important;align-items:center!important;justify-content:center!important}
+.legacy-actions .raseed-wallet-topup,.legacy-actions .raseed-login-button,.legacy-actions .raseed-notifications-button{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;min-height:44px!important;padding:0 14px!important;border:1px solid #5a4a1e!important;border-radius:999px!important;background:#151b2e!important;color:#e6c875!important;font-weight:800!important;white-space:nowrap!important}
+.raseed-header-settings-popover{z-index:100!important;position:absolute!important;top:calc(100% - 4px)!important;left:18px!important;display:grid!important;gap:10px!important;padding:14px!important;border:1px solid #5a4a1e!important;border-radius:14px!important;background:#121829!important;color:#f5f1e6!important;box-shadow:0 14px 35px #0008!important}
+.raseed-header-settings-popover button{display:flex!important;align-items:center!important;gap:8px!important;color:#e6c875!important}
+.raseed-store-layout{display:grid!important;grid-template-columns:minmax(0,1fr) 245px!important;gap:20px!important;direction:ltr!important}
+.raseed-main-column,.raseed-right-sidebar{direction:rtl!important}
+.raseed-right-sidebar{display:flex!important;position:sticky!important;top:16px!important;align-self:start!important;flex-direction:column!important;gap:12px!important;padding:14px!important;border:1px solid #2a3047!important;border-radius:20px!important;background:#101625!important}
+.raseed-wallet-card{display:flex!important;flex-direction:column!important;gap:12px!important;padding:18px!important;border:1px solid #5a4a1e!important;border-radius:16px!important;background:#151b2e!important;color:#f5f1e6!important}
+.raseed-wallet-card>strong{color:#e6c875!important;font-size:23px!important}
+.raseed-wallet-card button{min-height:42px!important;border-radius:999px!important;background:linear-gradient(135deg,#f2d98b,#c49a2e)!important;color:#0b0f1a!important;font-weight:900!important}
+.raseed-wallet-card .raseed-login-sidebar{border:1px solid #5a4a1e!important;background:transparent!important;color:#e6c875!important}
+.raseed-sidebar-settings,.raseed-sidebar-theme{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;min-height:48px!important;padding:0 14px!important;border:1px solid #2a3047!important;border-radius:13px!important;background:#151b2e!important;color:#e6c875!important}
+.raseed-sidebar-settings-panel{display:grid!important;gap:8px!important;padding:10px!important;background:#121829!important;border-radius:12px!important}
+.raseed-sidebar-settings-panel button{display:flex!important;align-items:center!important;gap:8px!important;color:#e6c875!important}
+.raseed-sidebar-brand,.raseed-sidebar-benefits{display:grid!important;gap:8px!important;color:#e6c875!important}
+@media(max-width:760px){
+ .raseed-store-layout{display:flex!important;flex-direction:column!important;gap:10px!important}
+ .raseed-right-sidebar{display:grid!important;position:static!important;order:-1!important;width:100%!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .raseed-wallet-card{grid-column:1/-1!important}
+ .legacy-actions{width:100%!important;display:flex!important;flex-wrap:wrap!important;justify-content:center!important;gap:6px!important}
+ .legacy-actions .raseed-balance-button{flex:1 1 100%!important;min-width:100%!important}
+ .legacy-actions .raseed-wallet-topup,.legacy-actions .raseed-login-button,.legacy-actions .raseed-notifications-button,.legacy-actions .raseed-header-settings,.legacy-actions .theme-toggle,.legacy-actions .legacy-menu{min-width:42px!important;min-height:40px!important;padding:0 9px!important;font-size:11px!important}
+ .legacy-header nav{order:5!important}
+}
