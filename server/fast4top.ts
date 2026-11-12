@@ -11,7 +11,6 @@ type Fast4TopProduct = {
   product_name?: string;
   category_name?: string;
   category?: string;
-  category_img?: unknown;
   currency?: string;
   category_type?: string;
   category_id?: number | string;
