@@ -40,6 +40,12 @@ type StoreProduct = {
     | "الإكسسوارات"
     | "الخدمات والاتصالات"
     | "البطاقات الرقمية"
+    | "العملات الرقمية"
+    | "تفعيل الأرقام"
+    | "السوشيال ميديا"
+    | "الخدمات السورية"
+    | "مزودات الإنترنت"
+    | "التصميم"
     | "خدمات رقمية";
   subcategory: string;
   delivery: "id" | "code";
@@ -602,6 +608,12 @@ export default function Home() {
     {category:"التطبيقات",icon:<Package/>,title:"شحن تطبيقات",hint:"رصيد وعملات للتطبيقات"},
     {category:"الخدمات والاتصالات",icon:<Wifi/>,title:"خدمات MTN وسيريتل",hint:"رصيد وباقات وخدمات"},
     {category:"البطاقات الرقمية",icon:<CreditCard/>,title:"بطاقات رقمية",hint:"هدايا واشتراكات"},
+    {category:"العملات الرقمية",icon:<CreditCard/>,title:"عملات رقمية",hint:"خدمات العملات"},
+    {category:"تفعيل الأرقام",icon:<Smartphone/>,title:"تفعيل الأرقام",hint:"أرقام وخدمات تفعيل"},
+    {category:"السوشيال ميديا",icon:<Sparkles/>,title:"السوشيال ميديا",hint:"خدمات المنصات"},
+    {category:"الخدمات السورية",icon:<Wifi/>,title:"الخدمات السورية",hint:"خدمات محلية"},
+    {category:"مزودات الإنترنت",icon:<Wifi/>,title:"مزودات الإنترنت",hint:"باقات الإنترنت"},
+    {category:"التصميم",icon:<Sparkles/>,title:"التصميم",hint:"خدمات التصميم"},
     {category:"خدمات رقمية",icon:<Sparkles/>,title:"خدمات رقمية",hint:"اكتشف المزيد"},
   ] as const).map(item => (
     <button key={item.category} className={active === item.category ? "selected" : ""} onClick={() => selectCategory(item.category)}>
