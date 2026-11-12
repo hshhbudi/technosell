@@ -498,7 +498,7 @@ export async function readDigitalCatalog() {
 export async function syncFast4TopCatalog(section?: string) {
   const allProducts = await readDigitalCatalog();
   const products = section && section !== "all"
-    ? allProducts.filter((product) => detectStoreSection(product) === section)
+    ? allProducts.filter((product) => product.storeSection === section)
     : allProducts;
 
   const syncResult = await syncSupplierProducts(products);
