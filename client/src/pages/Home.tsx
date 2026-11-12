@@ -535,6 +535,7 @@ export default function Home() {
 
         <section className="legacy-category-row" id="category-links">
   {([
+    {category:"المنتجات",icon:<Package/>,title:"منتجات",hint:"منتجات المتجر"},
     {category:"الإكسسوارات",icon:<Headphones/>,title:"إكسسوارات",hint:"سماعات وكفرات وشواحن"},
     {category:"الهواتف",icon:<Smartphone/>,title:"هواتف",hint:"أحدث الأجهزة"},
     {category:"الألعاب",icon:<Gamepad2/>,title:"ألعاب",hint:"شحن وبطاقات ألعاب"},
@@ -542,7 +543,7 @@ export default function Home() {
     {category:"الخدمات والاتصالات",icon:<Wifi/>,title:"خدمات MTN وسيريتل",hint:"رصيد وباقات وخدمات"},
     {category:"البطاقات الرقمية",icon:<CreditCard/>,title:"بطاقات رقمية",hint:"هدايا واشتراكات"},
     {category:"خدمات رقمية",icon:<Sparkles/>,title:"خدمات رقمية",hint:"اكتشف المزيد"},
-  ] as const).filter(item => products.some(product => product.category === item.category)).map(item => (
+  ] as const).map(item => (
     <button key={item.category} className={active === item.category ? "selected" : ""} onClick={() => selectCategory(item.category)}>
       <span className="category-card-icon">{item.icon}</span><strong>{item.title}</strong><small>{item.hint}</small>
     </button>
