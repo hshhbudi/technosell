@@ -1032,3 +1032,42 @@
 
 .legacy-actions .raseed-register-button{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:44px!important;padding:0 14px!important;border:1px solid #e6c875!important;border-radius:999px!important;background:transparent!important;color:#e6c875!important;font-weight:900!important;white-space:nowrap!important}
 @media(max-width:760px){.legacy-actions .raseed-register-button{min-height:40px!important;padding:0 9px!important;font-size:11px!important}}
+
+
+/* Owner dashboard readability: enforce high-contrast text and form controls */
+.admin-shell{color:#17243b}
+.admin-shell .admin-topbar,
+.admin-shell .panel,
+.admin-shell .stat-card,
+.admin-shell .admin-notifications,
+.admin-shell .product-modal,
+.admin-shell .category-edit-modal{color:#17243b}
+.admin-shell .admin-topbar .back-link,
+.admin-shell .admin-phone,
+.admin-shell .panel,
+.admin-shell .panel p,
+.admin-shell .panel span,
+.admin-shell .stat-card>span,
+.admin-shell .stat-card small,
+.admin-shell .panel-head span{color:#263852}
+.admin-shell .admin-section-tabs button{color:#263852}
+.admin-shell .admin-section-tabs button b{color:inherit}
+.admin-shell .admin-section-tabs button small{color:#536780}
+.admin-shell .admin-section-tabs button.active,
+.admin-shell .admin-section-tabs button.active b{color:#fff}
+.admin-shell .admin-section-tabs button.active small{color:#e4f2ff}
+.admin-shell input,
+.admin-shell select,
+.admin-shell textarea{background:#fff!important;color:#17243b!important;border:1px solid #b9c9dc!important}
+.admin-shell input::placeholder,
+.admin-shell textarea::placeholder{color:#718198!important;opacity:1}
+.admin-shell label{color:#263852!important}
+.admin-shell .text-btn{color:#087b91}
+.admin-shell .secondary-btn{background:#edf4fa;color:#17345b;border:1px solid #b9cadd}
+.admin-shell .admin-heading .secondary-btn{background:#ffffff18;color:#fff;border-color:#ffffff65}
+.admin-shell .order-toolbar input,
+.admin-shell .order-toolbar select{color:#17243b}
+.admin-shell .supplier-category-control,
+.admin-shell .supplier-category-controls{color:#20345e}
+.admin-shell .supplier-category-control strong,
+.admin-shell .supplier-category-controls h3{color:#172f53}
