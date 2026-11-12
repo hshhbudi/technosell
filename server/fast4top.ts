@@ -284,10 +284,10 @@ function normalizeProducts(products: Fast4TopProduct[]) {
   return [...unique.values()].filter((product) => detectSection(product) !== null).map((product) => {
     const qtyValues = product.qty_values;
 
-    const quantity = product.qty || product.amount ||
-      (Array.isArray(qtyValues)
-        ? { min: String(qtyValues[0] ?? 1), max: String(qtyValues[qtyValues.length - 1] ?? 1) }
-        : qtyValues && typeof qtyValues === "object"
+    const quantity = Array.isArray(qtyValues)
+      ? { min: String(qtyValues[0] ?? 1), max: String(qtyValues[qtyValues.length - 1] ?? 1) }
+      : product.qty || product.amount ||
+        (qtyValues && typeof qtyValues === "object"
           ? { min: String(qtyValues.min ?? 1), max: String(qtyValues.max ?? 1) }
           : null);
     // Keep only supplier-provided discrete quantities or the exact supplier range.
