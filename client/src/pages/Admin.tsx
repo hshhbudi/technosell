@@ -65,7 +65,7 @@ export default function Admin() {
   const utils = trpc.useUtils();
   const syncSupplier = trpc.supplier.sync.useMutation({
     onSuccess: async (result) => {
-      setNotice(`اكتملت مزامنة Fast4Top: ${result.inserted ?? 0} جديد، ${result.updated ?? 0} محدّث`);
+      setNotice(`اكتملت مزامنة كتالوج Fast4Top بالكامل: ${result.total ?? 0} من المورد، ${result.inserted ?? 0} جديد، ${result.updated ?? 0} محدّث، ${result.skipped ?? 0} تم تخطيه`);
       await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
     },
     onError: (err) => setError(err.message || "تعذرت مزامنة كتالوج Fast4Top"),
@@ -168,14 +168,17 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
     </div>
     <div className="admin-heading-actions">
       <span className="status-pill cyan">{supplierAdminCatalogQuery.isLoading ? "جاري التحميل" : `${supplierProducts.length} منتج · ${supplierCategories.length} قسم`}</span>
-      <button className="secondary-btn" onClick={() => syncSupplier.mutate({section:supplierSyncSection})} disabled={syncSupplier.isPending}>
+      <button className="secondary-btn" onClick={() => syncSupplier.mutate({section:"all"})} disabled={syncSupplier.isPending}>
         <RefreshCw size={15}/> {syncSupplier.isPending ? "جارٍ التحديث..." : "مزامنة الآن"}
       </button>
     </div>
   </div>
-  {supplierProducts.length === 0 ? (
+  {supplierAdminCatalogQuery.isError ? (
+    <div className="form-error">تعذر تحميل منتجات Fast4Top من قاعدة البيانات: {supplierAdminCatalogQuery.error.message}</div>
+  ) : supplierProducts.length === 0 ? (
     <div className="manager-note">
-      <Clock3 size={17}/> تتم مزامنة الكتالوج تلقائيًا عند تشغيل المتجر. إذا لم يظهر شيء، تحقق من اتصال Fast4Top.
+      <Clock3 size={17}/> لا توجد منتجات محفوظة في قاعدة البيانات حتى الآن. اضغط «مزامنة الآن» لجلب كتالوج Fast4Top كاملًا، وليس قسمًا واحدًا فقط.
+      <button className="primary-btn" onClick={() => syncSupplier.mutate({section:"all"})} disabled={syncSupplier.isPending}><RefreshCw size={15}/> {syncSupplier.isPending ? "جارٍ جلب كل المنتجات..." : "جلب كل منتجات Fast4Top"}</button>
     </div>
   ) : (
     <>
@@ -189,7 +192,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
           <small>{item.count} منتج · {item.selected} مختار</small>
         </button>
         <div className="supplier-folder-actions">
-          <button className="secondary-btn" onClick={()=>syncSupplier.mutate({section:item.section})} disabled={syncSupplier.isPending}><RefreshCw size={13}/> مزامنة</button>
+          <button className="secondary-btn" onClick={()=>syncSupplier.mutate({section:"all"})} disabled={syncSupplier.isPending}><RefreshCw size={13}/> مزامنة</button>
           <button className="text-btn" onClick={()=>setCategoryEdit({sourceName:`__section__${item.section}`,displayName:item.section,imageUrl:folderImage||""})}>صورة المجلد</button>
           <label className="supplier-section-picker">نقل كل المنتجات إلى
             <select value="" onChange={e=>{const target=e.target.value;if(target)moveSupplierFolder.mutate({fromSection:item.section,toSection:target as (typeof supplierFolders)[number]});}} disabled={moveSupplierFolder.isPending || item.count===0}>
@@ -246,7 +249,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
     </div>
   </div>
   <div className="supplier-sync-tabs" role="group" aria-label="تقسيم كتالوج الألعاب والتطبيقات وخدمات الشحن">
-        {(["الألعاب","التطبيقات","all","الخدمات والاتصالات","البطاقات الرقمية","خدمات رقمية"] as const).map(section=><button key={section} className={supplierSyncSection===section?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection(section);setSupplierView("all");syncSupplier.mutate({section});}}>
+        {(["الألعاب","التطبيقات","all","الخدمات والاتصالات","البطاقات الرقمية","خدمات رقمية"] as const).map(section=><button key={section} className={supplierSyncSection===section?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection(section);setSupplierView("all");syncSupplier.mutate({section:"all"});}}>
           {section==="الألعاب"?"الألعاب + خدمات شحنها":section==="التطبيقات"?"التطبيقات + خدمات شحنها":section==="all"?"كل كتالوج Fast4Top":"مزامنة "+section}
         </button>)}
       </div>
