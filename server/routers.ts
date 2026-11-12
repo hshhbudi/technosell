@@ -493,16 +493,29 @@ export const appRouter = router({
 
         const baseQuantity = Number(product.quantity ?? 1);
         const quantity = input.quantity ?? baseQuantity;
+        const supplierQuantityValues = product.quantityValues;
+        const allowedValues = Array.isArray(supplierQuantityValues)
+          ? supplierQuantityValues.map(Number).filter(value => Number.isSafeInteger(value) && value > 0)
+          : null;
+        const quantityRange = supplierQuantityValues && !Array.isArray(supplierQuantityValues)
+          ? supplierQuantityValues as { min?: number; max?: number }
+          : null;
 
         if (
           !Number.isSafeInteger(baseQuantity) ||
           baseQuantity <= 0 ||
           !Number.isSafeInteger(quantity) ||
-          quantity <= 0
+          quantity <= 0 ||
+          (allowedValues && allowedValues.length > 0 && !allowedValues.includes(quantity)) ||
+          (quantityRange && (
+            quantity < Number(quantityRange.min ?? baseQuantity) ||
+            quantity > Number(quantityRange.max ?? baseQuantity)
+          )) ||
+          (!allowedValues?.length && !quantityRange && quantity !== baseQuantity)
         ) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "كمية المنتج غير صالحة",
+            message: "الكمية المطلوبة غير موجودة ضمن كميات Fast4Top المتاحة",
           });
         }
 
