@@ -24,6 +24,7 @@ listProducts,
   listAllSupplierProducts,
   setSupplierProductApproval,
   setSupplierProductStoreSection,
+  setSupplierProductImage,
   setSupplierProductEnabled,
   setSupplierCategoryEnabled,
   listSupplierCategoryOverrides,
@@ -659,6 +660,22 @@ sync: adminProcedure.mutation(async () => {
     setStoreSection: adminProcedure
       .input(z.object({ id: z.number().int().positive(), storeSection: z.enum(["الألعاب", "التطبيقات"]) }))
       .mutation(async ({ input }) => setSupplierProductStoreSection(input.id, input.storeSection)),
+    setImage: adminProcedure
+      .input(z.object({
+        id: z.number().int().positive(),
+        imageData: z.string().max(2_000_000),
+      }))
+      .mutation(async ({ input }) => {
+        const match = input.imageData.match(/^data:(image\/(?:png|jpe?g|webp));base64,([A-Za-z0-9+/=]+)$/);
+        if (!match) throw new TRPCError({ code: "BAD_REQUEST", message: "صيغة الصورة غير مدعومة. استخدم PNG أو JPG أو WEBP." });
+        const uploaded = await storagePut(
+          `supplier-products/product-${input.id}-${Date.now()}-${randomUUID()}`,
+          Buffer.from(match[2], "base64"),
+          match[1]
+        );
+        await setSupplierProductImage(input.id, uploaded.url);
+        return { success: true, imageUrl: uploaded.url };
+      }),
     setApproval: adminProcedure
       .input(z.object({ id: z.number().int().positive(), approved: z.boolean() }))
       .mutation(async ({ input }) => {
