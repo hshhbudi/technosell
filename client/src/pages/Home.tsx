@@ -5,6 +5,8 @@ import {
   Gamepad2,
   Headphones,
   CreditCard,
+  Bell,
+  UserRound,
   Wifi,
   Home as HomeIcon,
   Menu,
@@ -442,9 +444,12 @@ export default function Home() {
           <button className="theme-toggle" aria-label="بحث" title="بحث" onClick={() => { document.getElementById("catalog")?.scrollIntoView({ behavior: "smooth" }); window.setTimeout(() => document.querySelector<HTMLInputElement>(".legacy-search input")?.focus(), 350); }}>
             <Search size={19}/>
           </button>
-          <button className="raseed-balance-button" onClick={() => customerQuery.data ? showToast("رصيدك الحالي: " + money(customerQuery.data.balanceCents ?? 0)) : setAuthOpen(true)} aria-label="رصيدي">
+          <button className="raseed-balance-button" onClick={() => setAuthOpen(true)} aria-label="رصيدي">
             <span>رصيد الحساب</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "تسجيل الدخول"}</strong>
           </button>
+          <button className="raseed-wallet-topup" onClick={() => setAuthOpen(true)}><CreditCard size={17}/> تعبئة الرصيد</button>
+          <button className="raseed-login-button" onClick={() => setAuthOpen(true)}><UserRound size={17}/> {customerQuery.data ? "حسابي" : "تسجيل الدخول"}</button>
+          <button className="raseed-notifications-button" onClick={() => setAuthOpen(true)} aria-label="الإشعارات" title="الإشعارات"><Bell size={19}/></button>
           <button className="raseed-header-settings" onClick={() => setSettingsOpen(v => !v)} aria-label="الإعدادات" title="الإعدادات"><Settings size={20}/></button>
           {settingsOpen && <div className="raseed-header-settings-popover"><strong>إعدادات رصيد</strong><button onClick={() => {setLightMode(v => !v);setSettingsOpen(false);}}>{lightMode ? <Sun size={16}/> : <Moon size={16}/>} تغيير المظهر</button></div>}
           <button
@@ -645,7 +650,7 @@ export default function Home() {
             </div>
           )}
         </section></div><aside className="raseed-right-sidebar">
-        <div className="raseed-wallet-card"><span>رصيد حسابك</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "سجّل دخولك"}</strong><button onClick={() => customerQuery.data ? showToast("رصيدك الحالي: " + money(customerQuery.data.balanceCents ?? 0)) : setAuthOpen(true)}>＋ شحن الرصيد</button></div>
+        <div className="raseed-wallet-card"><span>رصيد حسابك</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "سجّل دخولك"}</strong><button onClick={() => setAuthOpen(true)}>＋ تعبئة الرصيد</button><button className="raseed-login-sidebar" onClick={() => setAuthOpen(true)}>{customerQuery.data ? "حسابي والطلبات" : "تسجيل الدخول / إنشاء حساب"}</button></div>
         <button className="raseed-sidebar-settings" onClick={() => setSettingsOpen(v => !v)}><Settings size={22}/> الإعدادات <ChevronLeft size={17}/></button>
         {settingsOpen && <div className="raseed-sidebar-settings-panel"><button onClick={() => {setLightMode(v => !v);setSettingsOpen(false);}}>{lightMode ? <Sun size={16}/> : <Moon size={16}/>} تغيير المظهر</button><button onClick={() => {setAuthOpen(true);setSettingsOpen(false);}}>حسابي</button></div>}
         <button className="raseed-sidebar-theme" onClick={() => setLightMode(v => !v)}>{lightMode ? <Sun/> : <Moon/>} المظهر</button>
