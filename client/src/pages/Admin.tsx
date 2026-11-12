@@ -194,7 +194,12 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
           })}
         </div>
       </div>
-      <div className="supplier-sync-tabs" role="group" aria-label="مزامنة أقسام Fast4Top">{(["all","التطبيقات","الألعاب","الخدمات والاتصالات","البطاقات الرقمية","خدمات رقمية"] as const).map(section=><button key={section} className={supplierSyncSection===section?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection(section);setSupplierView("all");syncSupplier.mutate({section});}}>{section==="all"?"كل Fast4Top":"مزامنة "+section}</button>)}</div>
+      <div className="supplier-sync-tabs" role="group" aria-label="تقسيم كتالوج الألعاب والتطبيقات وخدمات الشحن">
+        {(["الألعاب","التطبيقات","all","الخدمات والاتصالات","البطاقات الرقمية","خدمات رقمية"] as const).map(section=><button key={section} className={supplierSyncSection===section?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection(section);setSupplierView("all");syncSupplier.mutate({section});}}>
+          {section==="الألعاب"?"الألعاب + خدمات شحنها":section==="التطبيقات"?"التطبيقات + خدمات شحنها":section==="all"?"كل كتالوج Fast4Top":"مزامنة "+section}
+        </button>)}
+      </div>
+      <p className="manager-note">{supplierSyncSection==="الألعاب"?"هنا تظهر الألعاب وباقاتها وخيارات شحنها التابعة لها، مثل PUBG وفري فاير، حسب المنتجات التي يوفرها Fast4Top.":supplierSyncSection==="التطبيقات"?"هنا تظهر التطبيقات وخدمات شحنها التابعة لها، مثل TikTok وLikee وKwai وBigo، حسب المنتجات التي يوفرها Fast4Top.":"اختر مجموعة الألعاب أو التطبيقات لعرض منتجاتها وخدمات شحنها معًا، أو اعرض كتالوج Fast4Top كاملًا."}</p>
        <div className="admin-heading-actions" style={{marginBottom:16}}>
         <button className={supplierView==="all" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("all")}>كل كتالوج Fast4Top ({supplierProducts.length})</button>
         <button className={supplierView==="selected" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("selected")}>المنتجات المختارة للمتجر ({supplierProducts.filter(p=>p.ownerSelected).length})</button>
