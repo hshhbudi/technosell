@@ -77,6 +77,15 @@ export default function Admin() {
     },
     onError: (err) => setError(err.message || "تعذر تغيير قسم المنتج"),
   });
+  const moveSupplierFolder = trpc.supplier.moveFolderProducts.useMutation({
+    onSuccess: async (result) => {
+      setNotice(`تم نقل ${result.moved} منتج من «${result.fromSection}» إلى «${result.toSection}»`);
+      setSupplierSyncSection(result.toSection);
+      setSupplierView("all");
+      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
+    },
+    onError: (err) => setError(err.message || "تعذر نقل منتجات المجلد"),
+  });
   const setSupplierImage = trpc.supplier.setImage.useMutation({
     onSuccess: async () => {
       setNotice("تم حفظ صورة المنتج");
@@ -182,6 +191,12 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
         <div className="supplier-folder-actions">
           <button className="secondary-btn" onClick={()=>syncSupplier.mutate({section:item.section})} disabled={syncSupplier.isPending}><RefreshCw size={13}/> مزامنة</button>
           <button className="text-btn" onClick={()=>setCategoryEdit({sourceName:`__section__${item.section}`,displayName:item.section,imageUrl:folderImage||""})}>صورة المجلد</button>
+          <label className="supplier-section-picker">نقل كل المنتجات إلى
+            <select value="" onChange={e=>{const target=e.target.value;if(target)moveSupplierFolder.mutate({fromSection:item.section,toSection:target as (typeof supplierFolders)[number]});}} disabled={moveSupplierFolder.isPending || item.count===0}>
+              <option value="">اختر القسم</option>
+              {supplierFolders.filter(section=>section!==item.section).map(section=><option key={section} value={section}>{section}</option>)}
+            </select>
+          </label>
         </div>
       </article>;
     })}
