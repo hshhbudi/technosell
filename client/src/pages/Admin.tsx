@@ -128,6 +128,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   const productTerm = productSearch.trim().toLocaleLowerCase("ar");
   const matchesProductSearch = (name:string, category:string, extra="") => !productTerm || `${name} ${category} ${extra}`.toLocaleLowerCase("ar").includes(productTerm);
   const sortedSupplierProducts = supplierProducts.filter(p=>(supplierSyncSection==="all" || (p.storeSection || "خدمات رقمية")===supplierSyncSection) && (supplierView==="all" || (supplierView==="selected" ? p.ownerSelected : !p.ownerSelected)) && matchesProductSearch(p.name,p.category ?? "",p.subcategory ?? "")).slice().sort((left,right)=>{if(productSort==="name-asc")return left.name.localeCompare(right.name,"ar");if(productSort==="name-desc")return right.name.localeCompare(left.name,"ar");if(productSort==="price-asc")return left.sellingPriceCents-right.sellingPriceCents;if(productSort==="price-desc")return right.sellingPriceCents-left.sellingPriceCents;return 0;});
+  const smartCounts = ["الألعاب","التطبيقات","الخدمات والاتصالات","البطاقات الرقمية","خدمات رقمية"].map(section=>({section,count:supplierProducts.filter(p=>(p.storeSection||"خدمات رقمية")===section).length,selected:supplierProducts.filter(p=>(p.storeSection||"خدمات رقمية")===section&&p.ownerSelected).length}));
   const categoryOverrides = categoryOverridesQuery.data ?? [];
   const orders=ordersQuery.data??[];
   const visibleProducts=products.filter(p=>matchesProductSearch(p.name,p.category,p.description ?? "")).filter(p=>activeSection==="games"?isGameProduct(p.category,p.name,""):activeSection==="apps"?p.category.includes("تطبيقات"):activeSection==="offers"?Boolean(p.tag||p.oldPrice):activeSection==="products"?["الهواتف","الإكسسوارات","المنتجات"].includes(p.category):true).slice().sort((left,right)=>{if(productSort==="name-asc")return left.name.localeCompare(right.name,"ar");if(productSort==="name-desc")return right.name.localeCompare(left.name,"ar");const lp=Number(left.priceUsdCents??left.price??0),rp=Number(right.priceUsdCents??right.price??0);if(productSort==="price-asc")return lp-rp;if(productSort==="price-desc")return rp-lp;return 0;});
@@ -194,7 +195,24 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
           })}
         </div>
       </div>
-      <div className="supplier-sync-tabs" role="group" aria-label="تقسيم كتالوج الألعاب والتطبيقات وخدمات الشحن">
+      <div className="panel" style={{marginBottom:18,border:"1px solid var(--border-color, #ddd)"}}>
+    <div className="panel-head">
+      <div><h2>المساعد الذكي لإدارة المتجر</h2><span>يراجع تصنيف كتالوج Fast4Top ويعرض لك المنتجات حسب مجموعتها</span></div>
+      <span className="status-pill cyan">مساعد التصنيف</span>
+    </div>
+    <p className="manager-note">التصنيف يعتمد على أسماء المنتجات وبيانات المورد، ولا ينشئ منتجات أو كميات من عنده. المنتجات الجديدة تبقى غير معروضة للزبائن حتى تختارها أنت.</p>
+    <div className="supplier-sync-tabs">
+      {smartCounts.map(item=><button key={item.section} className={supplierSyncSection===item.section?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection(item.section as typeof supplierSyncSection);setSupplierView("all");}}>
+        {item.section} · {item.count} منتج · {item.selected} مختار
+      </button>)}
+    </div>
+    <div className="admin-heading-actions">
+      <button className="primary-btn" onClick={()=>syncSupplier.mutate({section:"all"})} disabled={syncSupplier.isPending}><RefreshCw size={15}/> تحديث تصنيف ومزامنة الكتالوج كاملًا</button>
+      <button className="secondary-btn" onClick={()=>{setSupplierSyncSection("الألعاب");setSupplierView("all");}}>مراجعة الألعاب وشحنها</button>
+      <button className="secondary-btn" onClick={()=>{setSupplierSyncSection("التطبيقات");setSupplierView("all");}}>مراجعة التطبيقات وشحنها</button>
+    </div>
+  </div>
+  <div className="supplier-sync-tabs" role="group" aria-label="تقسيم كتالوج الألعاب والتطبيقات وخدمات الشحن">
         {(["الألعاب","التطبيقات","all","الخدمات والاتصالات","البطاقات الرقمية","خدمات رقمية"] as const).map(section=><button key={section} className={supplierSyncSection===section?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection(section);setSupplierView("all");syncSupplier.mutate({section});}}>
           {section==="الألعاب"?"الألعاب + خدمات شحنها":section==="التطبيقات"?"التطبيقات + خدمات شحنها":section==="all"?"كل كتالوج Fast4Top":"مزامنة "+section}
         </button>)}
