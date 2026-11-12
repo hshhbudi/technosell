@@ -24,6 +24,7 @@ listProducts,
   listAllSupplierProducts,
   setSupplierProductApproval,
   setSupplierProductStoreSection,
+  moveSupplierFolderProducts,
   setSupplierProductImage,
   setSupplierProductEnabled,
   setSupplierProductSelection,
@@ -676,6 +677,12 @@ sync: adminProcedure.input(z.object({
     setStoreSection: adminProcedure
       .input(z.object({ id: z.number().int().positive(), storeSection: z.enum(["الألعاب", "التطبيقات", "الخدمات والاتصالات", "البطاقات الرقمية", "العملات الرقمية", "تفعيل الأرقام", "السوشيال ميديا", "الخدمات السورية", "مزودات الإنترنت", "التصميم", "خدمات رقمية"]) }))
       .mutation(async ({ input }) => setSupplierProductStoreSection(input.id, input.storeSection)),
+    moveFolderProducts: adminProcedure
+      .input(z.object({
+        fromSection: z.enum(["الألعاب", "التطبيقات", "البطاقات الرقمية", "العملات الرقمية", "تفعيل الأرقام", "السوشيال ميديا", "الخدمات السورية", "الخدمات والاتصالات", "مزودات الإنترنت", "التصميم", "خدمات رقمية"]),
+        toSection: z.enum(["الألعاب", "التطبيقات", "البطاقات الرقمية", "العملات الرقمية", "تفعيل الأرقام", "السوشيال ميديا", "الخدمات السورية", "الخدمات والاتصالات", "مزودات الإنترنت", "التصميم", "خدمات رقمية"]),
+      }))
+      .mutation(async ({ input }) => moveSupplierFolderProducts(input.fromSection, input.toSection)),
     setImage: adminProcedure
       .input(z.object({
         id: z.number().int().positive(),
