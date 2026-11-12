@@ -284,20 +284,18 @@ function normalizeProducts(products: Fast4TopProduct[]) {
   return [...unique.values()].filter((product) => detectSection(product) !== null).map((product) => {
     const qtyValues = product.qty_values;
 
-    const quantity =
-      product.qty ||
-      product.amount ||
+    const quantity = product.qty || product.amount ||
       (Array.isArray(qtyValues)
-        ? {
-            min: String(qtyValues[0] ?? 1),
-            max: String(qtyValues[qtyValues.length - 1] ?? 1),
-          }
-        : qtyValues
-          ? {
-              min: String(qtyValues.min ?? 1),
-              max: String(qtyValues.max ?? 1),
-            }
+        ? { min: String(qtyValues[0] ?? 1), max: String(qtyValues[qtyValues.length - 1] ?? 1) }
+        : qtyValues && typeof qtyValues === "object"
+          ? { min: String(qtyValues.min ?? 1), max: String(qtyValues.max ?? 1) }
           : null);
+    // Keep only supplier-provided discrete quantities or the exact supplier range.
+    const supplierQuantityOptions = Array.isArray(qtyValues)
+      ? qtyValues.map(value => Number(value)).filter(value => Number.isSafeInteger(value) && value > 0)
+      : quantity
+        ? { min: Math.max(1, Number(quantity.min || 1) || 1), max: Math.max(1, Number(quantity.max || quantity.min || 1) || 1) }
+        : null;
 
     const minimumQuantity = Math.max(
       1,
@@ -351,9 +349,7 @@ function normalizeProducts(products: Fast4TopProduct[]) {
         "منتج رقمي من Fast4Top",
 
       quantity: minimumQuantity,
-      quantityValues: Array.isArray(qtyValues)
-        ? qtyValues
-        : null,
+      quantityValues: supplierQuantityOptions,
       requires,
       productType: product.product_type || "package",
     };
