@@ -15,12 +15,20 @@ type Fast4TopProduct = {
   product_currency_price?: string;
   available?: boolean;
   visible?: number;
-  photo?: string | null;
-  image?: string | null;
-  image_url?: string | null;
-  icon?: string | null;
-  logo?: string | null;
-  category_img?: string | null;
+  photo?: unknown;
+  image?: unknown;
+  image_url?: unknown;
+  product_image?: unknown;
+  productImage?: unknown;
+  product_img?: unknown;
+  thumbnail?: unknown;
+  picture?: unknown;
+  img?: unknown;
+  images?: unknown;
+  icon?: unknown;
+  icon_url?: unknown;
+  logo?: unknown;
+  category_img?: unknown;
   description?: string | null;
   offer?: boolean;
   product_type?: string;
@@ -203,16 +211,57 @@ function detectSection(
     product.product_type,
   ].filter(Boolean).join(" ").toLowerCase();
 
-  // تطبيقات البث المباشر فقط؛ نستبعد الاتصالات والخدمات والتطبيقات الأخرى.
-  if (/(haya|kwai|likee|bigo|tiktok|تيك\s*توك|poppo|mico|chamet|yalla\s*live|buzzcast|liveme|live\s*me|nonolive|uplive|شحن\s*بث|بث\s*مباشر|live\s*stream)/i.test(value)) {
+  // Use explicit supplier type/category labels first, then known Fast4Top catalog brands.
+  if ((/\b(app|apps|application|applications|live app|social app)\b|قسم التطبيقات|تطبيقات/i.test(value))) {
     return "التطبيقات";
   }
-
-  // الألعاب فقط، سواء ورد اسم اللعبة أو تصنيف الألعاب من المورد.
-  if (/(game|games|gaming|ألعاب|العاب|pubg|ببجي|free\s*fire|freefire|فري\s*فاير|call\s*of\s*duty|كول\s*اوف\s*ديوتي|mobile\s*legends|mlbb|roblox|minecraft|clash\s*of\s*clans|efootball|فيفا|fortnite|steam|playstation|xbox|valorant|genshin|موبايل\s*ليجند)/i.test(value)) {
+  if ((/\b(game|games|gaming)\b|قسم الألعاب|قسم الالعاب|ألعاب|العاب/i.test(value))) {
     return "الألعاب";
   }
 
+  // Fast4Top social/live application catalog (including brands shown in its Apps section).
+  if (/(haya|kwai|likee|bigo|tiktok|تيك\s*توك|poppo|mico|chamet|yalla\s*live|yalla\s*ludo|buzzcast|liveme|live\s*me|nonolive|uplive|soul\s*chill|mey[o]?\s*live|mey[o]?\s*chat|tumile|4fun|talk\s*talk|bo?bo\s*chat|yoho\s*waka|yoyo\s*chat|haki\s*chat|azal\s*live|lami\s*chat|lama\s*chat|falla\s*chat|migo\s*live|hawa\s*chat|beela\s*chat|mr.?7ba|light\s*chat|party\s*star|ligo\s*live|binmo\s*chat|hlah\s*chat|hayyakom|dream\s*chat|super\s*live|fancy\s*live|kiyo\s*chat|imo\s*chat|honey\s*jar|sky\s*chat|soyo\s*chat|livu|xena\s*live|ayome\s*chat|lit\s*chat|tango\s*live|yaahlan|momo\s*live|hicat\s*chat|yooy\s*chat|hallame|sugo|tami\s*chat|سول\s*تشيل|هاي\s*شات|كواي|لايكي|بيجو)/i.test(value)) {
+    return "التطبيقات";
+  }
+
+  // Fast4Top games catalog.
+  if (/(pubg|ببجي|free\s*fire|freefire|فري\s*فاير|call\s*of\s*duty|كول\s*اوف\s*ديوتي|mobile\s*legends|mlbb|roblox|minecraft|clash\s*of\s*clans|clash\s*royale|8\s*ball\s*pool|8ball|jawaker|جواكر|fifa\s*mobile|efootball|فيفا|fortnite|steam|playstation|xbox|valorant|genshin|whiteout\s*survival|football\s*rising|ludo\s*world|rise\s*of\s*the\s*kings|wepla|undawn|stumble\s*guys|last\s*war|brawl\s*stars|yalla\s*ludo|موبايل\s*ليجند)/i.test(value)) {
+    return "الألعاب";
+  }
+
+  return null;
+}
+
+function imageCandidate(value: unknown): string | null {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = imageCandidate(item);
+      if (found) return found;
+    }
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    for (const key of ["url", "src", "path", "image_url", "image", "original", "thumbnail"]) {
+      const found = imageCandidate(record[key]);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function resolveProductImage(product: Fast4TopProduct): string | null {
+  const record = product as Record<string, unknown>;
+  for (const key of [
+    "image", "image_url", "photo", "product_image", "productImage",
+    "product_img", "thumbnail", "picture", "img", "images",
+    "icon", "icon_url", "logo", "category_img",
+  ]) {
+    const candidate = imageCandidate(record[key]);
+    if (!candidate) continue;
+    if (/^(https?:)?\/\//i.test(candidate)) return candidate.startsWith("//") ? `https:${candidate}` : candidate;
+    return new URL(candidate.replace(/^\/+/, ""), FAST4TOP_BASE_URL + "/").toString();
+  }
   return null;
 }
 
@@ -265,8 +314,8 @@ function normalizeProducts(products: Fast4TopProduct[]) {
       `منتج ${product.id}`;
 
     const categoryName = product.category_name || name;
-    // Fast4Top's documented catalog field is `image`; keep legacy aliases too.
-    const photo = product.image || product.photo || product.image_url || product.category_img || product.icon || product.logo;
+    // Accept URL strings and nested/array image payloads from Fast4Top.
+    const photo = resolveProductImage(product);
 
     const requires =
       product.requires ||
@@ -291,14 +340,7 @@ function normalizeProducts(products: Fast4TopProduct[]) {
       available:
         product.available !== false && product.visible !== 0,
 
-      imageUrl: photo
-        ? photo.startsWith("http")
-          ? photo
-          : new URL(
-              photo.replace(/^\/+/, ""),
-              FAST4TOP_BASE_URL + "/"
-            ).toString()
-        : null,
+      imageUrl: photo,
 
       description:
         product.description ||
