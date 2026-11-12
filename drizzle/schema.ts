@@ -162,6 +162,7 @@ export const supplierProducts = mysqlTable(
     // Owner approval and visibility are separate controls
     approved: boolean("approved").notNull().default(false),
     enabled: boolean("enabled").notNull().default(false),
+    ownerSelected: boolean("ownerSelected").notNull().default(false),
 
     createdAt: timestamp("createdAt").defaultNow().notNull(),
 
