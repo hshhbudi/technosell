@@ -11,6 +11,8 @@ type Fast4TopProduct = {
   product_name?: string;
   category_name?: string;
   category?: string;
+  category_img?: unknown;
+  currency?: string;
   category_type?: string;
   category_id?: number | string;
   parent_id?: number | string;
@@ -211,8 +213,6 @@ async function apiGet<T>(
 function detectSection(
   product: Fast4TopProduct
 ): "التطبيقات" | "الألعاب" | null {
-  // Classify from supplier category/type metadata, never from a hard-coded
-  // list of individual game or app names.
   const categoryValue = [
     product.category_name,
     product.category,
@@ -223,14 +223,16 @@ function detectSection(
     product.product_type,
     product.type,
   ].filter(Boolean).join(" ").toLowerCase();
+  const productValue = [product.name, product.product_name].filter(Boolean).join(" ").toLowerCase();
 
-  if (/(\bapp\b|\bapps\b|application|applications|social|live app|تطبيق|برامج|دردشة|بث مباشر)/i.test(categoryValue)) {
-    return "التطبيقات";
-  }
-  if (/(\bgame\b|\bgames\b|gaming|لعبة|العاب|ألعاب|ألعاب|شحن ألعاب)/i.test(categoryValue)) {
+  if (/(game|games|gaming|لعبة|العاب|ألعاب|شحن ألعاب)/i.test(categoryValue) ||
+      /(free\s*fire|فري\s*فاير|pubg|ببجي|mobile\s*legends|mlbb|roblox|minecraft|fortnite|call\s*of\s*duty|genshin|valorant|clash\s*of\s*clans|efootball|playstation|xbox|steam|جواكر)/i.test(productValue)) {
     return "الألعاب";
   }
-
+  if (/(app|apps|application|applications|social|live app|تطبيق|برامج|دردشة|بث مباشر)/i.test(categoryValue) ||
+      /(tiktok|tik tok|likee|kwai|bigo|haya|hayachat|yalla live|poppo|mico|chamet|livu|imo chat|chat|live|لايكي|كواي|بيجو|هيا|حياة)/i.test(productValue)) {
+    return "التطبيقات";
+  }
   return null;
 }
 
@@ -317,7 +319,7 @@ function normalizeProducts(products: Fast4TopProduct[]) {
 
     const categoryName = product.category_name || name;
     // Accept URL strings and nested/array image payloads from Fast4Top.
-    const photo = resolveProductImage(product);
+    const photo = resolveProductImage(product) || imageCandidate(product.category_img);
 
     const requires =
       product.requires ||
@@ -359,14 +361,77 @@ function normalizeProducts(products: Fast4TopProduct[]) {
   });
 }
 
+type Fast4TopContent = {
+  categories?: Array<{ id?: number | string; name?: string; category_img?: unknown }>;
+  products?: Fast4TopProduct[];
+  data?: unknown;
+};
+
+function asContent(value: any): Fast4TopContent {
+  if (Array.isArray(value)) return { products: value };
+  if (value && typeof value === "object") {
+    if (value.data && typeof value.data === "object" && !Array.isArray(value.data)) {
+      return { ...value.data, categories: value.categories ?? value.data.categories, products: value.products ?? value.data.products };
+    }
+    return value;
+  }
+  return {};
+}
+
+async function readProductsFromCategoryTree(): Promise<Fast4TopProduct[]> {
+  const collected: Fast4TopProduct[] = [];
+  const queue: Array<{ id: number; rootName: string; path: string[] }> = [{ id: 0, rootName: "", path: [] }];
+  const visited = new Set<number>();
+  while (queue.length && visited.size < 250) {
+    const batch = queue.splice(0, 8).filter(item => !visited.has(item.id));
+    if (!batch.length) break;
+    for (const item of batch) visited.add(item.id);
+    const results = await Promise.all(batch.map(async item => {
+      try {
+        const raw = await apiGet<any>(`/client/api/content/${item.id}`);
+        return { item, content: asContent(raw) };
+      } catch (error) {
+        console.warn(`[Fast4Top] Category ${item.id} could not be read:`, error instanceof Error ? error.message : error);
+        return { item, content: {} as Fast4TopContent };
+      }
+    }));
+    for (const { item, content } of results) {
+      for (const product of content.products ?? []) {
+        collected.push({
+          ...product,
+          category_name: product.category_name || item.path[item.path.length - 1] || item.rootName || undefined,
+          parent_name: product.parent_name || item.rootName || undefined,
+          parent_category_name: product.parent_category_name || item.rootName || undefined,
+          category_img: product.category_img || undefined,
+        });
+      }
+      for (const category of content.categories ?? []) {
+        const id = Number(category.id);
+        if (!Number.isFinite(id) || id <= 0 || visited.has(id)) continue;
+        const name = String(category.name || "");
+        queue.push({
+          id,
+          rootName: item.id === 0 ? name : item.rootName,
+          path: [...item.path, name],
+        });
+      }
+    }
+  }
+  return collected;
+}
+
 export async function readDigitalCatalog() {
   if (catalogCache && Date.now() - catalogCache.at < 60000) {
     return catalogCache.products;
   }
 
-  const response = await apiGet<
-    Fast4TopProduct[] | ApiEnvelope<Fast4TopProduct[]>
-  >("/client/api/products");
+  let response: Fast4TopProduct[] | ApiEnvelope<Fast4TopProduct[]>;
+  try {
+    response = await apiGet<Fast4TopProduct[] | ApiEnvelope<Fast4TopProduct[]>>("/client/api/products");
+  } catch (error) {
+    console.warn("[Fast4Top] Flat product endpoint failed; trying category tree", error);
+    response = [];
+  }
 
   const envelope = response as ApiEnvelope<unknown> & {
     products?: unknown;
@@ -402,13 +467,36 @@ export async function readDigitalCatalog() {
     );
   }
 
-  const products = normalizeProducts(productsRaw);
+  let rawProducts = productsRaw;
+  try {
+    const treeProducts = await readProductsFromCategoryTree();
+    if (treeProducts.length) {
+      const merged = new Map<number, Fast4TopProduct>();
+      for (const item of rawProducts) merged.set(Number(item.id), item);
+      for (const item of treeProducts) {
+        const previous = merged.get(Number(item.id));
+        merged.set(Number(item.id), previous ? {
+          ...previous,
+          category_name: previous.category_name || item.category_name,
+          parent_name: previous.parent_name || item.parent_name,
+          parent_category_name: previous.parent_category_name || item.parent_category_name,
+          category_img: previous.category_img || item.category_img,
+          image: previous.image || item.image,
+          image_url: previous.image_url || item.image_url,
+        } : item);
+      }
+      rawProducts = [...merged.values()];
+    }
+  } catch (error) {
+    console.warn("[Fast4Top] Category tree lookup failed:", error);
+  }
+  const products = normalizeProducts(rawProducts);
   console.log(
-    `[Fast4Top] Supplier returned ${productsRaw.length} raw products; ${products.length} matched Games/Apps categories`
+    `[Fast4Top] Supplier returned ${rawProducts.length} raw products; ${products.length} matched Games/Apps categories`
   );
-  if (products.length === 0 && productsRaw.length > 0) {
+  if (products.length === 0 && rawProducts.length > 0) {
     const categorySamples = [...new Set(
-      productsRaw.slice(0, 20).map((item) => {
+      rawProducts.slice(0, 20).map((item) => {
         const p = item as Fast4TopProduct;
         return [p.category_name, p.category, p.category_type, p.product_type]
           .filter(Boolean).join(" / ");
