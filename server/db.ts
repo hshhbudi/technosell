@@ -396,6 +396,7 @@ export type SupplierProductSyncInput = {
   name: string;
   category?: string | null;
   subcategory?: string | null;
+  storeSection?: string | null;
   supplierPriceCents: number;
   quantity?: number | null;
   quantityValues?: unknown;
@@ -518,7 +519,7 @@ export async function syncSupplierProducts(
           name: item.name,
           category: item.category ?? current.category,
           subcategory: item.subcategory ?? current.subcategory,
-          storeSection: item.category ?? current.storeSection,
+          storeSection: current.storeSection || item.storeSection || null,
           supplierPriceCents: item.supplierPriceCents,
           sellingPriceCents: calculateSellingPrice(
             item.supplierPriceCents,
@@ -564,7 +565,7 @@ export async function syncSupplierProducts(
       imageUrl: item.imageUrl ?? null,
       description: item.description ?? null,
       available: item.available ?? true,
-      storeSection: item.category ?? null,
+      storeSection: item.storeSection ?? null,
       approved: false,
       enabled: false,
       ownerSelected: false,
@@ -617,7 +618,7 @@ export async function setSupplierProductImage(id: number, imageUrl: string | nul
   return getSupplierProductById(id);
 }
 
-export async function setSupplierProductStoreSection(id: number, storeSection: "الألعاب" | "التطبيقات") {
+export async function setSupplierProductStoreSection(id: number, storeSection: string) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   await db.update(supplierProducts).set({ storeSection }).where(eq(supplierProducts.id, id));
