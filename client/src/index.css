@@ -1025,3 +1025,7 @@
  .legacy-actions .raseed-wallet-topup,.legacy-actions .raseed-login-button,.legacy-actions .raseed-notifications-button,.legacy-actions .raseed-header-settings,.legacy-actions .theme-toggle,.legacy-actions .legacy-menu{min-width:42px!important;min-height:40px!important;padding:0 9px!important;font-size:11px!important}
  .legacy-header nav{order:5!important}
 }
+
+.supplier-sync-tabs{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0 18px;padding:12px;border:1px solid #2a3047;border-radius:14px;background:#101625}
+.supplier-sync-tabs button{min-height:40px;padding:0 14px;border-radius:10px;font-size:12px;font-weight:800}
+@media(max-width:650px){.supplier-sync-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.supplier-sync-tabs button{width:100%;padding:8px 5px}}
