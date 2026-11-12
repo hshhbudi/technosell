@@ -635,8 +635,10 @@ export const appRouter = router({
         };
       }
     }),
-sync: adminProcedure.mutation(async () => {
-      return await syncFast4TopCatalog();
+sync: adminProcedure.input(z.object({
+      section: z.enum(["all", "الألعاب", "التطبيقات", "الخدمات والاتصالات", "البطاقات الرقمية", "خدمات رقمية"]).default("all"),
+    })).mutation(async ({ input }) => {
+      return await syncFast4TopCatalog(input.section);
     }),
     adminCatalog: adminProcedure.query(async () => {
       return {
