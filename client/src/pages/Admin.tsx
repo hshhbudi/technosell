@@ -189,7 +189,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
         <button className="supplier-folder-open" onClick={()=>{setSupplierSyncSection(item.section);setSupplierView("all");}}>
           <span className="supplier-folder-art">{folderImage ? <img src={folderImage} alt={item.section}/> : <Package size={30}/>}</span>
           <strong>{item.section}</strong>
-          <small>{item.count} منتج · {item.selected} مختار</small>
+          <small>{item.count} منتج · {item.selected} منشور</small>
         </button>
         <div className="supplier-folder-actions">
           <button className="secondary-btn" onClick={()=>syncSupplier.mutate({section:"all"})} disabled={syncSupplier.isPending}><RefreshCw size={13}/> مزامنة</button>
@@ -256,8 +256,8 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
       <p className="manager-note">{supplierSyncSection==="الألعاب"?"هنا تظهر الألعاب وباقاتها وخيارات شحنها التابعة لها، مثل PUBG وفري فاير، حسب المنتجات التي يوفرها Fast4Top.":supplierSyncSection==="التطبيقات"?"هنا تظهر التطبيقات وخدمات شحنها التابعة لها، مثل TikTok وLikee وKwai وBigo، حسب المنتجات التي يوفرها Fast4Top.":"اختر مجموعة الألعاب أو التطبيقات لعرض منتجاتها وخدمات شحنها معًا، أو اعرض كتالوج Fast4Top كاملًا."}</p>
        <div className="admin-heading-actions" style={{marginBottom:16}}>
         <button className={supplierView==="all" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("all")}>كل كتالوج Fast4Top ({supplierProducts.length})</button>
-        <button className={supplierView==="selected" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("selected")}>المنتجات المختارة للمتجر ({supplierProducts.filter(p=>p.ownerSelected).length})</button>
-        <button className={supplierView==="unselected" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("unselected")}>غير المضافة ({supplierProducts.filter(p=>!p.ownerSelected).length})</button>
+        <button className={supplierView==="selected" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("selected")}>المنتجات المنشورة ({supplierProducts.filter(p=>p.ownerSelected).length})</button>
+        <button className={supplierView==="unselected" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("unselected")}>غير المنشورة ({supplierProducts.filter(p=>!p.ownerSelected).length})</button>
       </div>
       <p className="manager-note">المزامنة تجلب المنتجات المتاحة وتنشرها تلقائيًا. يمكنك إيقاف أي منتج يدويًا من بطاقة المنتج.</p>
       <div className="supplier-products-grid">
