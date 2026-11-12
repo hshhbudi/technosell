@@ -521,7 +521,11 @@ export async function syncSupplierProducts(
           name: item.name,
           category: item.category ?? current.category,
           subcategory: item.subcategory ?? current.subcategory,
-          storeSection: current.storeSection || item.storeSection || null,
+          // Correct products previously imported into Applications when the supplier now classifies them as Games.
+          // Keep any other owner-selected folder unchanged.
+          storeSection: current.storeSection === "التطبيقات" && item.storeSection === "الألعاب"
+            ? "الألعاب"
+            : current.storeSection || item.storeSection || null,
           supplierPriceCents: item.supplierPriceCents,
           sellingPriceCents: calculateSellingPrice(
             item.supplierPriceCents,
