@@ -209,32 +209,14 @@ async function apiGet<T>(
   }
 }
 
-function detectSection(
-  product: Fast4TopProduct
-): "التطبيقات" | "الألعاب" | null {
-  const categoryValue = [
-    product.category_name,
-    product.category,
-    product.category_type,
-    product.parent_name,
-    product.parent_category_name,
-    product.section,
-    product.product_type,
-    product.type,
-  ].filter(Boolean).join(" ").toLowerCase();
-  const productValue = [product.name, product.product_name].filter(Boolean).join(" ").toLowerCase();
-
-  if (/(game|games|gaming|لعبة|العاب|ألعاب|شحن ألعاب)/i.test(categoryValue) ||
-      /(free\s*fire|فري\s*فاير|pubg|ببجي|mobile\s*legends|mlbb|roblox|minecraft|fortnite|call\s*of\s*duty|genshin|valorant|clash\s*of\s*clans|efootball|playstation|xbox|steam|جواكر)/i.test(productValue)) {
-    return "الألعاب";
-  }
-  if (/(app|apps|application|applications|social|live app|تطبيق|برامج|دردشة|بث مباشر)/i.test(categoryValue) ||
-      /(tiktok|tik tok|likee|kwai|bigo|haya|hayachat|yalla live|poppo|mico|chamet|livu|imo chat|chat|live|لايكي|كواي|بيجو|هيا|حياة)/i.test(productValue)) {
-    return "التطبيقات";
-  }
-  return null;
+function detectStoreSection(product: Fast4TopProduct): string {
+  const source = [product.category_name, product.category, product.category_type, product.parent_name, product.parent_category_name, product.section, product.product_type, product.type, product.name, product.product_name].filter(Boolean).join(" ").toLowerCase();
+  if (/(game|games|gaming|لعبة|العاب|ألعاب|شحن ألعاب|pubg|ببجي|free\\s*fire|فري\\s*فاير|mobile\\s*legends|mlbb|roblox|minecraft|fortnite|call\\s*of\\s*duty|genshin|valorant|clash\\s*of\\s*clans|efootball|playstation|xbox|steam|جواكر)/i.test(source)) return "الألعاب";
+  if (/(mtn|syriatel|سيريتل|سيرياتيل|خدمات سورية|مزودات الإنترنت|رصيد الهاتف|تعبئة رصيد|باقات الهاتف|اتصالات|telecom|mobile top.?up)/i.test(source)) return "الخدمات والاتصالات";
+  if (/(gift.?card|voucher|بطاقات|كروت|بطاقة|اشتراك|subscription|netflix|spotify premium|google play|itunes|steam card)/i.test(source)) return "البطاقات الرقمية";
+  if (/(app|apps|application|applications|social|live app|تطبيق|برامج|دردشة|بث مباشر|tiktok|tik tok|likee|kwai|bigo|haya|hayachat|yalla live|poppo|mico|chamet|livu|imo chat|لايكي|كواي|بيجو|هيا)/i.test(source)) return "التطبيقات";
+  return "خدمات رقمية";
 }
-
 function imageCandidate(value: unknown): string | null {
   if (typeof value === "string" && value.trim()) return value.trim();
   if (Array.isArray(value)) {
@@ -281,7 +263,7 @@ function normalizeProducts(products: Fast4TopProduct[]) {
     }
   }
 
-  return [...unique.values()].filter((product) => detectSection(product) !== null).map((product) => {
+  return [...unique.values()].map((product) => {
     const qtyValues = product.qty_values;
 
     const quantity = Array.isArray(qtyValues)
@@ -329,8 +311,9 @@ function normalizeProducts(products: Fast4TopProduct[]) {
     return {
       externalId: String(product.id),
       name,
-      category: detectSection(product),
+      category: product.parent_name || product.parent_category_name || product.section || product.category || product.category_type || categoryName,
       subcategory: categoryName,
+      storeSection: detectStoreSection(product),
 
       // سعر المزوّد فقط، بدون إضافة نسبة ربح هنا.
       supplierPriceCents: Math.max(
@@ -487,7 +470,7 @@ export async function readDigitalCatalog() {
   }
   const products = normalizeProducts(rawProducts);
   console.log(
-    `[Fast4Top] Supplier returned ${rawProducts.length} raw products; ${products.length} matched Games/Apps categories`
+    `[Fast4Top] Supplier returned ${rawProducts.length} raw products; ${products.length} normalized across all catalog sections`
   );
   if (products.length === 0 && rawProducts.length > 0) {
     const categorySamples = [...new Set(
