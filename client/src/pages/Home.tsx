@@ -449,6 +449,7 @@ export default function Home() {
           </button>
           <button className="raseed-wallet-topup" onClick={() => setAuthOpen(true)}><CreditCard size={17}/> تعبئة الرصيد</button>
           <button className="raseed-login-button" onClick={() => setAuthOpen(true)}><UserRound size={17}/> {customerQuery.data ? "حسابي" : "تسجيل الدخول"}</button>
+          {!customerQuery.data && <button className="raseed-register-button" onClick={() => setAuthOpen(true)}>إنشاء حساب</button>}
           <button className="raseed-notifications-button" onClick={() => setAuthOpen(true)} aria-label="الإشعارات" title="الإشعارات"><Bell size={19}/></button>
           <button className="raseed-header-settings" onClick={() => setSettingsOpen(v => !v)} aria-label="الإعدادات" title="الإعدادات"><Settings size={20}/></button>
           {settingsOpen && <div className="raseed-header-settings-popover"><strong>إعدادات رصيد</strong><button onClick={() => {setLightMode(v => !v);setSettingsOpen(false);}}>{lightMode ? <Sun size={16}/> : <Moon size={16}/>} تغيير المظهر</button></div>}
