@@ -511,8 +511,10 @@ export async function syncSupplierProducts(
 
     if (current) {
       const markup = current.markupPercent ?? 8;
+      const isAvailable = item.available ?? current.available ?? true;
 
-      // Missing optional supplier fields must not erase data already curated by the owner.
+      // Fast4Top is the live catalog source: available products are published
+      // automatically after sync, while unavailable supplier products stay hidden.
       await db
         .update(supplierProducts)
         .set({
@@ -533,10 +535,10 @@ export async function syncSupplierProducts(
           // Preserve an image uploaded by the store owner; only fill an empty image from Fast4Top.
           imageUrl: current.imageUrl ?? item.imageUrl ?? null,
           description: item.description ?? current.description,
-          available: item.available ?? current.available,
-          // Supplier catalog is the source of truth: keep synced available items visible.
-          approved: item.available ?? current.available,
-          enabled: item.available ?? current.available,
+          available: isAvailable,
+          approved: isAvailable,
+          enabled: isAvailable,
+          ownerSelected: isAvailable,
         })
         .where(eq(supplierProducts.id, current.id));
 
@@ -546,8 +548,9 @@ export async function syncSupplierProducts(
 
     const markup = 8;
 
-    // New Fast4Top products stay hidden until the owner explicitly selects them.
-    // Existing owner selections are preserved during later catalog syncs.
+    // Publish every available Fast4Top product automatically after synchronization.
+    // Unavailable products remain hidden until the supplier marks them available.
+    const isAvailable = item.available ?? true;
     await db.insert(supplierProducts).values({
       externalId: item.externalId,
       name: item.name,
@@ -565,11 +568,11 @@ export async function syncSupplierProducts(
       productType: item.productType ?? null,
       imageUrl: item.imageUrl ?? null,
       description: item.description ?? null,
-      available: item.available ?? true,
+      available: isAvailable,
       storeSection: item.storeSection ?? null,
-      approved: false,
-      enabled: false,
-      ownerSelected: false,
+      approved: isAvailable,
+      enabled: isAvailable,
+      ownerSelected: isAvailable,
     });
 
     inserted++;
