@@ -395,7 +395,8 @@ async function readProductsFromCategoryTree(): Promise<Fast4TopProduct[]> {
         queue.push({
           id,
           rootName: item.id === 0 ? name : item.rootName,
-          path: [...item.path, name],\n          categoryImage: category.category_img || item.categoryImage,
+          path: [...item.path, name],
+          categoryImage: category.category_img || item.categoryImage,
         });
       }
     }
