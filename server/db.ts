@@ -537,7 +537,7 @@ export async function syncSupplierProducts(
           requires: item.requires ?? current.requires,
           productType: item.productType ?? current.productType,
           // Preserve an image uploaded by the store owner; only fill an empty image from Fast4Top.
-          imageUrl: current.imageUrl ?? item.imageUrl ?? null,
+          imageUrl: current.imageUrl || item.imageUrl || null,
           description: item.description ?? current.description,
           available: isAvailable,
           approved: isAvailable,
