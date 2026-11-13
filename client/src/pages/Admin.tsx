@@ -245,7 +245,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
     <div className="admin-heading-actions">
       <button className="primary-btn" onClick={()=>syncSupplier.mutate({section:"all"})} disabled={syncSupplier.isPending}><RefreshCw size={15}/> تحديث تصنيف ومزامنة الكتالوج كاملًا</button>
       <button className="secondary-btn" onClick={()=>{setSupplierSyncSection("الألعاب");setSupplierView("all");}}>مراجعة الألعاب وشحنها</button>
-      <button className="secondary-btn" onClick={()=>{setSupplierSyncSection("التطبيقات");setSupplierView("all");}}>مراجعة التطبيقات وشحنها</button>
+      <button className="secondary-btn" onClick={()=>{setSupplierSyncSection("التطبيقات");setSupplierView("all");}}>مراجعة التطبيقات</button>
     </div>
   </div>
   <div className="supplier-sync-tabs" role="group" aria-label="تقسيم كتالوج الألعاب والتطبيقات وخدمات الشحن">
