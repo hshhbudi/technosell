@@ -65,6 +65,65 @@ type StoreProduct = {
   }>;
 };
 
+const APP_ARABIC_NAMES: Array<[RegExp, string]> = [
+  [/tiktok/i, "تيك توك"], [/tumile/i, "توميلي لايف"], [/meye?o/i, "ميو لايف"],
+  [/soul\\s*chill/i, "سول تشيل"], [/soul\\s*u/i, "سول يو"], [/soul\\s*star/i, "سول ستار"],
+  [/bigo/i, "بيجو لايف"], [/ahlan/i, "أهلًا شات"], [/likee/i, "لايكي لايف"],
+  [/yalla/i, "يلا لايف"], [/kwai/i, "كواي"], [/talk\\s*talk/i, "توك توك"],
+  [/up\\s*live/i, "أب لايف"], [/mico/i, "ميكو لايف"], [/4fun/i, "فور فن شات"],
+  [/haki/i, "هاكي شات"], [/yoyo/i, "يويو شات"], [/yoho/i, "يوهو واكا"],
+  [/falla/i, "فالا شات"], [/lama/i, "لاما شات"], [/lami/i, "لامي شات"],
+  [/azal/i, "أزال لايف"], [/beela/i, "بيلا شات"], [/hawa/i, "حوا شات"],
+  [/migo/i, "ميغو لايف"], [/poppo/i, "بوبو لايف"], [/party\\s*star/i, "بارتي ستار"],
+  [/light\\s*chat/i, "لايت شات"], [/mr7ba/i, "مرحبا شات"], [/hayya?kom/i, "حياكم شات"],
+  [/h(i|e)ya/i, "هيا شات"], [/tango/i, "تانجو"], [/sugo/i, "سوغو"],
+  [/soyo/i, "سويو شات"], [/sky\\s*chat/i, "سكاي شات"], [/honey\\s*jar/i, "هاني جار"],
+  [/imo/i, "إيمو"], [/livu/i, "ليف يو"], [/momo/i, "مومو لايف"],
+  [/taka/i, "تاكا"], [/tada/i, "تادا شات"], [/e-?party/i, "إي بارتي"],
+  [/yoparty/i, "يو بارتي"], [/yami/i, "يامي ستار"], [/laki/i, "لاكي شات"],
+  [/doli/i, "دولي لايف"], [/hopi/i, "هوبي ستار"], [/nahki/i, "ناكي لايف"],
+  [/yahoo/i, "ياهو ستار"], [/yudo/i, "يودو"], [/salam/i, "سلام شات"],
+  [/our\\s*talk/i, "أور توك"], [/hi\\s*party/i, "هاي بارتي"], [/ditto/i, "ديتو لايف"],
+  [/mango/i, "مانجو لايف"], [/wyak/i, "وياك شات"], [/allo/i, "ألو شات"],
+  [/rostar/i, "روستار"], [/weso/i, "ويسو شات"], [/asha/i, "آشا لايف"],
+  [/shila/i, "شيلا شات"], [/chamoji/i, "تشاموجي"], [/pk\\s*star/i, "بي كي ستار"],
+  [/ti\\s*live/i, "تي آي لايف"], [/amisu/i, "أميسو بارتي"], [/sophia/i, "صوفيا شات"],
+  [/hoob/i, "هوب شات"], [/nady/i, "نادي ستار"], [/lemi/i, "ليمي لايف"],
+  [/oyuni/i, "أويوني"], [/nice\\s*chat/i, "نايس شات"], [/faby/i, "فابي ستار"],
+  [/shaghaf/i, "شغف شات"], [/volistar/i, "فولي ستار"], [/wikoo/i, "ويكو"],
+  [/moma/i, "موما لايف"], [/yula/i, "يولا شات"], [/yumi/i, "يومي شات"],
+  [/ya?ha/i, "ياها شات"], [/sohi/i, "سوهي شات"], [/taj\\s*star/i, "تاج ستار"],
+  [/tiktok/i, "تيك توك"], [/taka/i, "تاكا"], [/sodfa/i, "صدفة شات"],
+  [/wego/i, "ويغو لايف"], [/saada/i, "سعادة"], [/higo/i, "هيغو شات"],
+  [/habi/i, "هابي شات"], [/dana/i, "دانا"], [/kiti/i, "كيتي لايف"],
+  [/hooka/i, "هوكا شات"], [/vilaa/i, "فيلا شات"], [/lions/i, "لايونز شات"],
+  [/hilla/i, "هيلا شات"], [/kessmet/i, "كيسمت"], [/sahra/i, "سهرة شات"],
+  [/waki/i, "واكي ستار"], [/layla/i, "ليلى شات"], [/leeski/i, "ليسكي"],
+  [/oohla/i, "أوهلا شات"], [/nabd/i, "نبض شات"], [/waaw/i, "واو شات"],
+  [/halla/i, "هلا لايف"], [/gam(et)?\\s*live/i, "غيمت لايف"], [/halo/i, "هالو ستار"],
+  [/joyo/i, "جويو لايف"], [/hamster/i, "هامستر"], [/hoga/i, "هوغا شات"],
+  [/maza/i, "مازا شات"], [/habby/i, "هابي شات"], [/will\\s*chill/i, "ويل تشيل"],
+  [/we\\s*party/i, "وي بارتي"], [/zaar/i, "زار"], [/chillchat/i, "تشيل شات"],
+  [/roka/i, "روكا لايف"], [/hiyoo/i, "هيو"], [/matemet/i, "ميت ميت"],
+  [/tayyb/i, "طيب شات"], [/up\\s*fun/i, "أب فن"], [/fofo/i, "فوفو شات"],
+  [/dika/i, "ديكا شات"], [/supermeet/i, "سوبر ميت"], [/karak/i, "كرك شات"],
+  [/somatch/i, "سو ماتش"], [/laka/i, "لاكا شات"], [/hati/i, "هاتي شات"],
+  [/we\\s*chill/i, "وي تشيل"], [/shabab/i, "شباب شات"], [/yayya/i, "يايا شات"],
+  [/sama/i, "سما شات"], [/baat/i, "بات لايف"], [/lado/i, "لادو شات"],
+  [/oloo/i, "أولو"], [/hami/i, "هامي بارتي"], [/zaffa/i, "زفة لايف"],
+  [/mikoo/i, "ميكو"], [/litme/i, "ليت مي"], [/lotfun/i, "لوت فن"],
+  [/yena/i, "يينا شات"], [/crush/i, "كراش لايف"], [/hoki/i, "هوكي شات"],
+  [/woho/i, "وهو"], [/vone/i, "فون"], [/winko/i, "وينكو"],
+  [/niu/i, "نيو شات"], [/arabstar/i, "عرب ستار"], [/ezzo/i, "إيزو"],
+  [/sohha/i, "صحة لايف"], [/hay(i)?\\s*bulala/i, "هاي بولالا"],
+  [/wahda/i, "وحدة"], [/taya/i, "تايا"], [/lama\\s*ludo/i, "لاما لودو"],
+  [/rixo/i, "ريكسو"], [/sillagcc/i, "سيلا جي سي سي"], [/funni/i, "فني"],
+  [/bota/i, "بوتا شات"], [/habi/i, "هابي شات"], [/niko/i, "نيكو شات"],
+  [/pocoo/i, "بوكو شات"], [/holm/i, "هولم"], [/kitta/i, "كيتا"],
+];
+const arabicAppName = (name: string) =>
+  APP_ARABIC_NAMES.find(([pattern]) => pattern.test(name))?.[1] || "اسم عربي قيد التسمية";
+
 const money = (cents: number) =>
   `$ ${(Number(cents || 0) / 100).toFixed(2)}`;
 
@@ -605,7 +664,7 @@ export default function Home() {
     {category:"الإكسسوارات",icon:<Headphones/>,title:"إكسسوارات",hint:"سماعات وكفرات وشواحن"},
     {category:"الهواتف",icon:<Smartphone/>,title:"هواتف",hint:"أحدث الأجهزة"},
     {category:"الألعاب",icon:<Gamepad2/>,title:"ألعاب",hint:"شحن وبطاقات ألعاب"},
-    {category:"التطبيقات",icon:<Package/>,title:"شحن تطبيقات",hint:"رصيد وعملات للتطبيقات"},
+    {category:"التطبيقات",icon:<Package/>,title:"التطبيقات",hint:"تطبيقات ورصيد وعملات رقمية"},
     {category:"الخدمات والاتصالات",icon:<Wifi/>,title:"خدمات MTN وسيريتل",hint:"رصيد وباقات وخدمات"},
     {category:"البطاقات الرقمية",icon:<CreditCard/>,title:"بطاقات رقمية",hint:"هدايا واشتراكات"},
     {category:"العملات الرقمية",icon:<CreditCard/>,title:"عملات رقمية",hint:"خدمات العملات"},
@@ -700,7 +759,7 @@ export default function Home() {
 
                 <div className="legacy-card-info">
                   <span>{p.subcategory}</span>
-                  <h3>{p.name}</h3>
+                  <h3>{p.name}</h3>\n                  {p.category === "التطبيقات" && <small className="legacy-arabic-name">{arabicAppName(p.name)}</small>}
                   <p>{p.description}</p>
 
                   <div className="legacy-card-bottom">
