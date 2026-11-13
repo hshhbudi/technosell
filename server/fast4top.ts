@@ -363,7 +363,7 @@ function asContent(value: any): Fast4TopContent {
 
 async function readProductsFromCategoryTree(): Promise<Fast4TopProduct[]> {
   const collected: Fast4TopProduct[] = [];
-  const queue: Array<{ id: number; rootName: string; path: string[] }> = [{ id: 0, rootName: "", path: [] }];
+  const queue: Array<{ id: number; rootName: string; path: string[]; categoryImage?: unknown }> = [{ id: 0, rootName: "", path: [] }];
   const visited = new Set<number>();
   while (queue.length && visited.size < 250) {
     const batch = queue.splice(0, 8).filter(item => !visited.has(item.id));
@@ -385,7 +385,7 @@ async function readProductsFromCategoryTree(): Promise<Fast4TopProduct[]> {
           category_name: product.category_name || item.path[item.path.length - 1] || item.rootName || undefined,
           parent_name: product.parent_name || item.rootName || undefined,
           parent_category_name: product.parent_category_name || item.rootName || undefined,
-          category_img: product.category_img || undefined,
+          category_img: product.category_img || item.categoryImage || undefined,
         });
       }
       for (const category of content.categories ?? []) {
@@ -395,7 +395,7 @@ async function readProductsFromCategoryTree(): Promise<Fast4TopProduct[]> {
         queue.push({
           id,
           rootName: item.id === 0 ? name : item.rootName,
-          path: [...item.path, name],
+          path: [...item.path, name],\n          categoryImage: category.category_img || item.categoryImage,
         });
       }
     }
