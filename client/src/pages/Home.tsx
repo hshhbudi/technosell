@@ -780,7 +780,12 @@ export default function Home() {
 
                 <div className="legacy-card-info">
                   <span>{p.subcategory}</span>
-                  <h3>{p.name}</h3>\n                  {p.category === "التطبيقات" && <small className="legacy-arabic-name" style={{display:"block",marginTop:3,opacity:.78,fontSize:12}}>{arabicAppName(p.name)}</small>}
+                  <h3>{p.name}</h3>
+                  {(active === "التطبيقات" || p.category === "التطبيقات") && (
+                    <small className="legacy-arabic-name" style={{display:"block",marginTop:4,opacity:.9,fontSize:13,direction:"rtl"}}>
+                      {arabicAppName(p.name)}
+                    </small>
+                  )}
                   <p>{p.description}</p>
 
                   <div className="legacy-card-bottom">
