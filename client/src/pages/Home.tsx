@@ -121,8 +121,29 @@ const APP_ARABIC_NAMES: Array<[RegExp, string]> = [
   [/bota/i, "بوتا شات"], [/habi/i, "هابي شات"], [/niko/i, "نيكو شات"],
   [/pocoo/i, "بوكو شات"], [/holm/i, "هولم"], [/kitta/i, "كيتا"],
 ];
+const transliterateAppName = (name: string) => {
+  const words = name.replace(/[^a-zA-Z0-9\\s-]/g, " ").trim().split(/\\s+/).filter(Boolean);
+  const map: Array<[RegExp, string]> = [
+    [/tion/gi, "شن"], [/tch/gi, "تش"], [/sh/gi, "ش"], [/ch/gi, "تش"],
+    [/th/gi, "ث"], [/kh/gi, "خ"], [/gh/gi, "غ"], [/ph/gi, "ف"],
+    [/oo/gi, "و"], [/ee/gi, "ي"], [/ea/gi, "ي"], [/ai/gi, "اي"],
+    [/ay/gi, "اي"], [/ou/gi, "او"], [/ow/gi, "او"], [/qu/gi, "كو"],
+    [/ck/gi, "ك"], [/c/gi, "ك"], [/g/gi, "ج"], [/j/gi, "ج"],
+    [/v/gi, "ڤ"], [/p/gi, "ب"], [/x/gi, "كس"], [/w/gi, "و"],
+    [/y/gi, "ي"], [/z/gi, "ز"], [/s/gi, "س"], [/r/gi, "ر"],
+    [/t/gi, "ت"], [/d/gi, "د"], [/f/gi, "ف"], [/h/gi, "ه"],
+    [/k/gi, "ك"], [/l/gi, "ل"], [/m/gi, "م"], [/n/gi, "ن"],
+    [/b/gi, "ب"], [/a/gi, "ا"], [/e/gi, "ي"], [/i/gi, "ي"],
+    [/o/gi, "و"], [/u/gi, "و"],
+  ];
+  return words.map((word) => {
+    let value = word;
+    for (const [pattern, letter] of map) value = value.replace(pattern, letter);
+    return value;
+  }).join(" ");
+};
 const arabicAppName = (name: string) =>
-  APP_ARABIC_NAMES.find(([pattern]) => pattern.test(name))?.[1] || "اسم عربي قيد التسمية";
+  APP_ARABIC_NAMES.find(([pattern]) => pattern.test(name))?.[1] || transliterateAppName(name);
 
 const money = (cents: number) =>
   `$ ${(Number(cents || 0) / 100).toFixed(2)}`;
@@ -759,7 +780,7 @@ export default function Home() {
 
                 <div className="legacy-card-info">
                   <span>{p.subcategory}</span>
-                  <h3>{p.name}</h3>\n                  {p.category === "التطبيقات" && <small className="legacy-arabic-name">{arabicAppName(p.name)}</small>}
+                  <h3>{p.name}</h3>\n                  {p.category === "التطبيقات" && <small className="legacy-arabic-name" style={{display:"block",marginTop:3,opacity:.78,fontSize:12}}>{arabicAppName(p.name)}</small>}
                   <p>{p.description}</p>
 
                   <div className="legacy-card-bottom">
