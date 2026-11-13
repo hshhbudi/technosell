@@ -26,6 +26,7 @@ import {
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import CustomerAuth from "@/components/CustomerAuth";
+import ProductArtwork from "@/components/ProductArtwork";
 
 type StoreProduct = {
   id: number;
@@ -190,71 +191,6 @@ const freeFireSection = (
   isCodeProduct(name, subcategory, description)
     ? "Free Fire أكواد"
     : "Free Fire شحن بالـID";
-
-const fallbackImageFor = (
-  product: Pick<StoreProduct, "name" | "subcategory" | "category">
-): string | null => {
-  const itemName = `${product.name} ${product.subcategory}`.toLowerCase();
-
-  // Official Google Play app icons for products without supplier artwork.
-  if (product.category === "التطبيقات") {
-    if (/(haya|هايا|هيا)/i.test(itemName)) {
-      return "https://play-lh.googleusercontent.com/wcwRELi8XuMjQHavMgULcNXD-WTVfkUs1nVW7x3cIuiuqRnHftHvOri4FLZAIPheewptkTEVBFQhi2lB3PYl2Q=w512-h512";
-    }
-    if (/(kwai|كواي)/i.test(itemName)) {
-      return "https://play-lh.googleusercontent.com/_tbJZAK7486yk-0V2nBqYtH3lyWrZG5aI5MaKtzIsZou_UBEnX8wV5Dwyty2s2WsI3U6JgERB1-rBM_dJJoCcmk=w512-h512";
-    }
-    if (/(likee|لايكي)/i.test(itemName)) {
-      return "https://play-lh.googleusercontent.com/5kFm2Or1bHsU_OEZWkrWPWTBol5V5lMYbZieFg8E_8iXjuarqkb6PEQnKW84nD6KPGvLySi_XZfY90dA0aFL=w512-h512";
-    }
-    if (/(bigo|بيجو)/i.test(itemName)) {
-      return "https://play-lh.googleusercontent.com/8nDM585uK3X3AXiDQJC4lEARF_VLFrgdma-1YkdFMAwKi1LSrg4bMnWMGq7GqsviTKyL_LUfYayflZgs0SqCqQ=w512-h512";
-    }
-    const appArtwork: Array<[RegExp, string]> = [
-      [/(tiktok|تيك\s*توك)/i, "tiktok"],
-      [/(yalla\s*live|يلا\s*لايف)/i, "yallalive"],
-      [/(mico|ميكو)/i, "mico"],
-      [/(poppo|بوبو)/i, "poppo"],
-      [/(livu|ليڤو)/i, "livu"],
-      [/(imo|ايمو)/i, "imo"],
-      [/(tango|تانجو)/i, "tango"],
-      [/(momo|مومو)/i, "momolive"],
-      [/(telegram|تلغرام|تيليجرام)/i, "telegram"],
-      [/(youtube|يوتيوب)/i, "youtube"],
-      [/(discord|ديسكورد)/i, "discord"],
-      [/(spotify|سبوتيفاي)/i, "spotify"],
-      [/(twitch|تويتش)/i, "twitch"],
-    ];
-    const app = appArtwork.find(([pattern]) => pattern.test(itemName));
-    return app ? `https://cdn.simpleicons.org/${app[1]}/FFFFFF` : null;
-  }
-
-  if (product.category !== "الألعاب") return null;
-
-  // Game artwork fallbacks for supplier products that arrive without an image.
-  if (/(free\s*fire|فري\s*فاير)/i.test(itemName)) {
-    return "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/d6/8f/47/d68f4742-5a10-b375-2114-0f840bd49ec1/AppIcon-1781539049-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg";
-  }
-  if (/(pubg|ببجي)/i.test(itemName)) {
-    return "https://syimg.3dmgame.com/uploadimg/ico/2025/0515/1747294853476299.png";
-  }
-  const gameArtwork: Array<[RegExp, string]> = [
-    [/(mobile\s*legends|mlbb|موبايل\s*ليجند)/i, "mobilelegendsbangbang"],
-    [/(call\s*of\s*duty|cod|كول\s*اوف\s*ديوتي)/i, "callofduty"],
-    [/(roblox|روبلوكس)/i, "roblox"],
-    [/(minecraft|ماين\s*كرافت)/i, "minecraft"],
-    [/(clash\s*of\s*clans|كلاش\s*اوف\s*كلانس)/i, "clashofclans"],
-    [/(fortnite|فورتنايت)/i, "fortnite"],
-    [/(valorant|فالورانت)/i, "valorant"],
-    [/(genshin\s*impact|جينشن)/i, "genshinimpact"],
-    [/(efootball|\bpes\b|بيس)/i, "konami"],
-    [/(steam|ستيم)/i, "steam"],
-    [/(playstation|psn|بلايستيشن)/i, "playstation"],
-    [/(xbox|إكس\s*بوكس)/i, "xbox"],
-  ];
-  const artwork = gameArtwork.find(([pattern]) => pattern.test(itemName));
-  return artwork ? `https://cdn.simpleicons.org/${artwork[1]}/FFFFFF` : null;
-};
 
 export default function Home() {
   const supplierQuery = trpc.supplier.catalog.useQuery(undefined, {
@@ -739,13 +675,13 @@ export default function Home() {
                 }
                 onClick={() => setSubcategory(s)}
               >
-                {supplierCategoryOverrides.find(item => item.displayName === s)?.imageUrl ? (
-                  <img className="subcategory-image" src={supplierCategoryOverrides.find(item => item.displayName === s)?.imageUrl || ""} alt="" />
-                ) : active === "الألعاب" ? (
-                  <Gamepad2 size={14} />
-                ) : (
-                  <Package size={14} />
-                )}
+                <ProductArtwork
+                  variant="chip"
+                  name={s}
+                  category={active}
+                  subcategory={s}
+                  imageUrl={supplierCategoryOverrides.find(item => item.displayName === s)?.imageUrl}
+                />
                 {s}
               </button>
             ))}
@@ -765,17 +701,14 @@ export default function Home() {
 <b className="legacy-tag">{p.tag}</b>
                   )}
 
-                  {!p.imageUrl && <div className="legacy-product-icon">
-                    {p.icon === "game" ? <Gamepad2 size={42} /> : p.icon === "app" ? <Package size={42} /> : <Smartphone size={42} />}
-                  </div>}
-                  {(p.imageUrl || fallbackImageFor(p)) && (
-                    <img
-                      src={p.imageUrl || fallbackImageFor(p) || ""}
-                      alt={p.name}
-                      loading="lazy"
-                      onError={(event) => { event.currentTarget.style.display = "none"; }}
-                    />
-                  )}
+                  <ProductArtwork
+                    name={p.name}
+                    category={p.category}
+                    subcategory={p.subcategory}
+                    imageUrl={p.imageUrl}
+                    externalId={p.externalId}
+                    fit={p.icon === "product" ? "cover" : "contain"}
+                  />
                 </div>
 
                 <div className="legacy-card-info">

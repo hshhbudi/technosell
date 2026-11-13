@@ -1123,3 +1123,34 @@
  .admin-shell .supplier-products-grid{grid-template-columns:1fr!important}
  .admin-shell .supplier-mini-card{grid-template-columns:64px minmax(0,1fr)!important}
 }
+
+/* ==========================================================================
+   نظام صور المنتجات — Techno Sell
+   الصور المحلية: client/public/product-images (الفهرس يُبنى تلقائيًا قبل البناء)
+   ========================================================================== */
+.legacy-card-art{position:relative;overflow:hidden}
+.pa{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;isolation:isolate}
+.pa-fallback{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(120% 90% at 50% 118%,var(--pa-glow) 0%,transparent 62%),linear-gradient(155deg,var(--pa-from) 0%,var(--pa-to) 78%)}
+.pa-fallback::before{content:"";position:absolute;inset:-30%;background:conic-gradient(from 210deg at 50% 50%,transparent 0deg,#ffffff14 90deg,transparent 200deg);opacity:.6}
+.pa-fallback::after{content:"";position:absolute;inset:0;background-image:linear-gradient(#ffffff0f 1px,transparent 1px),linear-gradient(90deg,#ffffff0f 1px,transparent 1px);background-size:26px 26px;-webkit-mask-image:radial-gradient(circle at 50% 45%,#000 10%,transparent 78%);mask-image:radial-gradient(circle at 50% 45%,#000 10%,transparent 78%);opacity:.55}
+.pa-glyph{position:absolute;top:11px;inset-inline-start:11px;color:#ffffff3d;z-index:1}
+.pa-tile{position:relative;z-index:2;display:grid;place-items:center;min-width:84px;max-width:132px;height:84px;padding:0 14px;border-radius:26px;background:linear-gradient(160deg,#0d1526f5,#0b1224d9);border:1px solid #ffffff30;box-shadow:0 16px 34px #000000a6,inset 0 1px 0 #ffffff2e;transition:transform .45s cubic-bezier(.2,.7,.3,1),box-shadow .45s}
+.pa-tile::after{content:"";position:absolute;inset:6px;border-radius:20px;border:1px solid #ffffff14;pointer-events:none}
+.pa-monogram{font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-weight:900;font-size:32px;line-height:1;color:#fff;letter-spacing:.5px;text-shadow:0 3px 12px #000c;white-space:nowrap}
+.pa-monogram[data-len="4"]{font-size:24px}
+.pa-monogram[data-len="5"]{font-size:20px}
+.pa-monogram[data-len="6"]{font-size:17px}
+.legacy-card-art .pa-media{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:3!important;object-fit:contain!important;padding:16px!important;opacity:0;transform:scale(.98);transition:opacity .4s ease,transform .5s cubic-bezier(.2,.7,.3,1);background:transparent!important;border-radius:0!important;margin:0!important}
+.legacy-card-art .pa-ready .pa-media{opacity:1;transform:scale(1)}
+.legacy-card-art .pa-error .pa-media{display:none!important}
+.legacy-card-art .pa.is-cover .pa-media{object-fit:cover!important;padding:0!important}
+.legacy-card:hover .pa-ready .pa-media{transform:scale(1.06)}
+.legacy-card:hover .pa-tile{transform:translateY(-3px);box-shadow:0 18px 36px #00000073,inset 0 1px 0 #ffffff4d}
+.pa-chip{position:relative;inset:auto;width:25px;height:25px;flex:0 0 25px;border-radius:7px;display:inline-grid;place-items:center;vertical-align:-7px;overflow:hidden}
+.pa-chip .pa-fallback{background:linear-gradient(150deg,var(--pa-from),var(--pa-to))}
+.pa-chip .pa-fallback::before,.pa-chip .pa-fallback::after{display:none}
+.pa-chip-glyph{position:relative;z-index:1;display:grid;place-items:center;color:#e8f4ff;opacity:.95}
+.pa-chip .pa-tile{display:none}
+.pa-chip .pa-media{padding:0!important;object-fit:cover!important;border-radius:6px!important}
+.pa-chip.pa-ready .pa-chip-glyph{opacity:0}
+@media(prefers-reduced-motion:reduce){.pa-media,.pa-tile{transition:none!important}.legacy-card:hover .pa-ready .pa-media{transform:none}}
