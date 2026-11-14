@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Gamepad2, Package, Smartphone, Sparkles } from "lucide-react";
 import {
   defaultArtworkForCategory,
+  findLocalProductImage,
   monogramFor,
   resolveProductImage,
   toneFor,
@@ -52,20 +53,30 @@ export default function ProductArtwork({
     [name, category, subcategory, imageUrl, externalId]
   );
 
-  const fallbackSrc = useMemo(
-    () => (variant === "card" ? defaultArtworkForCategory(category) : null),
-    [category, variant]
+  const imageCandidates = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [
+            src,
+            findLocalProductImage({ name, category, subcategory, externalId }),
+            variant === "card" ? defaultArtworkForCategory(category) : null,
+          ].filter((candidate): candidate is string => Boolean(candidate))
+        )
+      ),
+    [src, name, category, subcategory, externalId, variant]
   );
-  const [usingFallback, setUsingFallback] = useState(false);
+  const [candidateIndex, setCandidateIndex] = useState(0);
   const [status, setStatus] = useState<ArtworkStatus>(
-    src || fallbackSrc ? "loading" : "error"
+    imageCandidates.length ? "loading" : "error"
   );
-  const imageSrc = usingFallback || !src ? fallbackSrc : src;
 
   useEffect(() => {
-    setUsingFallback(false);
-    setStatus(src || fallbackSrc ? "loading" : "error");
-  }, [src, fallbackSrc]);
+    setCandidateIndex(0);
+    setStatus(imageCandidates.length ? "loading" : "error");
+  }, [imageCandidates]);
+
+  const imageSrc = imageCandidates[candidateIndex] ?? null;
 
   const tone = toneFor(`${name} ${subcategory ?? ""}`);
   const monogram = monogramFor(name);
@@ -111,8 +122,8 @@ export default function ProductArtwork({
           referrerPolicy="no-referrer"
           onLoad={() => setStatus("ready")}
           onError={() => {
-            if (fallbackSrc && imageSrc !== fallbackSrc) {
-              setUsingFallback(true);
+            if (candidateIndex + 1 < imageCandidates.length) {
+              setCandidateIndex(candidateIndex + 1);
               setStatus("loading");
             } else {
               setStatus("error");
