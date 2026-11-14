@@ -443,6 +443,24 @@ function calculateSellingPrice(
   );
 }
 
+function isAutoPublishedGameProduct(item: {
+  storeSection?: string | null;
+  name?: string | null;
+  category?: string | null;
+  subcategory?: string | null;
+}) {
+  const source = [item.storeSection, item.name, item.category, item.subcategory]
+    .filter(Boolean)
+    .join(" ");
+
+  // Only the game products explicitly requested by the owner are auto-published.
+  // Their price and quantity still come exclusively from Fast4Top.
+  return (
+    item.storeSection === "الألعاب" &&
+    /(pubg|ببجي|free\s*fire|فري\s*فاير)/i.test(source)
+  );
+}
+
 export async function listSupplierProducts() {
   const db = await getDb();
   if (!db) return [];
@@ -540,6 +558,8 @@ export async function syncSupplierProducts(
       const markup = current.markupPercent ?? 8;
       const isAvailable = item.available ?? current.available ?? true;
       const baseQuantity = item.quantity ?? current.quantity ?? 1;
+      const autoPublishGame =
+        isAvailable && isAutoPublishedGameProduct(item);
 
       // Refresh supplier data while preserving the owner's publication choices.
       await db
@@ -569,9 +589,9 @@ export async function syncSupplierProducts(
           imageUrl: current.imageUrl || item.imageUrl || null,
           description: item.description ?? current.description,
           available: isAvailable,
-          approved: current.approved,
-          enabled: current.enabled,
-          ownerSelected: current.ownerSelected,
+          approved: autoPublishGame || current.approved,
+          enabled: autoPublishGame || current.enabled,
+          ownerSelected: autoPublishGame || current.ownerSelected,
         })
         .where(eq(supplierProducts.id, current.id));
 
@@ -581,8 +601,11 @@ export async function syncSupplierProducts(
 
     const markup = 8;
 
-    // New supplier items remain hidden until the owner explicitly selects them.
+    // New supplier items remain hidden until selected, except the requested
+    // available PUBG and Free Fire products, which are published automatically.
     const isAvailable = item.available ?? true;
+    const autoPublishGame =
+      isAvailable && isAutoPublishedGameProduct(item);
     await db.insert(supplierProducts).values({
       externalId: item.externalId,
       name: item.name,
@@ -602,9 +625,9 @@ export async function syncSupplierProducts(
       description: item.description ?? null,
       available: isAvailable,
       storeSection: item.storeSection ?? null,
-      approved: false,
-      enabled: false,
-      ownerSelected: false,
+      approved: autoPublishGame,
+      enabled: autoPublishGame,
+      ownerSelected: autoPublishGame,
     });
 
     inserted++;

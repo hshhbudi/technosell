@@ -264,10 +264,10 @@ export function startFast4TopWorker() {
     void processPendingFast4TopOrders();
   }, 60_000);
 
-  // Refresh supplier catalog every six hours while the app is awake.
+  // Refresh supplier catalog every three hours while the app is awake.
   setInterval(() => {
     void runCatalogSync();
-  }, 6 * 60 * 60 * 1000);
+  }, 3 * 60 * 60 * 1000);
 }
 
 /**

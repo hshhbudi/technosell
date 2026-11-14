@@ -352,7 +352,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
       <div><h2>إدارة كتالوج Fast4Top</h2><span>تصنيف المنتجات ومتابعة ظهورها في أقسام المتجر</span></div>
       <span className="status-pill cyan">مساعد التصنيف</span>
     </div>
-    <p className="manager-note">المزامنة تحدّث بيانات المورد فقط ولا تنشر المنتجات تلقائياً. المنتجات الجديدة تبقى مخفية حتى يختارها المالك، وغير المتاحة تبقى مخفية.</p>
+    <p className="manager-note">المزامنة تحدّث بيانات المورد والكميات تلقائياً كل 3 ساعات. المنتجات الجديدة تبقى مخفية حتى يختارها المالك، باستثناء منتجات PUBG وFree Fire المتاحة التي ينشرها النظام تلقائياً ببيانات Fast4Top الأصلية.</p>
     <div className="supplier-sync-tabs">
       {smartCounts.map(item=><button key={item.section} className={supplierSyncSection===item.section?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection(item.section);setSupplierView("all");}}>
         {item.section} · {item.count} منتج · {item.selected} مختار
