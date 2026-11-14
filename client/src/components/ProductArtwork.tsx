@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Gamepad2, Package, Smartphone, Sparkles } from "lucide-react";
-import { monogramFor, resolveProductImage, toneFor } from "@/lib/productImage";
+import {
+  defaultArtworkForCategory,
+  monogramFor,
+  resolveProductImage,
+  toneFor,
+} from "@/lib/productImage";
 
 type ProductArtworkProps = {
   name: string;
@@ -47,11 +52,20 @@ export default function ProductArtwork({
     [name, category, subcategory, imageUrl, externalId]
   );
 
-  const [status, setStatus] = useState<ArtworkStatus>(src ? "loading" : "error");
+  const fallbackSrc = useMemo(
+    () => (variant === "card" ? defaultArtworkForCategory(category) : null),
+    [category, variant]
+  );
+  const [usingFallback, setUsingFallback] = useState(false);
+  const [status, setStatus] = useState<ArtworkStatus>(
+    src || fallbackSrc ? "loading" : "error"
+  );
+  const imageSrc = usingFallback || !src ? fallbackSrc : src;
 
   useEffect(() => {
-    setStatus(src ? "loading" : "error");
-  }, [src]);
+    setUsingFallback(false);
+    setStatus(src || fallbackSrc ? "loading" : "error");
+  }, [src, fallbackSrc]);
 
   const tone = toneFor(`${name} ${subcategory ?? ""}`);
   const monogram = monogramFor(name);
@@ -86,17 +100,24 @@ export default function ProductArtwork({
         )}
       </div>
 
-      {src && status !== "error" ? (
+      {imageSrc && status !== "error" ? (
         <img
           className="pa-media"
-          src={src}
+          src={imageSrc}
           alt=""
           role="presentation"
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
           onLoad={() => setStatus("ready")}
-          onError={() => setStatus("error")}
+          onError={() => {
+            if (fallbackSrc && imageSrc !== fallbackSrc) {
+              setUsingFallback(true);
+              setStatus("loading");
+            } else {
+              setStatus("error");
+            }
+          }}
         />
       ) : null}
     </div>

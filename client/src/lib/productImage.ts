@@ -205,15 +205,33 @@ export function findLocalProductImage(input: ProductImageInput): string | null {
   return bestScore >= 200 && bestEntry ? bestEntry.file : null;
 }
 
+/** صورة احتياطية محلية لكل فئة عند غياب الصورة الأصلية أو تعطل رابطها. */
+export function defaultArtworkForCategory(category?: string | null): string | null {
+  const key = String(category ?? "").trim().toLowerCase();
+  if (/(games?|الألعاب|العاب|ألعاب|لعب)/i.test(key)) {
+    return "/artwork/default-game-art.webp";
+  }
+  if (/(apps?|applications?|التطبيقات|تطبيقات)/i.test(key)) {
+    return "/artwork/default-app-art.webp";
+  }
+  if (!key || /(المنتجات|منتجات|الهواتف|هواتف|الإكسسوارات|الاكسسوارات|اكسسوارات)/i.test(key)) {
+    return null;
+  }
+  return "/artwork/default-digital-art.webp";
+}
+
 /**
  * صور علامات احتياطية من شبكة خارجية.
- * تُستخدم فقط إذا لم يضع المالك صورة، ويسقط النظام تلقائيًا إلى البلاطة المحلية عند فشلها.
+ * تُستخدم فقط إذا لم يضع المالك صورة، ويسقط النظام تلقائيًا إلى الرسم المحلي عند فشلها.
  */
 export function remoteBrandArtwork(input: ProductImageInput): string | null {
   const itemName = `${input.name ?? ""} ${input.subcategory ?? ""}`.toLowerCase();
   if (!itemName.trim()) return null;
+  const categoryLabel = String(input.category ?? "");
+  const isAppsCategory = /(apps?|applications?|تطبيق)/i.test(categoryLabel);
+  const isGamesCategory = /(games?|لعب)/i.test(categoryLabel);
 
-  if (input.category === "التطبيقات") {
+  if (isAppsCategory) {
     if (/(haya|هايا|هيا)/i.test(itemName)) {
       return "https://play-lh.googleusercontent.com/wcwRELi8XuMjQHavMgULcNXD-WTVfkUs1nVW7x3cIuiuqRnHftHvOri4FLZAIPheewptkTEVBFQhi2lB3PYl2Q=w512-h512";
     }
@@ -230,6 +248,8 @@ export function remoteBrandArtwork(input: ProductImageInput): string | null {
       [/(tiktok|تيك\s*توك)/i, "tiktok"],
       [/(yalla\s*live|يلا\s*لايف)/i, "yallalive"],
       [/(mico|ميكو)/i, "mico"],
+      [/(chatgpt|openai|شات\s*جي\s*بي\s*تي)/i, "openai"],
+      [/(netflix|نتفلكس)/i, "netflix"],
       [/(poppo|بوبو)/i, "poppo"],
       [/(livu|ليڤو)/i, "livu"],
       [/(imo|ايمو)/i, "imo"],
@@ -245,7 +265,7 @@ export function remoteBrandArtwork(input: ProductImageInput): string | null {
     return app ? `https://cdn.simpleicons.org/${app[1]}/FFFFFF` : null;
   }
 
-  if (input.category !== "الألعاب") return null;
+  if (!isGamesCategory) return null;
 
   if (/(free\s*fire|فري\s*فاير)/i.test(itemName)) {
     return "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/d6/8f/47/d68f4742-5a10-b375-2114-0f840bd49ec1/AppIcon-1781539049-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg";
@@ -256,6 +276,10 @@ export function remoteBrandArtwork(input: ProductImageInput): string | null {
 
   const gameArtwork: Array<[RegExp, string]> = [
     [/(mobile\s*legends|mlbb|موبايل\s*ليجند)/i, "mobilelegendsbangbang"],
+    [/(brawl\s*stars)/i, "brawlstars"],
+    [/(clash\s*royale)/i, "clashroyale"],
+    [/(last\s*war)/i, "lastwar"],
+    [/(stumble\s*guys)/i, "stumbleguys"],
     [/(call\s*of\s*duty|cod|كول\s*اوف\s*ديوتي)/i, "callofduty"],
     [/(roblox|روبلوكس)/i, "roblox"],
     [/(minecraft|ماين\s*كرافت)/i, "minecraft"],
