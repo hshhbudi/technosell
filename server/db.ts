@@ -513,8 +513,7 @@ export async function syncSupplierProducts(
       const markup = current.markupPercent ?? 8;
       const isAvailable = item.available ?? current.available ?? true;
 
-      // Fast4Top is the live catalog source: available products are published
-      // automatically after sync, while unavailable supplier products stay hidden.
+      // Refresh supplier data while preserving the owner's publication choices.
       await db
         .update(supplierProducts)
         .set({
@@ -540,9 +539,9 @@ export async function syncSupplierProducts(
           imageUrl: current.imageUrl || item.imageUrl || null,
           description: item.description ?? current.description,
           available: isAvailable,
-          approved: isAvailable,
-          enabled: isAvailable,
-          ownerSelected: isAvailable,
+          approved: current.approved,
+          enabled: current.enabled,
+          ownerSelected: current.ownerSelected,
         })
         .where(eq(supplierProducts.id, current.id));
 
@@ -552,8 +551,7 @@ export async function syncSupplierProducts(
 
     const markup = 8;
 
-    // Publish every available Fast4Top product automatically after synchronization.
-    // Unavailable products remain hidden until the supplier marks them available.
+    // New supplier items remain hidden until the owner explicitly selects them.
     const isAvailable = item.available ?? true;
     await db.insert(supplierProducts).values({
       externalId: item.externalId,
@@ -574,9 +572,9 @@ export async function syncSupplierProducts(
       description: item.description ?? null,
       available: isAvailable,
       storeSection: item.storeSection ?? null,
-      approved: isAvailable,
-      enabled: isAvailable,
-      ownerSelected: isAvailable,
+      approved: false,
+      enabled: false,
+      ownerSelected: false,
     });
 
     inserted++;

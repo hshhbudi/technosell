@@ -164,7 +164,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   <div className="panel-head">
     <div>
       <h2>كتالوج Fast4Top المتصل</h2>
-      <span>تتم مزامنة كتالوج Fast4Top بالكامل ونشر المنتجات المتاحة تلقائيًا في المتجر</span>
+      <span>تتزامن بيانات Fast4Top، ولا يُنشر أي منتج إلا باختيار المالك؛ والمنتجات الجديدة تبدأ مخفية.</span>
     </div>
     <div className="admin-heading-actions">
       <span className="status-pill cyan">{supplierAdminCatalogQuery.isLoading ? "جاري التحميل" : `${supplierProducts.length} منتج · ${supplierCategories.length} قسم`}</span>
@@ -206,7 +206,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
   </div>
   <div className="supplier-folder-all"><button className={supplierSyncSection==="all"?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection("all");setSupplierView("all");}}>عرض كل المجلدات والمنتجات ({supplierProducts.length})</button></div>
   <div className="supplier-category-controls">
-        <h3>أقسام Fast4Top — المنتجات المتاحة تُعرض تلقائيًا في المتجر</h3>
+        <h3>أقسام Fast4Top — تحكم باختيار المنتجات التي تظهر في المتجر</h3>
         <div className="supplier-category-list">
           {supplierCategories.map(category => {
             const categoryProducts = supplierProducts.filter(p => p.subcategory === category && (supplierSyncSection==="all"||(p.storeSection||"خدمات رقمية")===supplierSyncSection));
@@ -231,12 +231,12 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
           })}
         </div>
       </div>
-      <div className="panel" style={{marginBottom:18,border:"1px solid var(--border-color, #ddd)"}}>
+  <div className="panel" style={{marginBottom:18,border:"1px solid var(--border-color, #ddd)"}}>
     <div className="panel-head">
       <div><h2>إدارة كتالوج Fast4Top</h2><span>تصنيف المنتجات ومتابعة ظهورها في أقسام المتجر</span></div>
       <span className="status-pill cyan">مساعد التصنيف</span>
     </div>
-    <p className="manager-note">يتم نشر كل منتج متاح لدى Fast4Top تلقائيًا بعد المزامنة. المنتجات غير المتاحة تبقى مخفية حتى يؤكد المورد توفرها.</p>
+    <p className="manager-note">المزامنة تحدّث بيانات المورد فقط ولا تنشر المنتجات تلقائياً. المنتجات الجديدة تبقى مخفية حتى يختارها المالك، وغير المتاحة تبقى مخفية.</p>
     <div className="supplier-sync-tabs">
       {smartCounts.map(item=><button key={item.section} className={supplierSyncSection===item.section?"primary-btn":"secondary-btn"} onClick={()=>{setSupplierSyncSection(item.section);setSupplierView("all");}}>
         {item.section} · {item.count} منتج · {item.selected} مختار
@@ -254,12 +254,12 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
         </button>)}
       </div>
       <p className="manager-note">{supplierSyncSection==="الألعاب"?"هنا تظهر الألعاب وباقاتها وخيارات شحنها التابعة لها، مثل PUBG وفري فاير، حسب المنتجات التي يوفرها Fast4Top.":supplierSyncSection==="التطبيقات"?"هنا تظهر التطبيقات وخدمات شحنها التابعة لها، مثل TikTok وLikee وKwai وBigo، حسب المنتجات التي يوفرها Fast4Top.":"اختر مجموعة الألعاب أو التطبيقات لعرض منتجاتها وخدمات شحنها معًا، أو اعرض كتالوج Fast4Top كاملًا."}</p>
-       <div className="admin-heading-actions" style={{marginBottom:16}}>
+      <div className="admin-heading-actions" style={{marginBottom:16}}>
         <button className={supplierView==="all" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("all")}>كل كتالوج Fast4Top ({supplierProducts.length})</button>
         <button className={supplierView==="selected" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("selected")}>المنتجات المنشورة ({supplierProducts.filter(p=>p.ownerSelected).length})</button>
         <button className={supplierView==="unselected" ? "primary-btn" : "secondary-btn"} onClick={()=>setSupplierView("unselected")}>غير المنشورة ({supplierProducts.filter(p=>!p.ownerSelected).length})</button>
       </div>
-      <p className="manager-note">المزامنة تجلب المنتجات المتاحة وتنشرها تلقائيًا. يمكنك إيقاف أي منتج يدويًا من بطاقة المنتج.</p>
+      <p className="manager-note">تحدّث المزامنة بيانات المورد ولا تغيّر اختيارات النشر التي ضبطها المالك.</p>
       <div className="supplier-products-grid">
         {sortedSupplierProducts.map(p => (
           <div className="supplier-mini-card" key={`${p.externalId}-${p.name}`}>
