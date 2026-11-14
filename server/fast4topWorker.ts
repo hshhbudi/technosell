@@ -2,6 +2,7 @@
 import {
   checkFast4TopOrders,
   createFast4TopOrder,
+  Fast4TopError,
   syncFast4TopCatalog,
   isFast4TopConfigured,
 } from "./fast4top";
@@ -115,6 +116,16 @@ async function submitOrder(order: PendingOrder) {
       error instanceof Error
         ? error.message
         : "تعذر تحديد نتيجة طلب Fast4Top";
+
+    // أخطاء الرفض المؤكدة من Fast4Top تعني أن الطلب لم يُنشأ لدى المورد؛
+    // finalizeSupplierOrder يعيد الرصيد مرة واحدة فقط ويحمي من التكرار.
+    if (error instanceof Fast4TopError && !error.retryable) {
+      await finalizeSupplierOrder(order.id, {
+        status: "reject",
+        note: `رفض Fast4Top الطلب: ${message}. تمت إعادة الرصيد للعميل`,
+      });
+      return;
+    }
 
     // لا نعيد الإرسال ولا نرجع الرصيد عند النتيجة المجهولة.
     await updateSupplierOrder(order.id, {
