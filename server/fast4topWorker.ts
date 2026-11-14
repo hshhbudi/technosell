@@ -122,7 +122,7 @@ async function submitOrder(order: PendingOrder) {
       executionStatus: "manual_processing",
       supplierLastError: message,
       ownerNote:
-        "نتيجة الإرسال غير مؤكدة. يجب مراجعة الطلب لدى Fast4Top قبل أي إجراء",
+        `نتيجة الإرسال غير مؤكدة: ${message}. يجب مراجعة الطلب لدى Fast4Top قبل أي إجراء`,
     });
 
     console.warn(
