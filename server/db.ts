@@ -15,6 +15,11 @@ import {
   mediaFiles,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
+import {
+  APP_STORE_SECTION,
+  MAX_APP_POINTS,
+  appPointsTotalCents,
+} from "@shared/points";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -409,10 +414,32 @@ export type SupplierProductSyncInput = {
 
 function calculateSellingPrice(
   supplierPriceCents: number,
-  markupPercent: number
+  markupPercent: number,
+  baseQuantity = 1,
+  points?: number | null
 ) {
-  return Math.round(
-    supplierPriceCents * (100 + markupPercent) / 100
+  const base = Math.max(1, Math.trunc(Number(baseQuantity) || 1));
+  const requestedPoints = Number(points);
+  const units =
+    Number.isSafeInteger(requestedPoints) && requestedPoints > 0
+      ? requestedPoints
+      : base;
+
+  // Without owner-defined points the result must stay byte-for-byte identical
+  // to the previous formula, so games and other sections never change.
+  if (units === base) {
+    return Math.round(
+      (supplierPriceCents * (100 + markupPercent)) / 100
+    );
+  }
+
+  return appPointsTotalCents(
+    {
+      supplierPriceCents,
+      markupPercent,
+      quantity: base,
+    },
+    units
   );
 }
 
@@ -512,6 +539,7 @@ export async function syncSupplierProducts(
     if (current) {
       const markup = current.markupPercent ?? 8;
       const isAvailable = item.available ?? current.available ?? true;
+      const baseQuantity = item.quantity ?? current.quantity ?? 1;
 
       // Refresh supplier data while preserving the owner's publication choices.
       await db
@@ -528,9 +556,11 @@ export async function syncSupplierProducts(
           supplierPriceCents: item.supplierPriceCents,
           sellingPriceCents: calculateSellingPrice(
             item.supplierPriceCents,
-            markup
+            markup,
+            baseQuantity,
+            current.points
           ),
-          quantity: item.quantity ?? current.quantity,
+          quantity: baseQuantity,
           // Quantity choices belong to Fast4Top; clear stale choices if the supplier no longer sends them.
           quantityValues: item.quantityValues ?? null,
           requires: item.requires ?? current.requires,
@@ -723,6 +753,57 @@ export async function setSupplierProductEnabled(
   await db
     .update(supplierProducts)
     .set({ enabled })
+    .where(eq(supplierProducts.id, id));
+
+  return getSupplierProductById(id);
+}
+
+/**
+ * حفظ عدد نقاط منتج تطبيق وإعادة احتساب سعره من سعر المورد وسعر النقطة المعتمد.
+ * مقصور على منتجات قسم التطبيقات، ولا يمس الألعاب أو بقية الأقسام.
+ */
+export async function setSupplierProductPoints(
+  id: number,
+  points: number
+) {
+  if (
+    !Number.isSafeInteger(points) ||
+    points < 1 ||
+    points > MAX_APP_POINTS
+  ) {
+    throw new Error(
+      `عدد النقاط يجب أن يكون رقمًا صحيحًا بين 1 و ${MAX_APP_POINTS.toLocaleString("en-US")}`
+    );
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  const current = await getSupplierProductById(id);
+  if (!current) throw new Error("المنتج غير موجود");
+
+  if (current.storeSection !== APP_STORE_SECTION) {
+    throw new Error("تعديل عدد النقاط متاح لمنتجات قسم التطبيقات فقط");
+  }
+
+  const sellingPriceCents = calculateSellingPrice(
+    current.supplierPriceCents,
+    current.markupPercent ?? 8,
+    current.quantity ?? 1,
+    points
+  );
+
+  if (
+    !Number.isSafeInteger(sellingPriceCents) ||
+    sellingPriceCents <= 0 ||
+    sellingPriceCents > 10_000_000
+  ) {
+    throw new Error("السعر الناتج عن عدد النقاط غير صالح");
+  }
+
+  await db
+    .update(supplierProducts)
+    .set({ points, sellingPriceCents })
     .where(eq(supplierProducts.id, id));
 
   return getSupplierProductById(id);

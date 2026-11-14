@@ -150,6 +150,10 @@ export const supplierProducts = mysqlTable(
 
     quantityValues: json("quantityValues"),
 
+    // App products only: owner-controlled points count.
+    // Null keeps Fast4Top's minimum quantity as the default points value.
+    points: int("points"),
+
     requires: json("requires"),
 
     productType: varchar("productType", { length: 100 }),

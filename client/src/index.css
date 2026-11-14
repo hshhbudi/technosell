@@ -1154,3 +1154,24 @@
 .pa-chip .pa-media{padding:0!important;object-fit:cover!important;border-radius:6px!important}
 .pa-chip.pa-ready .pa-chip-glyph{opacity:0}
 @media(prefers-reduced-motion:reduce){.pa-media,.pa-tile{transition:none!important}.legacy-card:hover .pa-ready .pa-media{transform:none}}
+
+/* App points: owner-defined points count with (+)/(−) and manual entry. */
+.legacy-points-badge{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:4px 10px;border-radius:999px;background:#f1ca761a;border:1px solid #f1ca764d;color:#f1ca76;font-size:11px;font-weight:800;letter-spacing:.2px}
+.points-stepper{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:8px;margin-top:8px;align-items:stretch;direction:ltr}
+.points-stepper input{width:100%;min-width:0;text-align:center;font-weight:800;font-size:16px;min-height:44px;background:#120d20;color:#fff;border:1px solid #80603d;border-radius:10px}
+.points-step-btn{display:grid;place-items:center;min-height:44px;border-radius:10px;border:1px solid #80603d;background:#241a3a;color:#f1ca76;font-size:22px;font-weight:900;line-height:1;cursor:pointer}
+.points-step-btn:hover:not(:disabled){background:#33254f;border-color:#f1ca76}
+.points-step-btn:disabled{opacity:.45;cursor:not-allowed}
+.points-hint{display:block;margin-top:8px;font-size:11px;font-weight:600;color:#cbbddd;line-height:1.7}
+.app-points-control{display:grid;gap:6px;margin:10px 0;padding:9px;border:1px solid #80603d66;border-radius:10px;background:#1a1229}
+.app-points-control>span{font-size:10px;font-weight:800;color:#f1ca76}
+.app-points-control .points-stepper{grid-template-columns:30px minmax(0,1fr) 30px;gap:4px;margin-top:0}
+.app-points-control .points-step-btn{min-height:30px;font-size:16px;border-radius:7px}
+.app-points-control input{min-height:30px;font-size:12px;padding:0 4px;border-radius:7px}
+.app-points-control small{display:grid;gap:2px;font-size:10px;color:#cbbddd;line-height:1.6}
+.app-points-control .app-points-saving{color:#f1ca76;font-weight:800}
+.theme-light .legacy-points-badge{background:#fff6e2;border-color:#d9b061;color:#8a5c12}
+.supplier-mini-card.has-points{flex-direction:column;align-items:stretch}
+.supplier-mini-card.has-points>div:last-child{min-width:0}
+.app-points-control{min-width:0;width:100%;box-sizing:border-box}
+.app-points-control .points-stepper{width:100%}

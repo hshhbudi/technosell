@@ -99,6 +99,13 @@
       "when": 1794510000000,
       "tag": "0013_supplier_owner_selection",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1794681000000,
+      "tag": "0014_supplier_app_points",
+      "breakpoints": true
     }
   ]
 }

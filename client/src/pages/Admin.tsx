@@ -1,9 +1,16 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ArrowRight, BadgePercent, Bell, Box, CheckCircle2, Clock3, CreditCard, Gamepad2, LayoutDashboard, Package, Plus, RefreshCw, Search, ShoppingBag, Smartphone, Trash2, TrendingUp, Users, WalletCards, X } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
+import {
+  appPointPriceCents,
+  appPointsStep,
+  appPointsTotalCents,
+  appPointsValue,
+  formatPointPrice,
+} from "@shared/points";
 
 const money=(cents:number)=>`$ ${(cents/100).toFixed(2)}`;
 const isSyriaTopupOrder=(items:string)=>items.includes('"category":"شحن ألعاب"')||items.includes('"category":"شحن تطبيقات"');
@@ -49,6 +56,106 @@ function compressProductImage(file: File, onDone: (data: string) => void, onErro
     image.src = String(reader.result);
   };
   reader.readAsDataURL(file);
+}
+
+type AppPointsProduct = {
+  id: number;
+  points?: number | null;
+  quantity?: number | null;
+  supplierPriceCents: number;
+  markupPercent: number;
+  sellingPriceCents: number;
+};
+
+/**
+ * تحكم المالك بعدد نقاط منتج تطبيق: أزرار (+) و(−) وإدخال يدوي.
+ * السعر يُعاد احتسابه من سعر المورد وسعر النقطة، ثم يُحفظ في قاعدة البيانات.
+ */
+function AppPointsControl({
+  product,
+  saving,
+  onSave,
+}: {
+  product: AppPointsProduct;
+  saving: boolean;
+  onSave: (points: number) => void;
+}) {
+  const savedPoints = appPointsValue(product);
+  const [draft, setDraft] = useState(String(savedPoints));
+
+  useEffect(() => {
+    setDraft(String(savedPoints));
+  }, [product.id, savedPoints]);
+
+  const current = Math.max(1, Math.trunc(Number(draft) || savedPoints));
+  const step = appPointsStep(current);
+  const pricing = {
+    supplierPriceCents: product.supplierPriceCents,
+    markupPercent: product.markupPercent,
+    quantity: product.quantity,
+    points: product.points,
+  };
+  const projected =
+    current === savedPoints
+      ? product.sellingPriceCents
+      : appPointsTotalCents(pricing, current);
+
+  const commit = (value: number) => {
+    const next = Math.max(1, Math.trunc(value));
+    setDraft(String(next));
+
+    if (next !== savedPoints) onSave(next);
+  };
+
+  return (
+    <div className="app-points-control">
+      <span>عدد نقاط التطبيق</span>
+      <div className="points-stepper">
+        <button
+          type="button"
+          className="points-step-btn"
+          aria-label={`إنقاص ${step} نقطة`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => commit(current - step)}
+          disabled={saving || current <= 1}
+        >
+          −
+        </button>
+        <input
+          type="number"
+          inputMode="numeric"
+          min="1"
+          step="1"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value.replace(/[^\d]/g, ""))}
+          onBlur={() => commit(Number(draft) || savedPoints)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commit(Number(draft) || savedPoints);
+            }
+          }}
+          aria-label="عدد نقاط التطبيق"
+          disabled={saving}
+        />
+        <button
+          type="button"
+          className="points-step-btn"
+          aria-label={`زيادة ${step} نقطة`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => commit(current + step)}
+          disabled={saving}
+        >
+          +
+        </button>
+      </div>
+      <small>
+        <span>سعر النقطة: {formatPointPrice(appPointPriceCents(pricing))}</span>
+        <span>السعر بعد التعديل: {money(projected)}</span>
+        {saving && <b className="app-points-saving"> — جارٍ الحفظ...</b>}
+      </small>
+    </div>
+  );
 }
 
 export default function Admin() {
@@ -105,6 +212,15 @@ export default function Admin() {
       await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
     },
     onError: (err) => setError(err.message || "تعذر تحديث المنتجات المختارة"),
+  });
+  const setSupplierPoints = trpc.supplier.setPoints.useMutation({
+    onSuccess: async () => {
+      setError("");
+      setNotice("تم حفظ عدد النقاط وإعادة احتساب سعر التطبيق");
+      setTimeout(() => setNotice(""), 3200);
+      await Promise.all([utils.supplier.adminCatalog.invalidate(), utils.supplier.catalog.invalidate()]);
+    },
+    onError: (err) => setError(err.message || "تعذر حفظ عدد النقاط"),
   });
   const saveSupplierCategory = trpc.supplier.saveCategory.useMutation({
     onSuccess: async () => {
@@ -262,7 +378,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
       <p className="manager-note">تحدّث المزامنة بيانات المورد ولا تغيّر اختيارات النشر التي ضبطها المالك.</p>
       <div className="supplier-products-grid">
         {sortedSupplierProducts.map(p => (
-          <div className="supplier-mini-card" key={`${p.externalId}-${p.name}`}>
+          <div className={`supplier-mini-card${p.storeSection === "التطبيقات" ? " has-points" : ""}`} key={`${p.externalId}-${p.name}`}>
             {p.imageUrl ? <img src={p.imageUrl} alt={p.name}/> : <div className="product-mini"><Box size={18}/></div>}
             <div>
               <strong>{p.name}</strong>
@@ -276,6 +392,13 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
                 </select>
               </label>
               <b>{money(p.sellingPriceCents)}</b>
+              {p.storeSection === "التطبيقات" && (
+                <AppPointsControl
+                  product={p}
+                  saving={setSupplierPoints.isPending}
+                  onSave={(points) => setSupplierPoints.mutate({ id: p.id, points })}
+                />
+              )}
               <small>الحالة: {p.ownerSelected ? "منشور في المتجر" : "غير منشور"} · التوفر لدى المزوّد: {p.available ? "متاح" : "غير متاح"}</small>
               <div className="admin-heading-actions">
                 <button className={p.ownerSelected ? "secondary-btn" : "primary-btn"} onClick={() => setSupplierSelection.mutate({id:p.id,selected:!p.ownerSelected})} disabled={setSupplierSelection.isPending || (!p.ownerSelected && !p.available)}>
@@ -296,7 +419,7 @@ const removeProduct = trpc.admin.products.delete.useMutation({ onSuccess: async(
         <div className="panel-head"><div><h2>{activeSection==="balance"?"طلبات تعبئة رصيد الزبائن":"طلبات الدفع والشحن"}</h2><span>{visibleOrders.length} طلب · تتحدث القائمة تلقائيًا</span></div><button className="secondary-btn" onClick={()=>ordersQuery.refetch()}><RefreshCw size={15}/> تحديث الطلبات</button></div>
         <div className="orders-toolbar"><input value={orderSearch} onChange={e=>setOrderSearch(e.target.value)} placeholder="ابحث برقم الطلب أو اسم الزبون أو رقمه"/><select value={orderFilter} onChange={e=>setOrderFilter(e.target.value as typeof orderFilter)}><option value="all">كل الحالات</option><option value="pending">بانتظار المراجعة</option><option value="processing">مؤكد / قيد المعالجة</option><option value="completed">مكتمل</option><option value="failed">مرفوض / فاشل</option></select></div>
         {ordersQuery.isLoading?<div className="manager-note">جاري تحميل الطلبات...</div>:filteredOrders.length===0?<div className="manager-empty"><WalletCards size={30}/><h3>لا توجد طلبات هنا</h3><p>طلبات الزبائن الجديدة ستظهر في هذا القسم مباشرة.</p></div>:<div className="orders-list">{filteredOrders.map(order=>{const walletOrder=isWalletTopupOrder(order.items);return <article className="owner-order-card" key={order.id}>
-          <div className="owner-order-main"><div><strong>{walletOrder?"تعبئة رصيد المحفظة":(() => { try { const items=JSON.parse(order.items) as Array<{name?:string;quantity?:number;targetId?:string}>; return items.map(item => `${item.quantity && item.quantity > 1 ? `${item.quantity} × ` : ""}${item.name || "طلب من المتجر"}`).join("، ") || "طلب من المتجر"; } catch { return "طلب من المتجر"; } })()} · {order.customerName}</strong><small>{order.orderNumber} · {new Date(order.createdAt).toLocaleString("ar-SY")} · {order.phone}</small></div><b className="owner-order-total">{money(order.total)}</b></div>
+          <div className="owner-order-main"><div><strong>{walletOrder?"تعبئة رصيد المحفظة":(() => { try { const items=JSON.parse(order.items) as Array<{name?:string;quantity?:number;points?:number;targetId?:string}>; return items.map(item => `${item.points ? `${item.points.toLocaleString("en-US")} نقطة · ` : item.quantity && item.quantity > 1 ? `${item.quantity} × ` : ""}${item.name || "طلب من المتجر"}`).join("، ") || "طلب من المتجر"; } catch { return "طلب من المتجر"; } })()} · {order.customerName}</strong><small>{order.orderNumber} · {new Date(order.createdAt).toLocaleString("ar-SY")} · {order.phone}</small></div><b className="owner-order-total">{money(order.total)}</b></div>
           <div className="owner-order-meta"><span>الدفع: {order.paymentStatus==="confirmed"?"مؤكد":order.paymentStatus==="rejected"?"مرفوض":"بانتظار التأكيد"}</span>{order.paymentReference&&<span>رقم التحويل: {order.paymentReference}</span>}{order.ownerNote&&<span>ملاحظة: {order.ownerNote}</span>}</div>
           {order.paymentProofUrl&&<a className="owner-proof-link" href={order.paymentProofUrl} target="_blank" rel="noreferrer">عرض إثبات التحويل</a>}
           {order.paymentStatus==="pending"&&<div className="owner-order-actions"><button className="primary-btn" onClick={()=>updateOrder.mutate({id:order.id,paymentStatus:"confirmed",...(walletOrder?{executionStatus:"completed" as const}:{})})} disabled={updateOrder.isPending}>{walletOrder?"تأكيد التحويل وإضافة الرصيد":"تأكيد الدفع"}</button><button className="delete-btn" onClick={()=>updateOrder.mutate({id:order.id,paymentStatus:"rejected",executionStatus:"failed"})} disabled={updateOrder.isPending}>رفض الطلب</button></div>}

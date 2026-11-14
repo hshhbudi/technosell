@@ -27,6 +27,14 @@ import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import CustomerAuth from "@/components/CustomerAuth";
 import ProductArtwork from "@/components/ProductArtwork";
+import {
+  appPointPriceCents,
+  appPointsStep,
+  appPointsTotalCents,
+  appPointsValue,
+  formatPointPrice,
+  formatPoints,
+} from "@shared/points";
 
 type StoreProduct = {
   id: number;
@@ -59,6 +67,9 @@ type StoreProduct = {
   icon: "app" | "game" | "product";
   quantity?: { min?: string; max?: string } | null;
   quantityValues?: number[] | { min: number; max: number } | null;
+  points?: number | null;
+  markupPercent?: number;
+  supplierPriceCents?: number;
   requires?: Array<{
     name?: string;
     question?: string;
@@ -148,6 +159,13 @@ const arabicAppName = (name: string) =>
 
 const money = (cents: number) =>
   `$ ${(Number(cents || 0) / 100).toFixed(2)}`;
+
+const pointsPricing = (product: StoreProduct) => ({
+  supplierPriceCents: product.supplierPriceCents ?? 0,
+  markupPercent: product.markupPercent ?? 8,
+  quantity: Number(product.quantity?.min || 1),
+  points: product.points ?? null,
+});
 
 const isGameProduct = (
   category: string,
@@ -288,6 +306,10 @@ export default function Home() {
         ? { min: Number((p.quantityValues as { min?: number; max?: number }).min), max: Number((p.quantityValues as { min?: number; max?: number }).max) }
         : null,
 
+    points: p.points ?? null,
+    markupPercent: p.markupPercent,
+    supplierPriceCents: p.supplierPriceCents,
+
     description,
     imageUrl: p.imageUrl || supplierCategoryOverrides.find(item => item.sourceName === subcategory)?.imageUrl || null,
 
@@ -369,19 +391,29 @@ export default function Home() {
     Boolean(Array.isArray(p.quantityValues) && p.quantityValues.length) ||
     Boolean(p.quantityValues && !Array.isArray(p.quantityValues));
 
+  const selectedPricing = selected ? pointsPricing(selected) : null;
+
+  const selectedPoints = selectedPricing
+    ? Math.max(1, Number(quantity) || appPointsValue(selectedPricing))
+    : 1;
+
   const computedTotal = selected
-    ? (() => {
-        const min = Number(selected.quantity?.min || 1);
+    ? selected.category === "التطبيقات"
+      ? selectedPoints === appPointsValue(pointsPricing(selected))
+        ? selected.price
+        : appPointsTotalCents(pointsPricing(selected), selectedPoints)
+      : (() => {
+          const min = Number(selected.quantity?.min || 1);
 
-        const q = hasQuantity(selected)
-          ? Math.max(min, Number(quantity) || min)
-          : 1;
+          const q = hasQuantity(selected)
+            ? Math.max(min, Number(quantity) || min)
+            : 1;
 
-        return Math.max(
-          1,
-          Math.round(selected.price * (q / min))
-        );
-      })()
+          return Math.max(
+            1,
+            Math.round(selected.price * (q / min))
+          );
+        })()
     : 0;
 
   const showToast = (message: string) => {
@@ -407,11 +439,13 @@ export default function Home() {
     setSelected(product);
     setTargetId("");
     setQuantity(
-      Array.isArray(product.quantityValues) && product.quantityValues.length
-        ? String(product.quantityValues[0])
-        : product.quantityValues && !Array.isArray(product.quantityValues)
-          ? String(product.quantityValues.min)
-          : ""
+      product.category === "التطبيقات"
+        ? String(appPointsValue(pointsPricing(product)))
+        : Array.isArray(product.quantityValues) && product.quantityValues.length
+          ? String(product.quantityValues[0])
+          : product.quantityValues && !Array.isArray(product.quantityValues)
+            ? String(product.quantityValues.min)
+            : ""
     );
   };
 
@@ -485,12 +519,15 @@ export default function Home() {
       return;
     }
 
-    const q = hasQuantity(selected)
-      ? Math.max(
-          Number(selected.quantity?.min || 1),
-          Number(quantity) || 1
-        )
-      : undefined;
+    const q =
+      selected.category === "التطبيقات"
+        ? selectedPoints
+        : hasQuantity(selected)
+          ? Math.max(
+              Number(selected.quantity?.min || 1),
+              Number(quantity) || 1
+            )
+          : undefined;
 
     directTopup.mutate({
       // نرسل المعرّف الداخلي من قاعدة البيانات
@@ -719,6 +756,18 @@ export default function Home() {
                       {arabicAppName(p.name)}
                     </small>
                   )}
+                  {p.category === "التطبيقات" &&
+                    (p.points != null || Number(p.quantity?.min || 1) > 1) && (
+                      <span className="legacy-points-badge">
+                        {formatPoints(
+                          appPointsValue({
+                            points: p.points,
+                            quantity: Number(p.quantity?.min || 1),
+                          })
+                        )}{" "}
+                        نقطة
+                      </span>
+                    )}
                   <p>{p.description}</p>
 
                   <div className="legacy-card-bottom">
@@ -777,30 +826,85 @@ export default function Home() {
               </label>
             )}
 
-            {hasQuantity(selected) && (
+            {selected.category === "التطبيقات" ? (
               <label>
-                الكمية المتاحة لدى Fast4Top
-                {Array.isArray(selected.quantityValues) && selected.quantityValues.length ? (
-                  <select
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
+                عدد النقاط
+                <div className="points-stepper">
+                  <button
+                    type="button"
+                    className="points-step-btn"
+                    aria-label="إنقاص النقاط"
+                    onClick={() =>
+                      setQuantity(
+                        String(
+                          Math.max(
+                            1,
+                            selectedPoints - appPointsStep(selectedPoints)
+                          )
+                        )
+                      )
+                    }
+                    disabled={selectedPoints <= 1}
                   >
-                    {selected.quantityValues.map((value) => (
-                      <option key={value} value={value}>{value.toLocaleString("en-US")}</option>
-                    ))}
-                  </select>
-                ) : (
+                    −
+                  </button>
                   <input
                     type="number"
-                    min={selected.quantity?.min || 1}
-                    max={selected.quantity?.max || undefined}
+                    inputMode="numeric"
+                    min="1"
                     step="1"
                     value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    placeholder="أدخل كمية ضمن حدود المورد"
+                    onChange={(e) =>
+                      setQuantity(e.target.value.replace(/[^\d]/g, ""))
+                    }
+                    onBlur={() => setQuantity(String(selectedPoints))}
+                    aria-label="عدد النقاط"
                   />
-                )}
+                  <button
+                    type="button"
+                    className="points-step-btn"
+                    aria-label="زيادة النقاط"
+                    onClick={() =>
+                      setQuantity(
+                        String(
+                          selectedPoints + appPointsStep(selectedPoints)
+                        )
+                      )
+                    }
+                  >
+                    +
+                  </button>
+                </div>
+                <small className="points-hint">
+                  سعر النقطة: {formatPointPrice(appPointPriceCents(selectedPricing!))} — يمكنك إدخال أي عدد نقاط
+                </small>
               </label>
+            ) : (
+              hasQuantity(selected) && (
+                <label>
+                  الكمية المتاحة لدى Fast4Top
+                  {Array.isArray(selected.quantityValues) && selected.quantityValues.length ? (
+                    <select
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                    >
+                      {selected.quantityValues.map((value) => (
+                        <option key={value} value={value}>{value.toLocaleString("en-US")}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="number"
+                      min={selected.quantity?.min || 1}
+                      max={selected.quantity?.max || undefined}
+                      step="1"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      placeholder="أدخل كمية ضمن حدود المورد"
+                    />
+                  )}
+                </label>
+              )
             )}
 
             <div className="legacy-modal-total">
@@ -892,4 +996,3 @@ export default function Home() {
     </div>
   );
 }
-

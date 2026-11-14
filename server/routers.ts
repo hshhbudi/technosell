@@ -27,6 +27,7 @@ listProducts,
   moveSupplierFolderProducts,
   setSupplierProductImage,
   setSupplierProductEnabled,
+  setSupplierProductPoints,
   setSupplierProductSelection,
   setSupplierCategoryEnabled,
   listSupplierCategoryOverrides,
@@ -43,6 +44,13 @@ listProducts,
   getCustomerByEmail,
   getCustomerById,
 } from "./db";
+
+import {
+  APP_STORE_SECTION,
+  MAX_APP_POINTS,
+  appPointsTotalCents,
+  appPointsValue,
+} from "@shared/points";
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -494,36 +502,66 @@ export const appRouter = router({
         }
 
         const baseQuantity = Number(product.quantity ?? 1);
-        const quantity = input.quantity ?? baseQuantity;
-        const supplierQuantityValues = product.quantityValues;
-        const allowedValues = Array.isArray(supplierQuantityValues)
-          ? supplierQuantityValues.map(Number).filter(value => Number.isSafeInteger(value) && value > 0)
-          : null;
-        const quantityRange = supplierQuantityValues && !Array.isArray(supplierQuantityValues)
-          ? supplierQuantityValues as { min?: number; max?: number }
-          : null;
+        const isAppProduct =
+          product.storeSection === APP_STORE_SECTION;
 
-        if (
-          !Number.isSafeInteger(baseQuantity) ||
-          baseQuantity <= 0 ||
-          !Number.isSafeInteger(quantity) ||
-          quantity <= 0 ||
-          (allowedValues && allowedValues.length > 0 && !allowedValues.includes(quantity)) ||
-          (quantityRange && (
-            quantity < Number(quantityRange.min ?? baseQuantity) ||
-            quantity > Number(quantityRange.max ?? baseQuantity)
-          )) ||
-          (!allowedValues?.length && !quantityRange && quantity !== baseQuantity)
-        ) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "الكمية المطلوبة غير موجودة ضمن كميات Fast4Top المتاحة",
-          });
+        let quantity: number;
+        let totalCents: number;
+
+        if (isAppProduct) {
+          // قسم التطبيقات: عدد النقاط حرّ (+/− أو إدخال يدوي)،
+          // والسعر يُحتسب من سعر المورد وسعر النقطة المعتمد.
+          quantity = input.quantity ?? appPointsValue(product);
+
+          if (
+            !Number.isSafeInteger(quantity) ||
+            quantity <= 0 ||
+            quantity > MAX_APP_POINTS
+          ) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "عدد النقاط غير صالح",
+            });
+          }
+
+          totalCents =
+            quantity === appPointsValue(product)
+              ? product.sellingPriceCents
+              : appPointsTotalCents(product, quantity);
+        } else {
+          // مسار الألعاب وبقية الأقسام يبقى كما هو دون أي تغيير.
+          const supplierQuantityValues = product.quantityValues;
+          const allowedValues = Array.isArray(supplierQuantityValues)
+            ? supplierQuantityValues.map(Number).filter(value => Number.isSafeInteger(value) && value > 0)
+            : null;
+          const quantityRange = supplierQuantityValues && !Array.isArray(supplierQuantityValues)
+            ? supplierQuantityValues as { min?: number; max?: number }
+            : null;
+
+          quantity = input.quantity ?? baseQuantity;
+
+          if (
+            !Number.isSafeInteger(baseQuantity) ||
+            baseQuantity <= 0 ||
+            !Number.isSafeInteger(quantity) ||
+            quantity <= 0 ||
+            (allowedValues && allowedValues.length > 0 && !allowedValues.includes(quantity)) ||
+            (quantityRange && (
+              quantity < Number(quantityRange.min ?? baseQuantity) ||
+              quantity > Number(quantityRange.max ?? baseQuantity)
+            )) ||
+            (!allowedValues?.length && !quantityRange && quantity !== baseQuantity)
+          ) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "الكمية المطلوبة غير موجودة ضمن كميات Fast4Top المتاحة",
+            });
+          }
+
+          totalCents = Math.round(
+            (product.sellingPriceCents * quantity) / baseQuantity
+          );
         }
-
-        const totalCents = Math.round(
-          (product.sellingPriceCents * quantity) / baseQuantity
-        );
 
         if (
           !Number.isSafeInteger(totalCents) ||
@@ -562,6 +600,7 @@ export const appRouter = router({
                 category: product.category || "شحن رقمي",
                 targetId: input.targetId?.trim() || undefined,
                 quantity,
+                ...(isAppProduct ? { points: quantity } : {}),
                 price: totalCents,
                 digital: true,
               },
@@ -708,6 +747,26 @@ sync: adminProcedure.input(z.object({
       .input(z.object({ id: z.number().int().positive(), enabled: z.boolean() }))
       .mutation(async ({ input }) => {
         return await setSupplierProductEnabled(input.id, input.enabled);
+      }),
+    setPoints: adminProcedure
+      .input(
+        z.object({
+          id: z.number().int().positive(),
+          points: z.number().int().min(1).max(MAX_APP_POINTS),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          return await setSupplierProductPoints(input.id, input.points);
+        } catch (error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              error instanceof Error
+                ? error.message
+                : "تعذر حفظ عدد النقاط",
+          });
+        }
       }),
     setSelection: adminProcedure
       .input(z.object({ id: z.number().int().positive(), selected: z.boolean() }))
