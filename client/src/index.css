@@ -1175,3 +1175,21 @@
 .supplier-mini-card.has-points>div:last-child{min-width:0}
 .app-points-control{min-width:0;width:100%;box-sizing:border-box}
 .app-points-control .points-stepper{width:100%}
+/* Clear owner order log: separate payment, supplier and execution states. */
+.owner-order-card{position:relative;overflow:hidden;border-inline-start:4px solid #80603d}
+.owner-order-card.order-status-accept{border-inline-start-color:#39d98a}
+.owner-order-card.order-status-wait,.owner-order-card.order-status-sending,.owner-order-card.order-status-manual_processing{border-inline-start-color:#f1ca76}
+.owner-order-card.order-status-reject,.owner-order-card.order-status-review,.owner-order-card.order-status-failed{border-inline-start-color:#ff6b6b}
+.owner-order-main small{font-size:11px;color:var(--muted);line-height:1.7}
+.owner-order-statuses{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.order-status-badge{display:inline-flex;align-items:center;min-height:27px;padding:4px 9px;border-radius:999px;border:1px solid #80603d66;font-size:10px;font-weight:800;line-height:1.4}
+.order-status-badge.payment-confirmed,.order-status-badge.supplier-accept,.order-status-badge.execution-completed{color:#5ee3a0;background:#153c2b;border-color:#39d98a66}
+.order-status-badge.payment-pending,.order-status-badge.supplier-wait,.order-status-badge.supplier-sending,.order-status-badge.execution-pending,.order-status-badge.execution-manual_processing{color:#f1ca76;background:#3b2b16;border-color:#f1ca7666}
+.order-status-badge.payment-rejected,.order-status-badge.supplier-reject,.order-status-badge.supplier-review,.order-status-badge.execution-failed{color:#ff9a9a;background:#451c25;border-color:#ff6b6b66}
+.order-status-badge.supplier-none{color:#cbbddd;background:#251a32}
+.owner-order-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding:10px;border:1px solid #80603d44;border-radius:10px;background:#100b1b66}
+.owner-order-details span,.owner-order-notes span{display:grid;gap:3px;font-size:11px;color:var(--text)}
+.owner-order-details b,.owner-order-notes b{font-size:10px;color:#d5b577}
+.owner-order-notes{display:grid;gap:7px;padding:10px;border-radius:10px;background:#2a183a;border:1px solid #80603d44}
+.owner-order-notes .owner-order-error{color:#ffb0b0;background:#451c2533;padding:7px;border-radius:7px}
+@media(max-width:600px){.owner-order-statuses{display:grid;grid-template-columns:1fr}.order-status-badge{justify-content:center}.owner-order-details{grid-template-columns:1fr}.owner-order-total{align-self:flex-start}}
