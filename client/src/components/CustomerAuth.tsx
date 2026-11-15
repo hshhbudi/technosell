@@ -46,7 +46,16 @@ export default function CustomerAuth({ onClose }: Props) {
       const credential = await signInWithPopup(firebaseAuth, provider);
       firebaseLogin.mutate({ idToken: await credential.user.getIdToken() });
     } catch (googleError) {
-      setPasswordMessage(googleError instanceof Error ? googleError.message : "تعذر تسجيل الدخول باستخدام Google");
+      const code = googleError && typeof googleError === "object" && "code" in googleError
+        ? String((googleError as { code?: unknown }).code)
+        : "";
+      setPasswordMessage(
+        code === "auth/unauthorized-domain"
+          ? "هذا النطاق غير مضاف في Firebase. أضف technosell.cncabtan.prod.page إلى Authorized domains ثم أعد المحاولة."
+          : googleError instanceof Error
+            ? googleError.message
+            : "تعذر تسجيل الدخول باستخدام Google"
+      );
     }
   };
   const signInWithFirebase = async () => {
