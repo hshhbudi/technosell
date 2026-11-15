@@ -5,6 +5,14 @@ export function publicPlatformConfig(env: NodeJS.ProcessEnv = process.env) {
     oauthPortalUrl: env.MANUS_OAUTH_PORTAL_URL ?? "",
     apiUrl: env.MANUS_API_URL ?? "",
     apiBrowserKey: env.MANUS_API_BROWSER_KEY ?? "",
+    firebaseConfig: {
+      apiKey: env.VITE_FIREBASE_API_KEY ?? "",
+      authDomain: env.VITE_FIREBASE_AUTH_DOMAIN ?? "",
+      projectId: env.VITE_FIREBASE_PROJECT_ID ?? "",
+      storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET ?? "",
+      messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? "",
+      appId: env.VITE_FIREBASE_APP_ID ?? "",
+    },
   };
 }
 
