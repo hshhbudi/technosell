@@ -223,6 +223,7 @@ export default function Home() {
     useState<StoreProduct["category"]>("التطبيقات");
 
   const [subcategory, setSubcategory] = useState("");
+  const [selectedApp, setSelectedApp] = useState("");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<StoreProduct | null>(null);
   const [targetId, setTargetId] = useState("");
@@ -347,6 +348,22 @@ export default function Home() {
   // يعرض المتجر المنتجات التي اختارها المالك من Fast4Top إضافة إلى المنتجات اليدوية المنشورة.
   const products: StoreProduct[] = [...supplierOnlyIdProducts, ...manualProducts];
 
+  const appGroups = useMemo(() => {
+    if (active !== "التطبيقات") return [];
+    const grouped = new Map<string, StoreProduct[]>();
+    for (const product of products) {
+      if (product.category !== "التطبيقات") continue;
+      const key = (product.subcategory || product.name || "تطبيق").trim();
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(product);
+    }
+    return Array.from(grouped.entries()).map(([name, items]) => ({
+      name, items,
+      imageUrl: supplierCategoryOverrides.find(item => item.displayName === name || item.sourceName === name)?.imageUrl || items.find(item => item.imageUrl)?.imageUrl || null,
+      productCount: items.length,
+    })).sort((a, b) => a.name.localeCompare(b.name, "ar"));
+  }, [products, active, supplierCategoryOverrides]);
+
   const subcategories = useMemo(
     () =>
       Array.from(
@@ -374,10 +391,11 @@ export default function Home() {
       products.filter(
         (p) =>
           p.category === active &&
+          (active !== "التطبيقات" || !selectedApp || p.subcategory === selectedApp) &&
           (!subcategory || p.subcategory === subcategory) &&
           p.name.toLowerCase().includes(query.toLowerCase())
       ),
-    [products, active, subcategory, query]
+    [products, active, subcategory, selectedApp, query]
   );
 
   const selectCategory = (
@@ -385,6 +403,8 @@ export default function Home() {
   ) => {
     setActive(value);
     setSubcategory("");
+    setSelectedApp("");
+    setQuery("");
   };
 
   const hasQuantity = (p: StoreProduct) =>
@@ -678,53 +698,50 @@ export default function Home() {
         <section className="legacy-catalog" id="catalog">
           <div className="legacy-section-head">
             <div>
-              <span className="legacy-kicker">
-                DIRECT TOPUP / الشحن المباشر
-              </span>
-
-              <h2>قسم {active}</h2>
+              <span className="legacy-kicker">DIRECT TOPUP / الشحن المباشر</span>
+              <h2>{active === "التطبيقات" && selectedApp ? selectedApp : `قسم ${active}`}</h2>
+              {active === "التطبيقات" && selectedApp && <small className="app-section-count">{filtered.length} منتج متاح</small>}
             </div>
-
-            <div className="legacy-search">
-              <Search size={18} />
-
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="ابحث داخل هذا القسم..."
-              />
+            {(!(active === "التطبيقات" && !selectedApp)) && (
+              <div className="legacy-search">
+                <Search size={18}/>
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ابحث داخل هذا القسم..."/>
+              </div>
+            )}
+          </div>
+          {active === "التطبيقات" && !selectedApp ? (
+            <div className="app-directory" aria-label="اختر التطبيق">
+              {appGroups.map((app) => (
+                <button type="button" key={app.name} className="app-directory-card" onClick={() => {setSelectedApp(app.name);setSubcategory("");setQuery("");}}>
+                  <div className="app-directory-art">
+                    <ProductArtwork name={app.name} category="التطبيقات" subcategory={app.name} imageUrl={app.imageUrl} fit="contain"/>
+                  </div>
+                  <strong>{app.name}</strong>
+                  <span>{app.productCount} باقة شحن</span>
+                  <small>اضغط لعرض الباقات <ChevronLeft size={14}/></small>
+                </button>
+              ))}
+              {appGroups.length === 0 && <div className="legacy-empty"><Package size={32}/><p>لا توجد تطبيقات منشورة حالياً.</p></div>}
             </div>
-          </div>
-
-          <div className="subcategory-row">
-            <button
-              className={!subcategory ? "selected" : ""}
-              onClick={() => setSubcategory("")}
-            >
-              كل المنتجات
-            </button>
-
-            {subcategories.map((s) => (
-              <button
-                key={s}
-                className={
-                  subcategory === s ? "selected" : ""
-                }
-                onClick={() => setSubcategory(s)}
-              >
-                <ProductArtwork
-                  variant="chip"
-                  name={s}
-                  category={active}
-                  subcategory={s}
-                  imageUrl={supplierCategoryOverrides.find(item => item.displayName === s)?.imageUrl}
-                />
-                {s}
-              </button>
-            ))}
-          </div>
-
-          <div className="legacy-grid">
+          ) : (
+            <>
+              {active === "التطبيقات" && selectedApp && (
+                <button type="button" className="app-directory-back" onClick={() => {setSelectedApp("");setSubcategory("");setQuery("");}}>
+                  <ChevronLeft size={17}/> العودة إلى كل التطبيقات
+                </button>
+              )}
+              {active !== "التطبيقات" && (
+                <div className="subcategory-row">
+                  <button className={!subcategory ? "selected" : ""} onClick={() => setSubcategory("")}>كل المنتجات</button>
+                  {subcategories.map((s) => (
+                    <button key={s} className={subcategory === s ? "selected" : ""} onClick={() => setSubcategory(s)}>
+                      <ProductArtwork variant="chip" name={s} category={active} subcategory={s} imageUrl={supplierCategoryOverrides.find(item => item.displayName === s)?.imageUrl}/>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+<div className="legacy-grid">
             {filtered.map((p) => (
               <article
                 className="legacy-card"
@@ -789,6 +806,8 @@ export default function Home() {
               <Package size={32} />
               <p>لا توجد منتجات في هذا القسم حالياً.</p>
             </div>
+          )}
+            </> 
           )}
         </section></div><aside className="raseed-right-sidebar">
         <div className="raseed-wallet-card"><span>رصيد حسابك</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "سجّل دخولك"}</strong><button onClick={() => setAuthOpen(true)}>＋ تعبئة الرصيد</button><button className="raseed-login-sidebar" onClick={() => setAuthOpen(true)}>{customerQuery.data ? "حسابي والطلبات" : "تسجيل الدخول / إنشاء حساب"}</button></div>
@@ -967,7 +986,18 @@ export default function Home() {
         </button>
       </div>
       <style>{`
-        .raseed-assistant-root{position:fixed;right:18px;bottom:18px;z-index:90;font-family:Tahoma,"Segoe UI",Arial,sans-serif}
+.app-directory{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin:18px 0 26px}
+        .app-directory-card{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:12px;border:1px solid #30234a;border-radius:20px;background:linear-gradient(145deg,#17152b,#10182c);color:#f7f1ff;text-align:right;cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+        .app-directory-card:hover{transform:translateY(-3px);border-color:#9b4be8;box-shadow:0 12px 28px #0005}
+        .app-directory-art{height:150px;overflow:hidden;border-radius:14px;background:#171b37;display:grid;place-items:center}
+        .app-directory-art>*{width:100%;height:100%}
+        .app-directory-card strong{font-size:16px;font-weight:800}
+        .app-directory-card>span{font-size:12px;color:#b9a9d2}
+        .app-directory-card>small{display:flex;align-items:center;gap:5px;color:#e7c76c;font-size:11px}
+        .app-directory-back{display:flex;align-items:center;gap:7px;margin:14px 0;padding:10px 15px;border:1px solid #51406b;border-radius:999px;background:#1b1730;color:#f4d77d;font-weight:700;cursor:pointer}
+        .app-section-count{display:block;margin-top:6px;color:#b9a9d2;font-size:12px}
+        @media(max-width:650px){.app-directory{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 20px}.app-directory-card{padding:8px;border-radius:15px;gap:7px}.app-directory-art{height:112px;border-radius:11px}.app-directory-card strong{font-size:13px}.app-directory-card>span,.app-directory-card>small{font-size:10px}}
+                .raseed-assistant-root{position:fixed;right:18px;bottom:18px;z-index:90;font-family:Tahoma,"Segoe UI",Arial,sans-serif}
         .raseed-assistant-launcher{display:flex;align-items:center;gap:9px;padding:13px 17px;border-radius:999px;background:#19b8d2;color:#07152d;font-weight:800;box-shadow:0 8px 28px #0005}
         .raseed-assistant-panel{position:absolute;right:0;bottom:66px;width:min(365px,calc(100vw - 28px));height:min(540px,calc(100dvh - 115px));display:flex;flex-direction:column;overflow:hidden;border:1px solid #36517b;border-radius:19px;background:#091536;color:#eef5ff;box-shadow:0 18px 55px #0009}
         .raseed-assistant-head{display:flex;align-items:center;gap:10px;padding:13px;background:#112653;border-bottom:1px solid #29416e}
