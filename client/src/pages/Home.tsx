@@ -275,7 +275,9 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const [lightMode, setLightMode] = useState(false);
+  // Pearl (التصميم الأبيض رقم 2) هو المظهر الافتراضي للمتجر.
+  // يبقى التبديل إلى الوضع الداكن متاحًا من إعدادات المظهر.
+  const [lightMode, setLightMode] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantDraft, setAssistantDraft] = useState("");
@@ -1081,6 +1083,18 @@ export default function Home() {
         .app-directory-action{justify-self:stretch;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 12px;border:0;border-radius:11px;background:linear-gradient(90deg,#a43cf1,#18c7df);color:#fff;font-weight:800;font-size:12px;cursor:pointer}
         .app-directory-back{display:flex;align-items:center;gap:7px;margin:14px 0;padding:10px 15px;border:1px solid #51406b;border-radius:999px;background:#1b1730;color:#f4d77d;font-weight:700;cursor:pointer}
         .app-section-count{display:block;margin-top:6px;color:#b9a9d2;font-size:12px}
+        /* Pearl: لا بنفسجي ولا رمادي في بطاقات التطبيقات. */
+        .theme-light .app-directory-card{border-color:#dbe6f3;background:#fff;color:#172b4d;box-shadow:0 10px 28px rgba(34,72,122,.10)}
+        .theme-light .app-directory-card:hover{border-color:#19aeca;box-shadow:0 16px 34px rgba(34,72,122,.16)}
+        .theme-light .app-directory-art{background:linear-gradient(145deg,#f5f9fd,#eaf2fa);border-color:#d5e2ef}
+        .theme-light .app-directory-heading span{color:#6b7f99}
+        .theme-light .app-package-mini{border-color:#d9e5f1;background:#f8fbfe;color:#203958}
+        .theme-light .app-package-mini:hover{background:#eef8fc;border-color:#28b7cc}
+        .theme-light .app-package-art{background:#eef4fa}
+        .theme-light .app-package-mini small{color:#6b7f99}
+        .theme-light .app-directory-action{background:linear-gradient(90deg,#164b7a,#1baabd);color:#fff}
+        .theme-light .app-directory-back{border-color:#c9dbea;background:#fff;color:#22527a}
+        .theme-light .app-section-count{color:#6b7f99}
         @media(max-width:850px){.app-directory{grid-template-columns:1fr}}
         @media(max-width:650px){.app-directory{gap:10px;margin:12px 0 20px}.app-directory-card{padding:10px;border-radius:15px;gap:9px}.app-directory-main{grid-template-columns:54px minmax(0,1fr) 18px;gap:9px}.app-directory-art{height:54px;border-radius:12px}.app-directory-card strong{font-size:14px}.app-package-strip{gap:4px}.app-package-mini{padding:4px 2px}.app-package-art{height:34px}.app-package-mini small{font-size:8px}}
                 .raseed-assistant-root{position:fixed;right:18px;bottom:18px;z-index:90;font-family:Tahoma,"Segoe UI",Arial,sans-serif}
