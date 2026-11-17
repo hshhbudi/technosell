@@ -8,6 +8,8 @@ COPY . .
 RUN pnpm build
 
 RUN pnpm prune --prod
+RUN pnpm install --prod --frozen-lockfile
+RUN node -e "import('vite').then(() => console.log('vite runtime dependency ok'))"
 
 FROM node:22-bookworm-slim
 WORKDIR /app
