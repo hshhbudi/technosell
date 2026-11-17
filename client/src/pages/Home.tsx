@@ -1081,7 +1081,7 @@ export default function Home() {
         .app-directory-card{min-width:0;display:grid;gap:12px;padding:14px;border:1px solid #2b4776;border-radius:20px;background:linear-gradient(145deg,#172951,#101b38);color:#f7f1ff;text-align:right;box-shadow:0 10px 28px #0003;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
         .app-directory-card:hover{transform:translateY(-3px);border-color:#26c9e5;box-shadow:0 16px 34px #0005}
         .app-directory-main{min-width:0;display:grid;grid-template-columns:68px minmax(0,1fr) 20px;align-items:center;gap:12px;padding:0;border:0;background:transparent;color:inherit;text-align:right;cursor:pointer}
-        .app-directory-art{height:68px;overflow:hidden;border-radius:16px;background:linear-gradient(145deg,#202e5c,#10172f);display:grid;place-items:center;border:1px solid #38558a}
+        .app-directory-art{position:relative;height:68px;overflow:hidden;border-radius:16px;background:linear-gradient(145deg,#202e5c,#10172f);display:grid;place-items:center;border:1px solid #38558a}
         .app-directory-art>*{width:100%;height:100%}
         .app-directory-heading{min-width:0;display:grid;gap:4px}
         .app-directory-card strong{font-size:17px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
