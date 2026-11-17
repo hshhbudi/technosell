@@ -1091,7 +1091,7 @@ export default function Home() {
         .app-package-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
         .app-package-mini{min-width:0;display:grid;gap:5px;padding:5px 4px;border:1px solid #31558a;border-radius:11px;background:#102040;color:#d9ebff;cursor:pointer;transition:background .16s ease,border-color .16s ease,transform .16s ease}
         .app-package-mini:hover{transform:translateY(-2px);background:#1c3565;border-color:#35d1e9}
-        .app-package-art{height:40px;display:grid;place-items:center;overflow:hidden;border-radius:7px;background:#162952}
+        .app-package-art{position:relative;height:40px;display:grid;place-items:center;overflow:hidden;border-radius:7px;background:#162952}
         .app-package-art>*{width:100%;height:100%}
         .app-package-mini small{font-size:9px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#a9c9ed}
         .app-directory-action{justify-self:stretch;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 12px;border:0;border-radius:11px;background:linear-gradient(90deg,#a43cf1,#18c7df);color:#fff;font-weight:800;font-size:12px;cursor:pointer}
