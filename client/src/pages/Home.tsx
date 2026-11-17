@@ -438,8 +438,7 @@ export default function Home() {
       products.filter(
         (p) =>
           p.category === active &&
-          (active !== "التطبيقات" || !selectedApp || getAppGroupName(p) === selectedApp) p.name.trim() === selectedApp)
-          )) &&
+          (active !== "التطبيقات" || !selectedApp || getAppGroupName(p) === selectedApp) &&
           (!subcategory || p.subcategory === subcategory) &&
           p.name.toLowerCase().includes(query.toLowerCase())
       ),
