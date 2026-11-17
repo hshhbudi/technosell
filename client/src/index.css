@@ -1193,3 +1193,12 @@
 .owner-order-notes{display:grid;gap:7px;padding:10px;border-radius:10px;background:#2a183a;border:1px solid #80603d44}
 .owner-order-notes .owner-order-error{color:#ffb0b0;background:#451c2533;padding:7px;border-radius:7px}
 @media(max-width:600px){.owner-order-statuses{display:grid;grid-template-columns:1fr}.order-status-badge{justify-content:center}.owner-order-details{grid-template-columns:1fr}.owner-order-total{align-self:flex-start}}
+/* Pearl final override: the selected white theme must win over the legacy dark reference rules. */
+.legacy-store.theme-light{--raseed-bg:#f5f8ff!important;--raseed-panel:#fff!important;--raseed-muted:#52627c!important;background:#f5f8ff!important;color:#13203c!important}
+.theme-light .legacy-header{border-bottom-color:#dbe4f2!important;background:rgba(255,255,255,.94)!important}
+.theme-light .legacy-logo{color:#164b7a!important}.theme-light .legacy-logo-mark{background:linear-gradient(135deg,#dff7fb,#1baabd)!important;color:#164b7a!important}
+.theme-light .legacy-header nav button{color:#52627c!important}.theme-light .legacy-actions .raseed-balance-button{background:#f1f7fc!important;border-color:#cbdbea!important;color:#52627c!important}.theme-light .legacy-actions .raseed-balance-button strong{color:#164b7a!important}
+.theme-light .legacy-hero h1,.theme-light .legacy-section-head h2{color:#13203c!important}.theme-light .legacy-hero h1 strong{color:#168ca1!important}.theme-light .legacy-hero p{color:#52627c!important}
+.theme-light .legacy-category-row button{background:#fff!important;border-color:#d4dfef!important;color:#52627c!important}.theme-light .legacy-category-row button.selected{background:#164b7a!important;border-color:#164b7a!important;color:#fff!important}.theme-light .legacy-category-row button strong,.theme-light .legacy-category-row button small{color:inherit!important}
+.theme-light .legacy-search{background:#fff!important;border-color:#d4dfef!important}.theme-light .legacy-search input{color:#13203c!important}
+.theme-light .legacy-delivery{background:#eaf5fb!important;border-color:#cfe1ec!important}.theme-light .legacy-delivery h2,.theme-light .legacy-delivery h2 strong{color:#164b7a!important}.theme-light .legacy-delivery p{color:#52627c!important}
