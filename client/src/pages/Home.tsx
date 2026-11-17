@@ -1083,6 +1083,8 @@ export default function Home() {
         .app-directory-main{min-width:0;display:grid;grid-template-columns:68px minmax(0,1fr) 20px;align-items:center;gap:12px;padding:0;border:0;background:transparent;color:inherit;text-align:right;cursor:pointer}
         .app-directory-art{position:relative;height:68px;overflow:hidden;border-radius:16px;background:linear-gradient(145deg,#202e5c,#10172f);display:grid;place-items:center;border:1px solid #38558a}
         .app-directory-art>*{width:100%;height:100%}
+        .app-directory-art .pa-media,.app-package-art .pa-media{position:absolute;inset:0;width:100%;height:100%;z-index:3;object-fit:contain;padding:5px;background:transparent}
+        .app-directory-art .pa-ready .pa-fallback,.app-package-art .pa-ready .pa-fallback{opacity:0}
         .app-directory-heading{min-width:0;display:grid;gap:4px}
         .app-directory-card strong{font-size:17px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .app-directory-heading span{font-size:11px;color:#a9c0e1}
