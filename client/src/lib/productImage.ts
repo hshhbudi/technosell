@@ -244,25 +244,10 @@ export function remoteBrandArtwork(input: ProductImageInput): string | null {
     if (/(bigo|بيجو)/i.test(itemName)) {
       return "https://play-lh.googleusercontent.com/8nDM585uK3X3AXiDQJC4lEARF_VLFrgdma-1YkdFMAwKi1LSrg4bMnWMGq7GqsviTKyL_LUfYayflZgs0SqCqQ=w512-h512";
     }
-    const appArtwork: Array<[RegExp, string]> = [
-      [/(tiktok|تيك\s*توك)/i, "tiktok"],
-      [/(yalla\s*live|يلا\s*لايف)/i, "yallalive"],
-      [/(mico|ميكو)/i, "mico"],
-      [/(chatgpt|openai|شات\s*جي\s*بي\s*تي)/i, "openai"],
-      [/(netflix|نتفلكس)/i, "netflix"],
-      [/(poppo|بوبو)/i, "poppo"],
-      [/(livu|ليڤو)/i, "livu"],
-      [/(imo|ايمو)/i, "imo"],
-      [/(tango|تانجو)/i, "tango"],
-      [/(momo|مومو)/i, "momolive"],
-      [/(telegram|تلغرام|تيليجرام)/i, "telegram"],
-      [/(youtube|يوتيوب)/i, "youtube"],
-      [/(discord|ديسكورد)/i, "discord"],
-      [/(spotify|سبوتيفاي)/i, "spotify"],
-      [/(twitch|تويتش)/i, "twitch"],
-    ];
-    const app = appArtwork.find(([pattern]) => pattern.test(itemName));
-    return app ? `https://cdn.simpleicons.org/${app[1]}/FFFFFF` : null;
+    // لا نعتمد على SimpleIcons الخارجي؛ بعض الشبكات تمنعه وتحوّل البطاقة
+    // إلى صورة رمادية أو تسجل أخطاء CORS. الصورة المحلية أو البلاطة المحلية
+    // في ProductArtwork هما البديل الثابت للتطبيقات.
+    return null;
   }
 
   if (!isGamesCategory) return null;
