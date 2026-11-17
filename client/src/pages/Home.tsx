@@ -618,8 +618,8 @@ export default function Home() {
       
       <header className="legacy-header">
         <Link href="/" className="legacy-logo">
-          <span className="legacy-logo-mark">ر</span>
-          <span>رصيد</span>
+          <span className="legacy-logo-mark">TS</span>
+          <span><b>Techno Sell</b><small>سوق الشحن الرقمي</small></span>
         </Link>
 
         <nav className={menuOpen ? "open" : ""}>
@@ -909,6 +909,18 @@ export default function Home() {
         <div className="raseed-sidebar-benefits"><span><Zap/> شحن فوري</span><span>♢ أمان عالي</span><span>◉ دعم 24/7</span></div>
       </aside></div>
       </main>
+
+      <section className="pearl-promo" aria-label="العروض المختارة">
+        <div><span>عروض مختارة</span><h2>اشحن أكثر، استفد أكثر</h2><p>اكتشف الخدمات والمنتجات المنشورة داخل المتجر.</p><button type="button" onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}>اكتشف العروض <ChevronLeft size={16}/></button></div>
+        <div className="pearl-promo-art" aria-hidden="true">✦</div>
+      </section>
+
+      <nav className="pearl-bottom-nav" aria-label="التنقل السفلي">
+        <button className="active" type="button" onClick={() => window.scrollTo({top:0,behavior:"smooth"})}><HomeIcon size={22}/><span>الرئيسية</span></button>
+        <button type="button" onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}><Package size={22}/><span>المنتجات</span></button>
+        <button type="button" onClick={() => setAuthOpen(true)}><CreditCard size={22}/><span>المحفظة</span></button>
+        <button type="button" onClick={() => setAuthOpen(true)}><UserRound size={22}/><span>حسابي</span></button>
+      </nav>
 
       {selected && (
         <div className="legacy-modal-backdrop">
