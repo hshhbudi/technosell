@@ -901,7 +901,7 @@ export default function Home() {
             </> 
           )}
         </section></div><aside className="raseed-right-sidebar">
-        <div className="raseed-wallet-card"><span>رصيد حسابك</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "سجّل دخولك"}</strong><button onClick={() => setAuthOpen(true)}>＋ تعبئة الرصيد</button><button className="raseed-login-sidebar" onClick={() => setAuthOpen(true)}>{customerQuery.data ? "حسابي والطلبات" : "تسجيل الدخول / إنشاء حساب"}</button></div>
+        <div className="raseed-wallet-card"><span>رصيد حسابك</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "سجّل دخولك"}</strong><button onClick={() => setAuthOpen(true)}><i>＋</i><span>إضافة رصيد</span></button><button className="raseed-login-sidebar" onClick={() => setAuthOpen(true)}>{customerQuery.data ? "حسابي والطلبات" : "تسجيل الدخول / إنشاء حساب"}</button></div>
         <button className="raseed-sidebar-settings" onClick={() => setSettingsOpen(v => !v)}><Settings size={22}/> الإعدادات <ChevronLeft size={17}/></button>
         {settingsOpen && <div className="raseed-sidebar-settings-panel"><button onClick={() => {setLightMode(v => !v);setSettingsOpen(false);}}>{lightMode ? <Sun size={16}/> : <Moon size={16}/>} تغيير المظهر</button><button onClick={() => {setAuthOpen(true);setSettingsOpen(false);}}>حسابي</button></div>}
         <button className="raseed-sidebar-theme" onClick={() => setLightMode(v => !v)}>{lightMode ? <Sun/> : <Moon/>} المظهر</button>
