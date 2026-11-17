@@ -712,14 +712,44 @@ export default function Home() {
           {active === "التطبيقات" && !selectedApp ? (
             <div className="app-directory" aria-label="اختر التطبيق">
               {appGroups.map((app) => (
-                <button type="button" key={app.name} className="app-directory-card" onClick={() => {setSelectedApp(app.name);setSubcategory("");setQuery("");}}>
-                  <div className="app-directory-art">
-                    <ProductArtwork name={app.name} category="التطبيقات" subcategory={app.name} imageUrl={app.imageUrl} fit="contain"/>
+                <article key={app.name} className="app-directory-card">
+                  <button type="button" className="app-directory-main" onClick={() => {setSelectedApp(app.name);setSubcategory("");setQuery("");}}>
+                    <div className="app-directory-art">
+                      <ProductArtwork name={app.name} category="التطبيقات" subcategory={app.name} imageUrl={app.imageUrl} fit="contain"/>
+                    </div>
+                    <div className="app-directory-heading">
+                      <strong>{app.name}</strong>
+                      <span>{app.productCount} باقات متاحة</span>
+                    </div>
+                    <ChevronLeft size={18} aria-hidden="true"/>
+                  </button>
+                  <div className="app-package-strip" aria-label={`باقات ${app.name}`}>
+                    {app.items.slice(0, 5).map((item, index) => (
+                      <button
+                        type="button"
+                        key={`${item.id}-${item.name}-${index}`}
+                        className="app-package-mini"
+                        title={item.name}
+                        onClick={() => startTopup(item)}
+                      >
+                        <span className="app-package-art">
+                          <ProductArtwork
+                            name={item.name}
+                            category={item.category}
+                            subcategory={item.subcategory}
+                            imageUrl={item.imageUrl}
+                            externalId={item.externalId}
+                            fit="contain"
+                          />
+                        </span>
+                        <small>{item.points != null ? formatPoints(item.points) : `باقة ${index + 1}`}</small>
+                      </button>
+                    ))}
                   </div>
-                  <strong>{app.name}</strong>
-                  <span>{app.productCount} باقة شحن</span>
-                  <small>اضغط لعرض الباقات <ChevronLeft size={14}/></small>
-                </button>
+                  <button type="button" className="app-directory-action" onClick={() => {setSelectedApp(app.name);setSubcategory("");setQuery("");}}>
+                    باقات التطبيق <ChevronLeft size={15}/>
+                  </button>
+                </article>
               ))}
               {appGroups.length === 0 && <div className="legacy-empty"><Package size={32}/><p>لا توجد تطبيقات منشورة حالياً.</p></div>}
             </div>
@@ -986,17 +1016,26 @@ export default function Home() {
         </button>
       </div>
       <style>{`
-.app-directory{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin:18px 0 26px}
-        .app-directory-card{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:12px;border:1px solid #30234a;border-radius:20px;background:linear-gradient(145deg,#17152b,#10182c);color:#f7f1ff;text-align:right;cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
-        .app-directory-card:hover{transform:translateY(-3px);border-color:#9b4be8;box-shadow:0 12px 28px #0005}
-        .app-directory-art{height:150px;overflow:hidden;border-radius:14px;background:#171b37;display:grid;place-items:center}
+.app-directory{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:18px 0 26px}
+        .app-directory-card{min-width:0;display:grid;gap:12px;padding:14px;border:1px solid #2b4776;border-radius:20px;background:linear-gradient(145deg,#172951,#101b38);color:#f7f1ff;text-align:right;box-shadow:0 10px 28px #0003;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+        .app-directory-card:hover{transform:translateY(-3px);border-color:#26c9e5;box-shadow:0 16px 34px #0005}
+        .app-directory-main{min-width:0;display:grid;grid-template-columns:68px minmax(0,1fr) 20px;align-items:center;gap:12px;padding:0;border:0;background:transparent;color:inherit;text-align:right;cursor:pointer}
+        .app-directory-art{height:68px;overflow:hidden;border-radius:16px;background:linear-gradient(145deg,#202e5c,#10172f);display:grid;place-items:center;border:1px solid #38558a}
         .app-directory-art>*{width:100%;height:100%}
-        .app-directory-card strong{font-size:16px;font-weight:800}
-        .app-directory-card>span{font-size:12px;color:#b9a9d2}
-        .app-directory-card>small{display:flex;align-items:center;gap:5px;color:#e7c76c;font-size:11px}
+        .app-directory-heading{min-width:0;display:grid;gap:4px}
+        .app-directory-card strong{font-size:17px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .app-directory-heading span{font-size:11px;color:#a9c0e1}
+        .app-package-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+        .app-package-mini{min-width:0;display:grid;gap:5px;padding:5px 4px;border:1px solid #31558a;border-radius:11px;background:#102040;color:#d9ebff;cursor:pointer;transition:background .16s ease,border-color .16s ease,transform .16s ease}
+        .app-package-mini:hover{transform:translateY(-2px);background:#1c3565;border-color:#35d1e9}
+        .app-package-art{height:40px;display:grid;place-items:center;overflow:hidden;border-radius:7px;background:#162952}
+        .app-package-art>*{width:100%;height:100%}
+        .app-package-mini small{font-size:9px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#a9c9ed}
+        .app-directory-action{justify-self:stretch;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 12px;border:0;border-radius:11px;background:linear-gradient(90deg,#a43cf1,#18c7df);color:#fff;font-weight:800;font-size:12px;cursor:pointer}
         .app-directory-back{display:flex;align-items:center;gap:7px;margin:14px 0;padding:10px 15px;border:1px solid #51406b;border-radius:999px;background:#1b1730;color:#f4d77d;font-weight:700;cursor:pointer}
         .app-section-count{display:block;margin-top:6px;color:#b9a9d2;font-size:12px}
-        @media(max-width:650px){.app-directory{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 20px}.app-directory-card{padding:8px;border-radius:15px;gap:7px}.app-directory-art{height:112px;border-radius:11px}.app-directory-card strong{font-size:13px}.app-directory-card>span,.app-directory-card>small{font-size:10px}}
+        @media(max-width:850px){.app-directory{grid-template-columns:1fr}}
+        @media(max-width:650px){.app-directory{gap:10px;margin:12px 0 20px}.app-directory-card{padding:10px;border-radius:15px;gap:9px}.app-directory-main{grid-template-columns:54px minmax(0,1fr) 18px;gap:9px}.app-directory-art{height:54px;border-radius:12px}.app-directory-card strong{font-size:14px}.app-package-strip{gap:4px}.app-package-mini{padding:4px 2px}.app-package-art{height:34px}.app-package-mini small{font-size:8px}}
                 .raseed-assistant-root{position:fixed;right:18px;bottom:18px;z-index:90;font-family:Tahoma,"Segoe UI",Arial,sans-serif}
         .raseed-assistant-launcher{display:flex;align-items:center;gap:9px;padding:13px 17px;border-radius:999px;background:#19b8d2;color:#07152d;font-weight:800;box-shadow:0 8px 28px #0005}
         .raseed-assistant-panel{position:absolute;right:0;bottom:66px;width:min(365px,calc(100vw - 28px));height:min(540px,calc(100dvh - 115px));display:flex;flex-direction:column;overflow:hidden;border:1px solid #36517b;border-radius:19px;background:#091536;color:#eef5ff;box-shadow:0 18px 55px #0009}
