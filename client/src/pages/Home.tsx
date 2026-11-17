@@ -353,7 +353,15 @@ export default function Home() {
     const grouped = new Map<string, StoreProduct[]>();
     for (const product of products) {
       if (product.category !== "التطبيقات") continue;
-      const key = (product.subcategory || product.name || "تطبيق").trim();
+      // بعض منتجات Fast4Top تصل بتصنيف عام اسمه Apps Section.
+      // لا نجمعها كلها في بطاقة واحدة؛ كل اسم تطبيق يجب أن يظهر كبطاقة مستقلة
+      // حتى تظهر صورته وباقاته بشكل صحيح على الهاتف والكمبيوتر.
+      const genericAppSection = /^(apps?\s+section|app\s+section)$/i.test(
+        (product.subcategory || "").trim()
+      );
+      const key = (
+        genericAppSection ? product.name : product.subcategory || product.name || "تطبيق"
+      ).trim();
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(product);
     }
