@@ -399,7 +399,10 @@ export default function Home() {
       products.filter(
         (p) =>
           p.category === active &&
-          (active !== "التطبيقات" || !selectedApp || p.subcategory === selectedApp) &&
+          (active !== "التطبيقات" || !selectedApp || (
+            p.subcategory === selectedApp ||
+            (/^(apps?\s+section|app\s+section)$/i.test((p.subcategory || "").trim()) && p.name.trim() === selectedApp)
+          )) &&
           (!subcategory || p.subcategory === subcategory) &&
           p.name.toLowerCase().includes(query.toLowerCase())
       ),
