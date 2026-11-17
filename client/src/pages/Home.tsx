@@ -764,7 +764,19 @@ export default function Home() {
                 <article key={app.name} className="app-directory-card">
                   <button type="button" className="app-directory-main" onClick={() => {setSelectedApp(app.name);setSubcategory("");setQuery("");}}>
                     <div className="app-directory-art">
-                      <ProductArtwork name={app.name} category="التطبيقات" subcategory={app.name} imageUrl={app.imageUrl} fit="contain"/>
+                      {(() => {
+                        // استخدم صورة أول باقة فعلية؛ اسم المجموعة العربي قد لا يطابق
+                        // اسم ملف الصورة المحلي، وكان ذلك يعرض الغلاف البني الافتراضي.
+                        const cover = app.items[0];
+                        return <ProductArtwork
+                          name={cover?.name || app.name}
+                          category="التطبيقات"
+                          subcategory={cover?.subcategory || app.name}
+                          imageUrl={cover?.imageUrl || app.imageUrl}
+                          externalId={cover?.externalId}
+                          fit="contain"
+                        />;
+                      })()}
                     </div>
                     <div className="app-directory-heading">
                       <strong>{app.name}</strong>
