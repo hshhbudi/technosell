@@ -157,6 +157,50 @@ const transliterateAppName = (name: string) => {
 const arabicAppName = (name: string) =>
   APP_ARABIC_NAMES.find(([pattern]) => pattern.test(name))?.[1] || transliterateAppName(name);
 
+const APP_GROUP_ALIASES: Array<[RegExp, string]> = [
+  [/soul\s*chill/i, "سول تشيل"], [/soul\s*u\b/i, "سول يو"], [/soul\s*star/i, "سول ستار"],
+  [/talk\s*talk/i, "توك توك"], [/up\s*live/i, "أب لايف"], [/party\s*star/i, "بارتي ستار"],
+  [/light\s*chat/i, "لايت شات"], [/sky\s*chat/i, "سكاي شات"], [/honey\s*jar/i, "هاني جار"],
+  [/our\s*talk/i, "أور توك"], [/hi\s*party/i, "هاي بارتي"], [/nice\s*chat/i, "نايس شات"],
+  [/taj\s*star/i, "تاج ستار"], [/hay\s*bulala/i, "هاي بولالا"], [/lama\s*ludo/i, "لاما لودو"],
+  [/pk\s*star/i, "بي كي ستار"], [/ti\s*live/i, "تي آي لايف"], [/we\s*party/i, "وي بارتي"],
+  [/will\s*chill/i, "ويل تشيل"], [/we\s*chill/i, "وي تشيل"], [/up\s*fun/i, "أب فن"],
+  [/game\s*live/i, "غيمت لايف"], [/haya/i, "هيا شات"], [/tiktok/i, "تيك توك"],
+  [/tumile/i, "توميلي لايف"], [/meyo/i, "ميو لايف"], [/bigo/i, "بيجو لايف"],
+  [/ahlan/i, "أهلًا شات"], [/likee/i, "لايكي لايف"], [/yalla/i, "يلا لايف"],
+  [/kwai/i, "كواي"], [/mico/i, "ميكو لايف"], [/4fun/i, "فور فن شات"],
+  [/haki/i, "هاكي شات"], [/yoyo/i, "يويو شات"], [/yoho/i, "يوهو واكا"],
+  [/falla/i, "فالا شات"], [/lama/i, "لاما شات"], [/lami/i, "لامي شات"],
+  [/azal/i, "أزال لايف"], [/beela/i, "بيلا شات"], [/hawa/i, "حوا شات"],
+  [/migo/i, "ميغو لايف"], [/poppo/i, "بوبو لايف"], [/mr7ba/i, "مرحبا شات"],
+  [/tango/i, "تانجو"], [/sugo/i, "سوغو"], [/soyo/i, "سويو شات"], [/imo/i, "إيمو"],
+  [/livu/i, "ليف يو"], [/momo/i, "مومو لايف"], [/taka/i, "تاكا"], [/tada/i, "تادا شات"],
+  [/yami/i, "يامي ستار"], [/laki/i, "لاكي شات"], [/doli/i, "دولي لايف"], [/hopi/i, "هوبي ستار"],
+  [/yudo/i, "يودو"], [/salam/i, "سلام شات"], [/ditto/i, "ديتو لايف"], [/mango/i, "مانجو لايف"],
+  [/allo/i, "ألو شات"], [/rostar/i, "روستار"], [/weso/i, "ويسو شات"], [/asha/i, "آشا لايف"],
+  [/shila/i, "شيلا شات"], [/amisu/i, "أميسو بارتي"], [/sophia/i, "صوفيا شات"],
+  [/nady/i, "نادي ستار"], [/lemi/i, "ليمي لايف"], [/wikoo/i, "ويكو"], [/yumi/i, "يومي شات"],
+  [/halla/i, "هلا لايف"], [/halo/i, "هالو ستار"], [/hamster/i, "هامستر"], [/hoga/i, "هوغا شات"],
+  [/maza/i, "مازا شات"], [/roka/i, "روكا لايف"], [/hiyoo/i, "هيو"], [/vone/i, "فون"],
+  [/winko/i, "وينكو"], [/niu/i, "نيو شات"], [/arabstar/i, "عرب ستار"], [/ezzo/i, "إيزو"],
+  [/bota/i, "بوتا شات"], [/niko/i, "نيكو شات"], [/pocoo/i, "بوكو شات"], [/kitta/i, "كيتا"],
+];
+
+const isGenericAppSection = (subcategory: string) =>
+  /^(apps?\s+section|app\s+section)$/i.test(subcategory.trim());
+
+const getAppGroupName = (product: StoreProduct) => {
+  const subcategory = (product.subcategory || "").trim();
+  if (subcategory && !isGenericAppSection(subcategory)) return subcategory;
+  const match = APP_GROUP_ALIASES.find(([pattern]) => pattern.test(product.name));
+  if (match) return match[1];
+  const baseName = product.name
+    .replace(/\s*[-–—|:]?\s*\d[\d,.\s]*(?:coins?|diamonds?|points?|beans?|credits?|gifts?|نقطة|نقاط|ماسة|ماسات|عملة|عملات|كوينز?)\b.*$/i, "")
+    .replace(/\s*[-–—|:].*$/, "")
+    .trim();
+  return baseName || product.name.trim() || "تطبيق";
+};
+
 const money = (cents: number) =>
   `$ ${(Number(cents || 0) / 100).toFixed(2)}`;
 
@@ -356,12 +400,7 @@ export default function Home() {
       // بعض منتجات Fast4Top تصل بتصنيف عام اسمه Apps Section.
       // لا نجمعها كلها في بطاقة واحدة؛ كل اسم تطبيق يجب أن يظهر كبطاقة مستقلة
       // حتى تظهر صورته وباقاته بشكل صحيح على الهاتف والكمبيوتر.
-      const genericAppSection = /^(apps?\s+section|app\s+section)$/i.test(
-        (product.subcategory || "").trim()
-      );
-      const key = (
-        genericAppSection ? product.name : product.subcategory || product.name || "تطبيق"
-      ).trim();
+      const key = getAppGroupName(product);
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(product);
     }
@@ -399,9 +438,7 @@ export default function Home() {
       products.filter(
         (p) =>
           p.category === active &&
-          (active !== "التطبيقات" || !selectedApp || (
-            p.subcategory === selectedApp ||
-            (/^(apps?\s+section|app\s+section)$/i.test((p.subcategory || "").trim()) && p.name.trim() === selectedApp)
+          (active !== "التطبيقات" || !selectedApp || getAppGroupName(p) === selectedApp) p.name.trim() === selectedApp)
           )) &&
           (!subcategory || p.subcategory === subcategory) &&
           p.name.toLowerCase().includes(query.toLowerCase())
