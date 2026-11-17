@@ -73,11 +73,15 @@ import {
 import { verifyFirebaseIdToken } from "./_core/firebaseAdmin";
 
 const CUSTOMER_COOKIE = "technosell_customer";
+const DEVELOPMENT_CUSTOMER_SECRET = randomBytes(32);
 
-const customerSecret = () =>
-  new TextEncoder().encode(
-    ENV.cookieSecret || "technosell-development-secret"
-  );
+const customerSecret = () => {
+  if (ENV.cookieSecret) return new TextEncoder().encode(ENV.cookieSecret);
+  if (ENV.isProduction) {
+    throw new Error("MANUS_JWT_SECRET must be configured in production");
+  }
+  return DEVELOPMENT_CUSTOMER_SECRET;
+};
 
 const hashPassword = (
   password: string,
@@ -108,6 +112,27 @@ const secretMatches = (provided: string, expected: string) => {
     timingSafeEqual(a, b)
   );
 };
+
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+function enforceRateLimit(
+  req: { headers: Record<string, string | string[] | undefined> },
+  scope: string,
+  limit = 12
+) {
+  const forwarded = req.headers["x-forwarded-for"];
+  const ip = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(",")[0]?.trim() || "unknown";
+  const key = `${scope}:${ip}`;
+  const now = Date.now();
+  const current = rateBuckets.get(key);
+  if (!current || current.resetAt <= now) {
+    rateBuckets.set(key, { count: 1, resetAt: now + 60_000 });
+    return;
+  }
+  if (current.count >= limit) {
+    throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "محاولات كثيرة، أعد المحاولة بعد قليل" });
+  }
+  current.count += 1;
+}
 
 const customerSafe = (
   customer: Awaited<ReturnType<typeof getCustomerById>>
@@ -156,7 +181,7 @@ async function setCustomerCookie(res: any, id: number) {
   res.cookie(CUSTOMER_COOKIE, token, {
     httpOnly: true,
     secure: true,
-    sameSite: "none",
+    sameSite: "lax",
     path: "/",
     maxAge: 180 * 24 * 60 * 60 * 1000,
   });
@@ -267,6 +292,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
+        enforceRateLimit(ctx.req, "customer-register");
         if (await getCustomerByEmail(input.email)) {
           throw new TRPCError({
             code: "CONFLICT",
@@ -301,6 +327,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
+        enforceRateLimit(ctx.req, "customer-login");
         const customer = await getCustomerByEmail(input.email);
 
         if (
@@ -325,6 +352,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
+        enforceRateLimit(ctx.req, "firebase-login");
         let decoded;
 
         try {
@@ -342,6 +370,13 @@ export const appRouter = router({
           throw new TRPCError({
             code: "UNAUTHORIZED",
             message: "حساب Firebase لا يحتوي على بريد إلكتروني",
+          });
+        }
+
+        if (decoded.email_verified !== true) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "يجب تأكيد البريد الإلكتروني أولًا",
           });
         }
 
@@ -400,7 +435,7 @@ export const appRouter = router({
       ctx.res.clearCookie(CUSTOMER_COOKIE, {
         httpOnly: true,
         secure: true,
-        sameSite: "none",
+        sameSite: "lax",
         path: "/",
       });
 
@@ -416,6 +451,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
+        enforceRateLimit(ctx.req, "wallet-topup", 10);
         const customer = await customerFromRequest(ctx.req);
 
         if (!customer) {
