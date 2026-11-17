@@ -1058,10 +1058,10 @@ export default function Home() {
 
       <div className="raseed-assistant-root" dir="rtl">
         {assistantOpen && (
-          <section className="raseed-assistant-panel" aria-label="مساعد رصيد">
+          <section className="raseed-assistant-panel" aria-label="مساعد Techno Sell">
             <header className="raseed-assistant-head">
               <span className="raseed-assistant-avatar"><Bot size={21} /></span>
-              <div><strong>مساعد رصيد</strong><small>مساعدة آلية • الدعم البشري متاح</small></div>
+              <div><strong>مساعد Techno Sell</strong><small>مساعدة آلية • الدعم البشري متاح</small></div>
               <button type="button" aria-label="إغلاق المحادثة" onClick={() => setAssistantOpen(false)}><X size={19} /></button>
             </header>
             <div className="raseed-assistant-messages" aria-live="polite">
@@ -1084,8 +1084,8 @@ export default function Home() {
             <small className="raseed-assistant-note">الإجابات آلية وتعتمد على المنتجات المنشورة؛ لا تنفّذ دفعاً أو طلب شحن نيابةً عنك.</small>
           </section>
         )}
-        <button className="raseed-assistant-launcher" type="button" onClick={() => setAssistantOpen((open) => !open)} aria-label="افتح مساعد رصيد">
-          {assistantOpen ? <X size={23} /> : <><MessageCircle size={22} /><span>اسأل مساعد رصيد</span></>}
+        <button className="raseed-assistant-launcher" type="button" onClick={() => setAssistantOpen((open) => !open)} aria-label="افتح مساعد Techno Sell">
+          {assistantOpen ? <X size={23} /> : <><MessageCircle size={22} /><span>مساعدة Techno Sell</span></>}
         </button>
       </div>
       <style>{`
