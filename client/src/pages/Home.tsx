@@ -282,8 +282,9 @@ export default function Home() {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantDraft, setAssistantDraft] = useState("");
   const [assistantMessages, setAssistantMessages] = useState<Array<{ role: "assistant" | "customer"; text: string }>>([
-    { role: "assistant", text: "أهلاً بك في رصيد 👋 اسألني عن المنتجات والأسعار وشحن الألعاب والتطبيقات، أو اختر أحد الأزرار بالأسفل." },
+    { role: "assistant", text: "أهلاً بك في مساعد Techno Sell 👋 اسألني عن المتجر أو أي موضوع عام، وسأحاول مساعدتك." },
   ]);
+  const assistantChat = trpc.assistant.chat.useMutation();
 
   const directTopup = trpc.customer.directTopup.useMutation({
     onSuccess: async () => {
@@ -393,6 +394,18 @@ export default function Home() {
   }));
   // يعرض المتجر المنتجات التي اختارها المالك من Fast4Top إضافة إلى المنتجات اليدوية المنشورة.
   const products: StoreProduct[] = [...supplierOnlyIdProducts, ...manualProducts];
+
+  const assistantStoreContext = useMemo(
+    () => products.slice(0, 180).map((product) => [
+      `المنتج: ${product.name}`,
+      `القسم: ${product.category}`,
+      product.subcategory ? `التصنيف: ${product.subcategory}` : "",
+      `السعر الظاهر: ${money(product.price)}`,
+      `التوفر: ${product.stock > 0 ? "متاح" : "غير متاح"}`,
+      product.category === "التطبيقات" && product.points ? `النقاط: ${product.points}` : "",
+    ].filter(Boolean).join(" | ")).join("\n"),
+    [products]
+  );
 
   const appGroups = useMemo(() => {
     if (active !== "التطبيقات") return [];
@@ -518,56 +531,17 @@ export default function Home() {
     );
   };
 
-  const sendAssistantMessage = (rawText: string) => {
+  const sendAssistantMessage = async (rawText: string) => {
     const message = rawText.trim();
     if (!message) return;
     setAssistantMessages((items) => [...items, { role: "customer", text: message }]);
     setAssistantDraft("");
-
-    const normalized = message.toLowerCase();
-    const categoryMatch =
-      /(ببجي|pubg|فري فاير|free fire|العاب|ألعاب|لعبة|game)/i.test(message)
-        ? "الألعاب"
-        : /(تطبيق|تطبيقات|هايا|haya|كواي|kwai|لايكي|likee|تيك.?توك|tiktok|بيجو|bigo)/i.test(message)
-          ? "التطبيقات"
-          : /(هاتف|موبايل|جوال|اكسسوار|إكسسوار|سماعة|شاحن)/i.test(message)
-            ? "المنتجات"
-            : /(بطاقة|بطاقات|اشتراك|كرت)/i.test(message)
-              ? "البطاقات الرقمية"
-              : null;
-
-    const matchedProducts = products.filter((product) =>
-      [product.name, product.subcategory, product.description]
-        .filter(Boolean)
-        .some((value) => normalized.includes(String(value).toLowerCase()) || String(value).toLowerCase().includes(normalized))
-    );
-
-    let answer = "";
-    if (/(طلب|طلبي|حالة الشحن|وين وصل|تتبع|متابعة)/i.test(message)) {
-      answer = customerQuery.data
-        ? "لمتابعة طلباتك افتح حسابك من زر «حسابي» في أعلى المتجر. إذا لم تظهر الحالة أو احتجت مساعدة، تواصل مع الدعم البشري عبر واتساب."
-        : "لمتابعة طلبك سجّل الدخول أولاً من زر «تسجيل الدخول»، ثم افتح حسابك والطلبات. ويمكنك التواصل مع الدعم عبر واتساب.";
-    } else if (/(رصيد|محفظة|تعبئة|شحن رصيد الحساب)/i.test(message)) {
-      answer = "لتعبئة رصيد حسابك اضغط «تعبئة الرصيد» وسجّل الدخول، ثم اتبع خطوات الدفع الظاهرة في المتجر. لا ترسل كلمة المرور أو رمز التحقق لأي شخص.";
-    } else if (matchedProducts.length) {
-      answer = "وجدت هذه المنتجات المنشورة حالياً في المتجر:\n" +
-        matchedProducts.slice(0, 5).map((product) => `• ${product.name} — ${money(product.price)}`).join("\n") +
-        "\nيمكنك فتح القسم والضغط على «اشحن الآن» للمنتجات المتاحة للشحن المباشر.";
-    } else if (categoryMatch) {
-      const categoryProducts = products.filter((product) => product.category === categoryMatch).slice(0, 5);
-      answer = categoryProducts.length
-        ? `قسم ${categoryMatch} يحتوي حالياً على:\n` + categoryProducts.map((product) => `• ${product.name} — ${money(product.price)}`).join("\n") + "\nاضغط زر القسم لعرض جميع المنتجات المتاحة."
-        : `قسم ${categoryMatch} لا يحتوي حالياً على منتجات منشورة. يمكنك مراسلة الدعم للتأكد من توفر الخدمة.`;
-      selectCategory(categoryMatch as StoreProduct["category"]);
-    } else if (/(دفع|ادفع|شام كاش|shamcash)/i.test(message)) {
-      answer = "طرق الدفع المتاحة تظهر لك أثناء تعبئة الرصيد أو تأكيد الطلب. لا تحول أي مبلغ إلى جهة غير موضحة داخل المتجر، وإذا واجهت مشكلة تواصل مع الدعم.";
-    } else if (/(مرحبا|السلام|اهلا|أهلا|هاي|hello)/i.test(message)) {
-      answer = "أهلاً وسهلاً فيك 🌟 كيف بقدر أساعدك؟ اسأل عن لعبة أو تطبيق أو سعر منتج، أو اختر أحد الأقسام.";
-    } else {
-      answer = "فيني أساعدك بمعلومات المنتجات المنشورة وأسعارها وأقسام الألعاب والتطبيقات، وبإرشادات الطلب وتعبئة الرصيد. إذا سؤالك يحتاج متابعة من موظف، اضغط «تواصل مع الدعم».";
+    try {
+      const result = await assistantChat.mutateAsync({ message, storeContext: assistantStoreContext });
+      setAssistantMessages((items) => [...items, { role: "assistant", text: result.answer }]);
+    } catch {
+      setAssistantMessages((items) => [...items, { role: "assistant", text: "المساعد غير متاح مؤقتًا. جرّب بعد قليل أو تواصل مع الدعم البشري عبر واتساب." }]);
     }
-
-    setAssistantMessages((items) => [...items, { role: "assistant", text: answer }]);
   };
 
   const submitTopup = () => {
