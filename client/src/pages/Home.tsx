@@ -282,7 +282,7 @@ export default function Home() {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantDraft, setAssistantDraft] = useState("");
   const [assistantMessages, setAssistantMessages] = useState<Array<{ role: "assistant" | "customer"; text: string }>>([
-    { role: "assistant", text: "أهلاً بك في مساعد Techno Sell 👋 اسألني عن المتجر أو أي موضوع عام، وسأحاول مساعدتك." },
+    { role: "assistant", text: "أهلاً بك في مساعد رصيد 👋 اسألني عن المتجر أو أي موضوع عام، وسأحاول مساعدتك." },
   ]);
   const assistantChat = trpc.assistant.chat.useMutation();
 
@@ -593,7 +593,7 @@ export default function Home() {
       <header className="legacy-header">
         <Link href="/" className="legacy-logo">
           <span className="legacy-logo-mark">TS</span>
-          <span><b>Techno Sell</b><small>سوق الشحن الرقمي</small></span>
+          <span><b>رصيد</b><small>سوق الشحن الرقمي</small></span>
         </Link>
 
         <nav className={menuOpen ? "open" : ""}>

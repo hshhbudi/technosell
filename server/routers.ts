@@ -232,7 +232,7 @@ export const appRouter = router({
             messages: [
               {
                 role: "system",
-                content: `أنت مساعد Techno Sell داخل المتجر. أجب بالعربية الواضحة وبأسلوب ودود ومختصر، ويمكنك استخدام الإنجليزية إذا طلبها المستخدم. تستطيع الإجابة عن أسئلة عامة خارج المتجر، لكن لا تدّعِ أن المعلومة العامة من Techno Sell.
+                content: `أنت مساعد رصيد داخل المتجر. أجب بالعربية الواضحة وبأسلوب ودود ومختصر، ويمكنك استخدام الإنجليزية إذا طلبها المستخدم. تستطيع الإجابة عن أسئلة عامة خارج المتجر، لكن لا تدّعِ أن المعلومة العامة من رصيد.
 
 قواعد أسئلة المتجر:
 - استخدم سياق المتجر المرفق فقط للأسعار والتوفر والمنتجات؛ لا تخترع سعرًا أو كمية أو اسم منتج.
@@ -429,7 +429,7 @@ ${input.storeContext}`,
         if (!customer) {
           customer = await createCustomer({
             displayName:
-              decoded.name || email.split("@")[0] || "عميل Techno Sell",
+              decoded.name || email.split("@")[0] || "عميل رصيد",
             email,
             passwordHash: hashPassword(randomBytes(32).toString("hex")),
             phone: null,
