@@ -275,9 +275,9 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  // Pearl (التصميم الأبيض رقم 2) هو المظهر الافتراضي للمتجر.
-  // يبقى التبديل إلى الوضع الداكن متاحًا من إعدادات المظهر.
-  const [lightMode, setLightMode] = useState(true);
+  // التصميم الداكن الفاخر والتقني هو المظهر الافتراضي للمتجر.
+  // يبقى التبديل إلى الوضع الفاتح متاحًا من إعدادات المظهر.
+  const [lightMode, setLightMode] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantDraft, setAssistantDraft] = useState("");
