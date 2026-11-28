@@ -1,0 +1,11 @@
+<resources>
+    <style name="RaseedTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#B52CFF</item>
+        <item name="android:statusBarColor">#09051D</item>
+        <item name="android:navigationBarColor">#09051D</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowSplashScreenBackground">#09051D</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_raseed_launcher</item>
+    </style>
+</resources>
