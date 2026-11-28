@@ -1609,3 +1609,25 @@
 .legacy-category-row{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important}
 .legacy-category-row button{flex:0 0 calc((100% - 52px)/5)!important;min-width:118px}
 @media(max-width:800px){.legacy-category-row button{flex:0 0 112px!important}}
+
+
+/* Category tiles: distinct visual symbols requested for the Raseed store. */
+.legacy-category-row .category-tile{flex:1 0 0!important;min-width:0!important;min-height:142px!important;padding:15px 10px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:9px!important;border-radius:21px!important;background:linear-gradient(155deg,#21143d,#100923)!important;border:1px solid #503176!important;color:#fff!important}
+.legacy-category-row .category-tile .category-card-icon{width:61px!important;height:61px!important;display:grid!important;place-items:center!important;border-radius:19px!important;color:#fff!important;box-shadow:0 8px 23px #0006!important}
+.legacy-category-row .category-tile .category-card-icon svg{width:29px!important;height:29px!important;stroke-width:2.1!important}
+.legacy-category-row .category-apps .category-card-icon{background:linear-gradient(145deg,#a83dff,#6418d8)!important;box-shadow:0 0 22px #9e35ff55!important}
+.legacy-category-row .category-games .category-card-icon{background:linear-gradient(145deg,#20c8ff,#1458d9)!important;box-shadow:0 0 22px #218dff55!important}
+.legacy-category-row .category-cards .category-card-icon{background:linear-gradient(145deg,#35d6a0,#07845d)!important;box-shadow:0 0 22px #20c99344!important}
+.legacy-category-row .category-services .category-card-icon{background:linear-gradient(145deg,#ffbd48,#e46b19)!important;box-shadow:0 0 22px #ff9b3155!important}
+.legacy-category-row .category-offers .category-card-icon{background:linear-gradient(145deg,#ff5ca8,#bd2479)!important;box-shadow:0 0 22px #ff4e9b55!important}
+.legacy-category-row .category-tile strong{font-size:14px!important;font-weight:900!important;color:#fff!important}
+.legacy-category-row .category-tile small{font-size:10px!important;line-height:1.5!important;color:#c9b6e5!important;text-align:center!important}
+.legacy-category-row .category-tile.selected{border-color:#e0a0ff!important;box-shadow:0 0 0 1px #c65aff55,0 13px 30px #8b24ff33!important;background:linear-gradient(155deg,#32165b,#160b2b)!important}
+.legacy-category-row .category-offers{cursor:pointer}
+@media(max-width:800px){
+ .legacy-category-row .category-tile{flex:0 0 112px!important;min-width:112px!important;min-height:119px!important;padding:11px 7px!important;border-radius:18px!important}
+ .legacy-category-row .category-tile .category-card-icon{width:51px!important;height:51px!important;border-radius:16px!important}
+ .legacy-category-row .category-tile .category-card-icon svg{width:25px!important;height:25px!important}
+ .legacy-category-row .category-tile strong{font-size:12px!important}
+ .legacy-category-row .category-tile small{font-size:9px!important}
+}
