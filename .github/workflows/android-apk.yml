@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - main
       - android-app
       - raseed-neon-refresh
     paths:
