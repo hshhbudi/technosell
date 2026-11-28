@@ -22,7 +22,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setStatusBarColor(android.graphics.Color.rgb(11, 18, 32));
+        getWindow().setStatusBarColor(android.graphics.Color.rgb(9, 5, 29));
         getWindow().setNavigationBarColor(android.graphics.Color.rgb(11, 18, 32));
 
         FrameLayout root = new FrameLayout(this);
