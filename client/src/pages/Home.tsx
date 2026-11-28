@@ -592,7 +592,7 @@ export default function Home() {
       
       <header className="legacy-header">
         <Link href="/" className="legacy-logo">
-          <span className="legacy-logo-mark">TS</span>
+          <img className="raseed-logo-image" src="/icons/raseed-logo.svg" alt="رصيد" />
           <span><b>رصيد</b><small>سوق الشحن الرقمي</small></span>
         </Link>
 
@@ -673,26 +673,24 @@ export default function Home() {
 
           <div className="legacy-hero-art raseed-hero-art">
             <div className="hero-glow" />
-
-            <div className="hero-device">
+            <div className="hero-device raseed-gift-device">
               <div className="device-brand">RASEED • DIGITAL STORE</div>
-
-              <div className="hero-icons">
-                <Gamepad2 />
-                <span>+</span>
-                <Package />
-              </div>
-
-              <strong>شحنك أسهل مع رصيد</strong>
-              <small>GAMES • LIVE APPS</small>
+              <div className="hero-icons"><Gamepad2 /><span>+</span><CreditCard /></div>
+              <strong>كل احتياجاتك الرقمية</strong>
+              <small>GAMES • LIVE APPS • GIFT CARDS</small>
+              <span className="raseed-gift-box" aria-hidden="true">R</span>
             </div>
-
-            <div className="hero-sticker">
-              آمن
-              <br />
-              <b>100%</b>
-            </div>
+            <div className="hero-sticker">عروض<br/><b>رصيد</b></div>
           </div>
+        </section>
+
+        <section className="raseed-promo-banner" aria-label="عروض رصيد">
+          <div className="raseed-promo-copy">
+            <span>عروض وخدمات رقمية مختارة</span>
+            <strong>كل ما تحتاجه في مكان واحد</strong>
+            <button type="button" onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}>تسوّق الآن <ChevronLeft size={17}/></button>
+          </div>
+          <div className="raseed-promo-art" aria-hidden="true"><Package/><Sparkles/><CreditCard/></div>
         </section>
 
         <section className="legacy-category-row" id="category-links">
@@ -883,6 +881,13 @@ export default function Home() {
         <div className="raseed-sidebar-benefits"><span><Zap/> شحن فوري</span><span>♢ أمان عالي</span><span>◉ دعم 24/7</span></div>
       </aside></div>
       </main>
+
+      <nav className="raseed-mobile-bottom-nav" aria-label="التنقل السريع">
+        <button type="button" onClick={() => window.scrollTo({top:0,behavior:"smooth"})}><HomeIcon/><span>الرئيسية</span></button>
+        <button type="button" onClick={() => document.getElementById("category-links")?.scrollIntoView({behavior:"smooth"})}><Package/><span>الأقسام</span></button>
+        <button type="button" onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}><Gamepad2/><span>المنتجات</span></button>
+        <button type="button" onClick={() => setAuthOpen(true)}><UserRound/><span>حسابي</span></button>
+      </nav>
 
       <section className="pearl-promo" aria-label="العروض المختارة">
         <div><span>عروض مختارة</span><h2>اشحن أكثر، استفد أكثر</h2><p>اكتشف الخدمات والمنتجات المنشورة داخل المتجر.</p><button type="button" onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}>اكتشف العروض <ChevronLeft size={16}/></button></div>
