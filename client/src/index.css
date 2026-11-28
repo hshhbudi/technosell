@@ -1603,3 +1603,9 @@
  .legacy-grid{gap:8px!important}
  .legacy-card-info{padding:8px!important}
 }
+
+
+/* Keep every supplier/store section in one swipeable category rail. */
+.legacy-category-row{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important}
+.legacy-category-row button{flex:0 0 calc((100% - 52px)/5)!important;min-width:118px}
+@media(max-width:800px){.legacy-category-row button{flex:0 0 112px!important}}
