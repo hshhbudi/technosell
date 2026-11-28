@@ -1095,9 +1095,9 @@ export default function Home() {
         .theme-light .app-section-count{color:#6b7f99}
         @media(max-width:850px){.app-directory{grid-template-columns:1fr}}
         @media(max-width:650px){.app-directory{gap:10px;margin:12px 0 20px}.app-directory-card{padding:10px;border-radius:15px;gap:9px}.app-directory-main{grid-template-columns:54px minmax(0,1fr) 18px;gap:9px}.app-directory-art{height:54px;border-radius:12px}.app-directory-card strong{font-size:14px}.app-package-strip{gap:4px}.app-package-mini{padding:4px 2px}.app-package-art{height:34px}.app-package-mini small{font-size:8px}}
-                .raseed-assistant-root{position:fixed;right:18px;bottom:18px;z-index:90;font-family:Tahoma,"Segoe UI",Arial,sans-serif}
+                .raseed-assistant-root{position:fixed;left:18px;top:104px;right:auto;bottom:auto;z-index:90;font-family:Tahoma,"Segoe UI",Arial,sans-serif}
         .raseed-assistant-launcher{display:flex;align-items:center;gap:9px;padding:13px 17px;border-radius:999px;background:#19b8d2;color:#07152d;font-weight:800;box-shadow:0 8px 28px #0005}
-        .raseed-assistant-panel{position:absolute;right:0;bottom:66px;width:min(365px,calc(100vw - 28px));height:min(540px,calc(100dvh - 115px));display:flex;flex-direction:column;overflow:hidden;border:1px solid #36517b;border-radius:19px;background:#091536;color:#eef5ff;box-shadow:0 18px 55px #0009}
+        .raseed-assistant-panel{position:absolute;left:0;right:auto;top:66px;bottom:auto;width:min(365px,calc(100vw - 28px));height:min(540px,calc(100dvh - 180px));display:flex;flex-direction:column;overflow:hidden;border:1px solid #36517b;border-radius:19px;background:#091536;color:#eef5ff;box-shadow:0 18px 55px #0009}
         .raseed-assistant-head{display:flex;align-items:center;gap:10px;padding:13px;background:#112653;border-bottom:1px solid #29416e}
         .raseed-assistant-avatar{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;background:#19b8d2;color:#07152d}
         .raseed-assistant-head div{display:grid;gap:4px;flex:1}.raseed-assistant-head strong{font-size:13px}.raseed-assistant-head small{font-size:10px;color:#a9bddc}
@@ -1113,7 +1113,7 @@ export default function Home() {
         .raseed-assistant-compose button{width:42px;border-radius:11px;background:#19b8d2;color:#07152d;display:grid;place-items:center}.raseed-assistant-compose button:disabled{opacity:.45}
         .raseed-assistant-human{display:block;text-align:center;color:#75e4f2;text-decoration:none;font-size:10px;padding:8px}
         .raseed-assistant-note{display:block;text-align:center;color:#8297ba;font-size:9px;padding:0 10px 10px}
-        @media(max-width:480px){.raseed-assistant-root{right:12px;bottom:12px}.raseed-assistant-panel{right:0;width:calc(100vw - 24px);height:min(520px,calc(100dvh - 100px))}.raseed-assistant-launcher{padding:12px 15px}}
+        @media(max-width:480px){.raseed-assistant-root{left:12px;top:92px;right:auto;bottom:auto}.raseed-assistant-panel{left:0;right:auto;top:56px;bottom:auto;width:min(365px,calc(100vw - 24px));height:min(520px,calc(100dvh - 170px))}.raseed-assistant-launcher{width:48px;height:48px;padding:0;justify-content:center;border-radius:50%}.raseed-assistant-launcher span{display:none}}
       `}</style>
 
       <footer className="legacy-footer">
