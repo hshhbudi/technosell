@@ -30,6 +30,7 @@ import {
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import CustomerAuth from "@/components/CustomerAuth";
+import CustomerOrderTracking from "@/components/CustomerOrderTracking";
 import ProductArtwork from "@/components/ProductArtwork";
 import {
   appPointPriceCents,
@@ -279,6 +280,7 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [trackingOpen, setTrackingOpen] = useState(false);
   // التصميم الداكن الفاخر والتقني هو المظهر الافتراضي للمتجر.
   // يبقى التبديل إلى الوضع الفاتح متاحًا من إعدادات المظهر.
   const [lightMode, setLightMode] = useState(false);
@@ -886,8 +888,8 @@ export default function Home() {
         <button className="active" type="button" onClick={() => window.scrollTo({top:0,behavior:"smooth"})}><HomeIcon size={22}/><span>الرئيسية</span></button>
         <button type="button" onClick={() => document.getElementById("category-links")?.scrollIntoView({behavior:"smooth"})}><Package size={22}/><span>الأقسام</span></button>
         <button type="button" onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}><Gamepad2 size={22}/><span>المنتجات</span></button>
-        <button type="button" onClick={() => setAuthOpen(true)}><ClipboardList size={22}/><span>تتبّع الطلبات</span></button>
-        <button type="button" onClick={() => setAuthOpen(true)}><UserRound size={22}/><span>{customerQuery.data ? "حسابي" : "تسجيل الدخول / إنشاء حساب"}</span></button>
+        <button type="button" onClick={() => customerQuery.data ? setTrackingOpen(true) : setAuthOpen(true)}><ClipboardList size={22}/><span>تتبّع الطلبات</span></button>
+        <button type="button" onClick={() => setAuthOpen(true)} title="تسجيل الدخول / إنشاء حساب"><UserRound size={22}/><span>تسجيل الدخول<br/>إنشاء حساب</span></button>
       </nav>
 
       {selected && (
@@ -1011,6 +1013,8 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {trackingOpen && <CustomerOrderTracking onClose={() => setTrackingOpen(false)} />}
 
       {authOpen && (
         <CustomerAuth
