@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
   Gamepad2,
+  Grid2X2,
+  Gem,
+  Gift,
   Headphones,
   CreditCard,
   Bell,
@@ -684,7 +687,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="raseed-promo-banner" aria-label="عروض رصيد">
+        <section className="raseed-promo-banner" id="raseed-offers" aria-label="عروض رصيد">
           <div className="raseed-promo-copy">
             <span>عروض وخدمات رقمية مختارة</span>
             <strong>كل ما تحتاجه في مكان واحد</strong>
@@ -693,27 +696,20 @@ export default function Home() {
           <div className="raseed-promo-art" aria-hidden="true"><Package/><Sparkles/><CreditCard/></div>
         </section>
 
-        <section className="legacy-category-row" id="category-links">
+        <section className="legacy-category-row" id="category-links" aria-label="أقسام متجر رصيد">
   {([
-    {category:"المنتجات",icon:<Package/>,title:"منتجات",hint:"منتجات المتجر"},
-    {category:"الإكسسوارات",icon:<Headphones/>,title:"إكسسوارات",hint:"سماعات وكفرات وشواحن"},
-    {category:"الهواتف",icon:<Smartphone/>,title:"هواتف",hint:"أحدث الأجهزة"},
-    {category:"الألعاب",icon:<Gamepad2/>,title:"ألعاب",hint:"شحن وبطاقات ألعاب"},
-    {category:"التطبيقات",icon:<Package/>,title:"التطبيقات",hint:"تطبيقات ورصيد وعملات رقمية"},
-    {category:"الخدمات والاتصالات",icon:<Wifi/>,title:"خدمات MTN وسيريتل",hint:"رصيد وباقات وخدمات"},
-    {category:"البطاقات الرقمية",icon:<CreditCard/>,title:"بطاقات رقمية",hint:"هدايا واشتراكات"},
-    {category:"العملات الرقمية",icon:<CreditCard/>,title:"عملات رقمية",hint:"خدمات العملات"},
-    {category:"تفعيل الأرقام",icon:<Smartphone/>,title:"تفعيل الأرقام",hint:"أرقام وخدمات تفعيل"},
-    {category:"السوشيال ميديا",icon:<Sparkles/>,title:"السوشيال ميديا",hint:"خدمات المنصات"},
-    {category:"الخدمات السورية",icon:<Wifi/>,title:"الخدمات السورية",hint:"خدمات محلية"},
-    {category:"مزودات الإنترنت",icon:<Wifi/>,title:"مزودات الإنترنت",hint:"باقات الإنترنت"},
-    {category:"التصميم",icon:<Sparkles/>,title:"التصميم",hint:"خدمات التصميم"},
-    {category:"خدمات رقمية",icon:<Sparkles/>,title:"خدمات رقمية",hint:"اكتشف المزيد"},
+    {category:"التطبيقات",icon:<Grid2X2/>,title:"التطبيقات",hint:"شحن تطبيقات اللايف",kind:"apps"},
+    {category:"الألعاب",icon:<Gamepad2/>,title:"الألعاب",hint:"شحن الألعاب والبطاقات",kind:"games"},
+    {category:"البطاقات الرقمية",icon:<CreditCard/>,title:"بطاقات الشحن",hint:"بطاقات رقمية واشتراكات",kind:"cards"},
+    {category:"الخدمات والاتصالات",icon:<Gem/>,title:"الخدمات",hint:"MTN وسيريتل وخدمات رقمية",kind:"services"},
   ] as const).map(item => (
-    <button key={item.category} className={active === item.category ? "selected" : ""} onClick={() => selectCategory(item.category)}>
+    <button key={item.category} className={`category-tile category-${item.kind} ${active === item.category ? "selected" : ""}`} onClick={() => selectCategory(item.category)}>
       <span className="category-card-icon">{item.icon}</span><strong>{item.title}</strong><small>{item.hint}</small>
     </button>
   ))}
+  <button type="button" className="category-tile category-offers" onClick={() => document.getElementById("raseed-offers")?.scrollIntoView({behavior:"smooth",block:"center"})}>
+    <span className="category-card-icon"><Gift/></span><strong>العروض المميزة</strong><small>هدايا وعروض رصيد</small>
+  </button>
 </section>
 
         <section className="legacy-catalog" id="catalog">
