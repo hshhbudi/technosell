@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - android-app
+      - raseed-neon-refresh
     paths:
       - "android/**"
       - ".github/workflows/android-apk.yml"
