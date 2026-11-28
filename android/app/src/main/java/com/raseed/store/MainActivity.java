@@ -23,7 +23,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(android.graphics.Color.rgb(9, 5, 29));
-        getWindow().setNavigationBarColor(android.graphics.Color.rgb(11, 18, 32));
+        getWindow().setNavigationBarColor(android.graphics.Color.rgb(9, 5, 29));
 
         FrameLayout root = new FrameLayout(this);
         webView = new WebView(this);
@@ -70,6 +70,9 @@ public class MainActivity extends Activity {
         });
 
         if (savedInstanceState == null) {
+            // Force fresh storefront assets after an APK update; cookies and login data stay intact.
+            webView.clearCache(true);
+            webView.getSettings().setCacheMode(android.webkit.WebSettings.LOAD_DEFAULT);
             webView.loadUrl(STORE_URL);
         } else {
             webView.restoreState(savedInstanceState);
