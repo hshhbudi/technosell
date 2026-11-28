@@ -1631,3 +1631,16 @@
  .legacy-category-row .category-tile strong{font-size:12px!important}
  .legacy-category-row .category-tile small{font-size:9px!important}
 }
+
+
+/* Raseed: match the wallet top-up action to the current neon-purple storefront. */
+.legacy-store:not(.theme-light) .legacy-actions .raseed-wallet-topup{
+  background:linear-gradient(110deg,#d83cff,#7516eb)!important;
+  border:1px solid #d88dff!important;
+  color:#fff!important;
+  box-shadow:0 8px 22px #8c24ff55!important;
+}
+.legacy-store:not(.theme-light) .legacy-actions .raseed-wallet-topup:hover{
+  background:linear-gradient(110deg,#e45cff,#8b20f5)!important;
+  border-color:#efb0ff!important;
+}
