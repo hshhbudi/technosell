@@ -8,6 +8,7 @@ import {
   Gift,
   Headphones,
   CreditCard,
+  ClipboardList,
   Bell,
   UserRound,
   Wifi,
@@ -29,6 +30,7 @@ import {
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import CustomerAuth from "@/components/CustomerAuth";
+import CustomerOrderTracking from "@/components/CustomerOrderTracking";
 import ProductArtwork from "@/components/ProductArtwork";
 import {
   appPointPriceCents,
@@ -278,6 +280,7 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [trackingOpen, setTrackingOpen] = useState(false);
   // التصميم الداكن الفاخر والتقني هو المظهر الافتراضي للمتجر.
   // يبقى التبديل إلى الوضع الفاتح متاحًا من إعدادات المظهر.
   const [lightMode, setLightMode] = useState(false);
@@ -613,8 +616,6 @@ export default function Home() {
             <span>رصيد الحساب</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "تسجيل الدخول"}</strong>
           </button>
           <button className="raseed-wallet-topup" onClick={() => setAuthOpen(true)}><CreditCard size={17}/> تعبئة الرصيد</button>
-          <button className="raseed-login-button" onClick={() => setAuthOpen(true)}><UserRound size={17}/> {customerQuery.data ? "حسابي" : "تسجيل الدخول"}</button>
-          {!customerQuery.data && <button className="raseed-register-button" onClick={() => setAuthOpen(true)}>إنشاء حساب</button>}
           <button className="raseed-notifications-button" onClick={() => setAuthOpen(true)} aria-label="الإشعارات" title="الإشعارات"><Bell size={19}/></button>
           <button className="raseed-header-settings" onClick={() => setSettingsOpen(v => !v)} aria-label="الإعدادات" title="الإعدادات"><Settings size={20}/></button>
           {settingsOpen && <div className="raseed-header-settings-popover"><strong>إعدادات رصيد</strong><button onClick={() => {setLightMode(v => !v);setSettingsOpen(false);}}>{lightMode ? <Sun size={16}/> : <Moon size={16}/>} تغيير المظهر</button></div>}
@@ -869,21 +870,14 @@ export default function Home() {
             </> 
           )}
         </section></div><aside className="raseed-right-sidebar">
-        <div className="raseed-wallet-card"><span>رصيد حسابك</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "سجّل دخولك"}</strong><button onClick={() => setAuthOpen(true)}><i>＋</i><span>إضافة رصيد</span></button><button className="raseed-login-sidebar" onClick={() => setAuthOpen(true)}>{customerQuery.data ? "حسابي والطلبات" : "تسجيل الدخول / إنشاء حساب"}</button></div>
+        <div className="raseed-wallet-card"><span>رصيد حسابك</span><strong>{customerQuery.data ? money(customerQuery.data.balanceCents ?? 0) : "سجّل دخولك"}</strong><button onClick={() => setAuthOpen(true)}><i>＋</i><span>إضافة رصيد</span></button></div>
         <button className="raseed-sidebar-settings" onClick={() => setSettingsOpen(v => !v)}><Settings size={22}/> الإعدادات <ChevronLeft size={17}/></button>
-        {settingsOpen && <div className="raseed-sidebar-settings-panel"><button onClick={() => {setLightMode(v => !v);setSettingsOpen(false);}}>{lightMode ? <Sun size={16}/> : <Moon size={16}/>} تغيير المظهر</button><button onClick={() => {setAuthOpen(true);setSettingsOpen(false);}}>حسابي</button></div>}
+        {settingsOpen && <div className="raseed-sidebar-settings-panel"><button onClick={() => {setLightMode(v => !v);setSettingsOpen(false);}}>{lightMode ? <Sun size={16}/> : <Moon size={16}/>} تغيير المظهر</button></div>}
         <button className="raseed-sidebar-theme" onClick={() => setLightMode(v => !v)}>{lightMode ? <Sun/> : <Moon/>} المظهر</button>
         <div className="raseed-sidebar-brand"><span>♛</span><strong>رصيد</strong><small>أسرع • آمن • الأفضل</small></div>
         <div className="raseed-sidebar-benefits"><span><Zap/> شحن فوري</span><span>♢ أمان عالي</span><span>◉ دعم 24/7</span></div>
       </aside></div>
       </main>
-
-      <nav className="raseed-mobile-bottom-nav" aria-label="التنقل السريع">
-        <button type="button" onClick={() => window.scrollTo({top:0,behavior:"smooth"})}><HomeIcon/><span>الرئيسية</span></button>
-        <button type="button" onClick={() => document.getElementById("category-links")?.scrollIntoView({behavior:"smooth"})}><Package/><span>الأقسام</span></button>
-        <button type="button" onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}><Gamepad2/><span>المنتجات</span></button>
-        <button type="button" onClick={() => setAuthOpen(true)}><UserRound/><span>حسابي</span></button>
-      </nav>
 
       <section className="pearl-promo" aria-label="العروض المختارة">
         <div><span>عروض مختارة</span><h2>اشحن أكثر، استفد أكثر</h2><p>اكتشف الخدمات والمنتجات المنشورة داخل المتجر.</p><button type="button" onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}>اكتشف العروض <ChevronLeft size={16}/></button></div>
@@ -892,9 +886,10 @@ export default function Home() {
 
       <nav className="pearl-bottom-nav" aria-label="التنقل السفلي">
         <button className="active" type="button" onClick={() => window.scrollTo({top:0,behavior:"smooth"})}><HomeIcon size={22}/><span>الرئيسية</span></button>
-        <button type="button" onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}><Package size={22}/><span>المنتجات</span></button>
-        <button type="button" onClick={() => setAuthOpen(true)}><CreditCard size={22}/><span>المحفظة</span></button>
-        <button type="button" onClick={() => setAuthOpen(true)}><UserRound size={22}/><span>حسابي</span></button>
+        <button type="button" onClick={() => document.getElementById("category-links")?.scrollIntoView({behavior:"smooth"})}><Package size={22}/><span>الأقسام</span></button>
+        <button type="button" onClick={() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth"})}><Gamepad2 size={22}/><span>المنتجات</span></button>
+        <button type="button" onClick={() => customerQuery.data ? setTrackingOpen(true) : setAuthOpen(true)}><ClipboardList size={22}/><span>تتبّع الطلبات</span></button>
+        <button type="button" onClick={() => setAuthOpen(true)} title="تسجيل الدخول / إنشاء حساب"><UserRound size={22}/><span>تسجيل الدخول<br/>إنشاء حساب</span></button>
       </nav>
 
       {selected && (
@@ -1018,6 +1013,8 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {trackingOpen && <CustomerOrderTracking onClose={() => setTrackingOpen(false)} />}
 
       {authOpen && (
         <CustomerAuth
